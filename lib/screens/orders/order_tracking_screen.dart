@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/order_model.dart';
 import 'package:smart_kirana/providers/order_provider.dart';
 import 'package:smart_kirana/utils/constants.dart';
+import 'package:smart_kirana/widgets/order_tracking_map.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   static const String routeName = '/order-tracking';
@@ -115,8 +116,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           _buildStatusCard(order),
           const SizedBox(height: AppPadding.medium),
 
-          // Map Placeholder (in a real app, this would be a Google Map)
-          _buildMapPlaceholder(order),
+          // Google Maps Integration for Order Tracking
+          OrderTrackingMap(order: order, height: 250),
           const SizedBox(height: AppPadding.medium),
 
           // Delivery Agent Info
@@ -222,39 +223,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMapPlaceholder(OrderModel order) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppBorderRadius.medium),
-      ),
-      child: Container(
-        height: 200,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(AppBorderRadius.medium),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.map, size: 60, color: AppColors.primary),
-              const SizedBox(height: AppPadding.small),
-              Text('Map View', style: AppTextStyles.heading3),
-              const SizedBox(height: AppPadding.small),
-              Text(
-                'In a real app, this would be a Google Map\nshowing the delivery location and current position',
-                style: AppTextStyles.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
         ),
       ),
     );
