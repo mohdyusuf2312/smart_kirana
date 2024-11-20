@@ -27,7 +27,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     'All',
     'pending',
     'processing',
-    'Out for Delivery',
+    'outForDelivery',
     'delivered',
     'cancelled',
   ];
@@ -388,7 +388,12 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                       ),
                       const SizedBox(height: AppPadding.small),
                       Text(
-                        order.deliveryAddress.toString(),
+                        '${order.deliveryAddress['label'] ?? ''}, '
+                        '${order.deliveryAddress['addressLine'] ?? ''}, '
+                        '${order.deliveryAddress['city'] ?? ''}, '
+                        '${order.deliveryAddress['state'] ?? ''}-'
+                        '${order.deliveryAddress['pincode'] ?? ''}\n'
+                        '${order.deliveryAddress['phoneNumber'] ?? ''}',
                         style: AppTextStyles.bodyMedium,
                       ),
                     ],
@@ -501,9 +506,13 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     return DropdownButton<String>(
       value: order.status.name,
       items:
-          ['pending', 'processing', 'out for delivery', 'delivered', 'cancelled'].map((
-            String value,
-          ) {
+          [
+            'pending',
+            'processing',
+            'outForDelivery',
+            'delivered',
+            'cancelled',
+          ].map((String value) {
             return DropdownMenuItem<String>(value: value, child: Text(value));
           }).toList(),
       onChanged: (newValue) async {
