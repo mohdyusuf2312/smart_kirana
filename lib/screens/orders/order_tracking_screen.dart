@@ -156,7 +156,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         statusColor = AppColors.primary;
         statusText = 'Processing';
         break;
-      case OrderStatus.shipped:
+      case OrderStatus.outForDelivery:
         statusColor = AppColors.secondary;
         statusText = 'Out for Delivery';
         break;
@@ -325,10 +325,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             ),
             _buildTimelineItem(
               'Out for Delivery',
-              order.status.index >= OrderStatus.shipped.index
+              order.status.index >= OrderStatus.outForDelivery.index
                   ? 'Your order is on the way'
                   : 'Pending',
-              isCompleted: order.status.index >= OrderStatus.shipped.index,
+              isCompleted: order.status.index >= OrderStatus.outForDelivery.index,
             ),
             _buildTimelineItem(
               'Delivered',
@@ -434,7 +434,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         return Icons.access_time;
       case OrderStatus.processing:
         return Icons.inventory;
-      case OrderStatus.shipped:
+      case OrderStatus.outForDelivery:
         return Icons.local_shipping;
       case OrderStatus.delivered:
         return Icons.check_circle;
