@@ -152,6 +152,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                       ),
                     ],
                   ),
+                  pw.SizedBox(width: 30),
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
@@ -161,9 +162,14 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                       ),
                       pw.SizedBox(height: 5),
                       pw.Container(
-                        width: 200,
+                        width: 230,
                         child: pw.Text(
-                          order.deliveryAddress.toString(),
+                          '${order.deliveryAddress['label'] ?? ''}, '
+                          '${order.deliveryAddress['addressLine'] ?? ''}, '
+                          '${order.deliveryAddress['city'] ?? ''}, '
+                          '${order.deliveryAddress['state'] ?? ''}-'
+                          '${order.deliveryAddress['pincode'] ?? ''}\n'
+                          '${order.deliveryAddress['phoneNumber'] ?? ''}',
                           style: pw.TextStyle(font: font, fontSize: 12),
                         ),
                       ),
