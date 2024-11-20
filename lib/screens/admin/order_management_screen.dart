@@ -27,7 +27,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     'All',
     'pending',
     'processing',
-    'shipped',
+    'Out for Delivery',
     'delivered',
     'cancelled',
   ];
@@ -476,7 +476,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
       case 'PROCESSING':
         color = Colors.blue;
         break;
-      case 'SHIPPED':
+      case 'OUT FOR DELIVERY':
         color = Colors.purple;
         break;
       case 'DELIVERED':
@@ -501,7 +501,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     return DropdownButton<String>(
       value: order.status.name,
       items:
-          ['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((
+          ['pending', 'processing', 'out for delivery', 'delivered', 'cancelled'].map((
             String value,
           ) {
             return DropdownMenuItem<String>(value: value, child: Text(value));
