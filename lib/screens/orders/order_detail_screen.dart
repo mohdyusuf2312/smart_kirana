@@ -277,7 +277,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         statusColor = AppColors.primary;
         statusIcon = Icons.inventory;
         break;
-      case OrderStatus.shipped:
+      case OrderStatus.outForDelivery:
         statusColor = AppColors.secondary;
         statusIcon = Icons.local_shipping;
         break;
