@@ -158,7 +158,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         break;
       case OrderStatus.outForDelivery:
         statusColor = AppColors.secondary;
-        statusText = 'Out for Delivery';
+        statusText = 'outForDelivery';
         break;
     }
 
@@ -328,7 +328,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               order.status.index >= OrderStatus.outForDelivery.index
                   ? 'Your order is on the way'
                   : 'Pending',
-              isCompleted: order.status.index >= OrderStatus.outForDelivery.index,
+              isCompleted:
+                  order.status.index >= OrderStatus.outForDelivery.index,
             ),
             _buildTimelineItem(
               'Delivered',
