@@ -97,7 +97,7 @@ class AdminProvider extends ChangeNotifier {
                 pendingOrders++;
                 break;
               case 'PROCESSING':
-              case 'SHIPPED':
+              case 'OUT FOR DELIVERY':
                 // These are also considered pending but tracked separately
                 pendingOrders++;
                 break;
