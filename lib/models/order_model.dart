@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smart_kirana/models/cart_item_model.dart';
 
-enum OrderStatus { pending, processing, shipped, delivered, cancelled }
+enum OrderStatus { pending, processing, outForDelivery, delivered, cancelled }
 
 enum PaymentStatus { pending, completed, failed, refunded }
 
