@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:smart_kirana/models/order_model.dart';
@@ -21,6 +20,7 @@ class _OrderTrackingMapState extends State<OrderTrackingMap> {
   final MapsService _mapsService = MapsService();
 
   Set<Marker> _markers = {};
+  Set<Polyline> _polylines = {};
   bool _isLoading = true;
   String? _error;
   StreamSubscription<LatLng>? _locationSubscription;
@@ -40,19 +40,10 @@ class _OrderTrackingMapState extends State<OrderTrackingMap> {
 
   Future<void> _initializeMap() async {
     try {
-      if (kDebugMode) {
-        print('OrderTrackingMap: Starting map initialization...');
-      }
-
       // Initialize maps service
       final initialized = await _mapsService.initialize();
       if (!initialized) {
         final errorMsg = _mapsService.error ?? 'Failed to initialize maps';
-        if (kDebugMode) {
-          print(
-            'OrderTrackingMap: Maps service initialization failed - $errorMsg',
-          );
-        }
         if (mounted) {
           setState(() {
             _error = errorMsg;
@@ -62,22 +53,9 @@ class _OrderTrackingMapState extends State<OrderTrackingMap> {
         return;
       }
 
-      if (kDebugMode) {
-        print('OrderTrackingMap: Maps service initialized successfully');
-      }
-
       // Check if order has delivery coordinates
       if (widget.order.deliveryLatitude == null ||
           widget.order.deliveryLongitude == null) {
-        if (kDebugMode) {
-          print('OrderTrackingMap: Delivery coordinates not available');
-          print(
-            'OrderTrackingMap: deliveryLatitude: ${widget.order.deliveryLatitude}',
-          );
-          print(
-            'OrderTrackingMap: deliveryLongitude: ${widget.order.deliveryLongitude}',
-          );
-        }
         if (mounted) {
           setState(() {
             _error = 'Delivery location not available';
@@ -87,19 +65,8 @@ class _OrderTrackingMapState extends State<OrderTrackingMap> {
         return;
       }
 
-      if (kDebugMode) {
-        print('OrderTrackingMap: Setting up map data...');
-      }
-
       await _setupBasicMapData();
-
-      if (kDebugMode) {
-        print('OrderTrackingMap: Map initialization completed successfully');
-      }
     } catch (e) {
-      if (kDebugMode) {
-        print('OrderTrackingMap: Exception during initialization - $e');
-      }
       if (mounted) {
         setState(() {
           _error = 'Error setting up map: $e';
@@ -115,12 +82,6 @@ class _OrderTrackingMapState extends State<OrderTrackingMap> {
       widget.order.deliveryLongitude!,
     );
 
-    if (kDebugMode) {
-      print(
-        'OrderTrackingMap: Delivery location - ${deliveryLocation.latitude}, ${deliveryLocation.longitude}',
-      );
-    }
-
     LatLng? currentLocation;
     if (widget.order.currentLatitude != null &&
         widget.order.currentLongitude != null) {
@@ -128,15 +89,6 @@ class _OrderTrackingMapState extends State<OrderTrackingMap> {
         widget.order.currentLatitude!,
         widget.order.currentLongitude!,
       );
-      if (kDebugMode) {
-        print(
-          'OrderTrackingMap: Current location - ${currentLocation.latitude}, ${currentLocation.longitude}',
-        );
-      }
-    } else {
-      if (kDebugMode) {
-        print('OrderTrackingMap: Current location not available');
-      }
     }
 
     // Create markers using maps service
@@ -146,15 +98,29 @@ class _OrderTrackingMapState extends State<OrderTrackingMap> {
       deliveryAgentName: widget.order.deliveryAgentName,
     );
 
-    if (kDebugMode) {
-      print('OrderTrackingMap: Created ${_markers.length} markers');
-    }
+    // Extract and create route polylines if available
+    _polylines = _extractRoutePolylines();
 
     // Set loading to false after successful setup
     if (mounted) {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Set<Polyline> _extractRoutePolylines() {
+    try {
+      // Check if order has route information stored
+      // This would be stored when the order was created with route calculation
+      // For now, we'll return empty set as the route data structure needs to be defined
+      // In a real implementation, you would extract the route points from the order data
+
+      // Extract route points from order.routeInfo if available
+      // For now, return empty set
+      return {};
+    } catch (e) {
+      return {};
     }
   }
 
@@ -283,10 +249,8 @@ class _OrderTrackingMapState extends State<OrderTrackingMap> {
     return GoogleMap(
       initialCameraPosition: initialCameraPosition,
       markers: _markers,
+      polylines: _polylines,
       onMapCreated: (GoogleMapController controller) {
-        if (kDebugMode) {
-          print('OrderTrackingMap: Google Map created successfully');
-        }
         _mapController = controller;
       },
       myLocationEnabled: false,
