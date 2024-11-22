@@ -68,7 +68,6 @@ class RecommendationService {
               .get();
 
       if (ordersSnapshot.docs.isEmpty) {
-        debugPrint('No orders found for user $userId');
         return;
       }
 
@@ -125,6 +124,9 @@ class RecommendationService {
         }
       }
 
+      // Add complementary products based on category similarity
+      await _addComplementaryProducts(productFrequency, userId);
+
       // Sort products by a combination of frequency and recency
       final recommendedProducts =
           productFrequency.values.toList()..sort((a, b) {
@@ -149,10 +151,8 @@ class RecommendationService {
         'lastUpdated': Timestamp.now(),
         'isGlobal': false,
       });
-
-      debugPrint('Generated recommendations for user $userId');
     } catch (e) {
-      debugPrint('Error generating recommendations: $e');
+      // Error generating recommendations - fail silently
     }
   }
 
@@ -211,7 +211,7 @@ class RecommendationService {
         });
       }
     } catch (e) {
-      debugPrint('Error adding product to recommendations: $e');
+      // Error adding product to recommendations - fail silently
     }
   }
 
@@ -243,7 +243,7 @@ class RecommendationService {
         'lastUpdated': Timestamp.now(),
       });
     } catch (e) {
-      debugPrint('Error removing product from recommendations: $e');
+      // Error removing product from recommendations - fail silently
     }
   }
 
@@ -311,14 +311,12 @@ class RecommendationService {
           'products': topProducts.map((p) => p.toMap()).toList(),
           'lastUpdated': Timestamp.now(),
         });
-
-        debugPrint('Updated recommendations after order for user $userId');
       } else {
         // User doesn't have recommendations yet, generate them from scratch
         await generateRecommendationsForUser(userId, userName);
       }
     } catch (e) {
-      debugPrint('Error generating recommendations after order: $e');
+      // Error generating recommendations after order - fail silently
     }
   }
 
@@ -348,13 +346,10 @@ class RecommendationService {
           now.difference(recommendations.lastUpdated).inDays;
 
       if (daysSinceUpdate > 7) {
-        debugPrint(
-          'Recommendations for user $userId are $daysSinceUpdate days old. Refreshing...',
-        );
         await generateRecommendationsForUser(userId, userName);
       }
     } catch (e) {
-      debugPrint('Error checking recommendation age: $e');
+      // Error checking recommendation age - fail silently
     }
   }
 
@@ -420,7 +415,82 @@ class RecommendationService {
         });
       }
     } catch (e) {
-      debugPrint('Error adding product to global recommendations: $e');
+      // Error adding product to global recommendations - fail silently
+    }
+  }
+
+  // Add complementary products based on category similarity and popularity
+  Future<void> _addComplementaryProducts(
+    Map<String, RecommendedProduct> productFrequency,
+    String userId,
+  ) async {
+    try {
+      // Get categories of frequently purchased products
+      final purchasedCategories = <String>{};
+      final purchasedProductIds = productFrequency.keys.toSet();
+
+      // Get product details to find categories
+      for (final productId in purchasedProductIds) {
+        final productDoc =
+            await _firestore.collection('products').doc(productId).get();
+        if (productDoc.exists) {
+          final categoryId = productDoc.data()?['categoryId'] as String?;
+          if (categoryId != null) {
+            purchasedCategories.add(categoryId);
+          }
+        }
+      }
+
+      // Find popular products in the same categories
+      for (final categoryId in purchasedCategories) {
+        final categoryProductsSnapshot =
+            await _firestore
+                .collection('products')
+                .where('categoryId', isEqualTo: categoryId)
+                .where('stock', isGreaterThan: 0)
+                .limit(5)
+                .get();
+
+        for (final productDoc in categoryProductsSnapshot.docs) {
+          final productId = productDoc.id;
+          final productData = productDoc.data();
+
+          // Skip if already in recommendations
+          if (productFrequency.containsKey(productId)) continue;
+
+          // Add as complementary product with lower frequency
+          productFrequency[productId] = RecommendedProduct(
+            productId: productId,
+            productName: productData['name'] ?? '',
+            imageUrl: productData['imageUrl'] ?? '',
+            price: (productData['price'] ?? 0.0).toDouble(),
+            discountPrice:
+                productData['discountPrice'] != null
+                    ? (productData['discountPrice']).toDouble()
+                    : null,
+            frequency: 1, // Lower frequency for complementary products
+          );
+        }
+      }
+
+      // Add trending products from global recommendations
+      final globalRecommendations = await getGlobalRecommendations();
+      if (globalRecommendations != null) {
+        for (final product in globalRecommendations.products.take(3)) {
+          if (!productFrequency.containsKey(product.productId)) {
+            productFrequency[product.productId] = RecommendedProduct(
+              productId: product.productId,
+              productName: product.productName,
+              imageUrl: product.imageUrl,
+              price: product.price,
+              discountPrice: product.discountPrice,
+              frequency: 1, // Lower frequency for trending products
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // Don't fail the main recommendation process if complementary products fail
     }
   }
 }
