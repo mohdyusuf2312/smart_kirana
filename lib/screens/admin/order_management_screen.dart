@@ -474,14 +474,14 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
   Widget _buildStatusChip(String status) {
     Color color;
-    switch (status) {
+    switch (status.toUpperCase()) {
       case 'PENDING':
         color = Colors.orange;
         break;
       case 'PROCESSING':
         color = Colors.blue;
         break;
-      case 'OUT FOR DELIVERY':
+      case 'OUTFORDELIVERY':
         color = Colors.purple;
         break;
       case 'DELIVERED':
