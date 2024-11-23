@@ -75,7 +75,10 @@ class AdminProvider extends ChangeNotifier {
         for (var order in orders) {
           final orderData = order.data();
           final amount = orderData['totalAmount'];
-          if (amount != null) {
+          final paymentStatus = orderData['paymentStatus'];
+
+          // Only include revenue from successful payments
+          if (amount != null && paymentStatus == 'completed') {
             // Ensure amount is properly converted to double
             if (amount is int) {
               totalRevenue += amount.toDouble();
@@ -97,7 +100,7 @@ class AdminProvider extends ChangeNotifier {
                 pendingOrders++;
                 break;
               case 'PROCESSING':
-              case 'OUT FOR DELIVERY':
+              case 'OUTFORDELIVERY':
                 // These are also considered pending but tracked separately
                 pendingOrders++;
                 break;
@@ -212,10 +215,18 @@ class AdminProvider extends ChangeNotifier {
                   .where('orderDate', isLessThan: Timestamp.fromDate(nextDate))
                   .get();
 
-          // Calculate total revenue for this day
+          // Calculate total revenue for this day (only successful payments)
           double dailyRevenue = 0;
           for (var order in ordersSnapshot.docs) {
-            dailyRevenue += (order.data()['totalAmount'] ?? 0).toDouble();
+            final orderData = order.data();
+            final amount = orderData['totalAmount'];
+            final paymentStatus = orderData['paymentStatus'];
+
+            // Only include revenue from successful payments
+            if (amount != null && paymentStatus == 'completed') {
+              dailyRevenue +=
+                  (amount is int ? amount.toDouble() : amount ?? 0.0);
+            }
           }
 
           revenueData.add(RevenueData(date: date, amount: dailyRevenue));
