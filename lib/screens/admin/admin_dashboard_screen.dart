@@ -810,7 +810,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return Colors.orange;
       case 'PROCESSING':
         return Colors.blue;
-      case 'OUT FOR DELIVERY':
+      case 'OUTFORDELIVERY':
         return Colors.purple;
       case 'DELIVERED':
         return Colors.green;
