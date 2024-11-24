@@ -1,13 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:smart_kirana/models/cart_item_model.dart';
 import 'package:smart_kirana/models/order_model.dart';
 import 'package:smart_kirana/models/user_model.dart';
 import 'package:smart_kirana/services/recommendation_service.dart';
+import 'package:smart_kirana/services/route_service.dart';
 
 class OrderService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final RecommendationService _recommendationService = RecommendationService();
+  final RouteService _routeService = RouteService();
 
   // Create a new order
   Future<String> createOrder({
@@ -21,6 +23,8 @@ class OrderService {
     required String paymentMethod,
     required String userName,
     String? deliveryNotes,
+    double? currentLatitude,
+    double? currentLongitude,
   }) async {
     try {
       // Validate stock availability before proceeding
@@ -48,6 +52,35 @@ class OrderService {
       final orderItems =
           cartItems.map((item) => OrderItem.fromCartItem(item)).toList();
 
+      // Calculate route if both current location and delivery address are available
+      RouteInfo? routeInfo;
+      DateTime estimatedDeliveryTime = DateTime.now().add(
+        const Duration(hours: 2),
+      );
+
+      if (currentLatitude != null && currentLongitude != null) {
+        try {
+          routeInfo = await _routeService.calculateRoute(
+            origin: LatLng(currentLatitude, currentLongitude),
+            destination: LatLng(
+              deliveryAddress.latitude,
+              deliveryAddress.longitude,
+            ),
+          );
+
+          if (routeInfo != null) {
+            // Calculate more accurate delivery time based on route
+            estimatedDeliveryTime = DateTime.now().add(
+              Duration(
+                seconds: routeInfo.durationValue + (15 * 60),
+              ), // Add 15 min prep time
+            );
+          }
+        } catch (e) {
+          // Continue with default delivery time if route calculation fails
+        }
+      }
+
       // Create order document
       final orderRef = _firestore.collection('orders').doc();
 
@@ -65,14 +98,24 @@ class OrderService {
         paymentMethod: paymentMethod,
         deliveryNotes: deliveryNotes,
         userName: userName,
-        estimatedDeliveryTime: DateTime.now().add(const Duration(hours: 2)),
+        estimatedDeliveryTime: estimatedDeliveryTime,
+        deliveryLatitude: deliveryAddress.latitude,
+        deliveryLongitude: deliveryAddress.longitude,
+        currentLatitude: currentLatitude,
+        currentLongitude: currentLongitude,
       );
 
       // Use a batch to ensure all operations succeed or fail together
       final batch = _firestore.batch();
 
+      // Prepare order data with route information
+      final orderData = order.toMap();
+      if (routeInfo != null) {
+        orderData['routeInfo'] = routeInfo.toMap();
+      }
+
       // Add the order
-      batch.set(orderRef, order.toMap());
+      batch.set(orderRef, orderData);
 
       // Update product stock for each item
       for (var item in cartItems) {
@@ -94,7 +137,6 @@ class OrderService {
 
       // Generate recommendations based on this new order
       try {
-        debugPrint('Generating recommendations after order for user $userId');
         await _recommendationService.generateRecommendationsAfterOrder(
           userId,
           userName,
@@ -102,7 +144,6 @@ class OrderService {
         );
       } catch (e) {
         // Don't fail the order creation if recommendation generation fails
-        debugPrint('Error generating recommendations after order: $e');
       }
 
       return orderRef.id;
@@ -215,6 +256,7 @@ class OrderService {
     required String paymentId,
     required PaymentStatus paymentStatus,
     String? transactionId,
+    String? paymentMethod,
   }) async {
     try {
       final Map<String, dynamic> updateData = {
@@ -224,6 +266,10 @@ class OrderService {
 
       if (transactionId != null) {
         updateData['transactionId'] = transactionId;
+      }
+
+      if (paymentMethod != null) {
+        updateData['paymentMethod'] = paymentMethod;
       }
 
       await _firestore.collection('orders').doc(orderId).update(updateData);
