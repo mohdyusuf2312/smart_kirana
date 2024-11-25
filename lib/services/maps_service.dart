@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -165,6 +166,21 @@ class MapsService {
     }
 
     return CameraPosition(target: center, zoom: zoom);
+  }
+
+  // Create polylines for route display
+  Set<Polyline> createRoutePolylines(List<LatLng> routePoints) {
+    if (routePoints.isEmpty) return {};
+
+    return {
+      Polyline(
+        polylineId: const PolylineId('route'),
+        points: routePoints,
+        color: const Color(0xFF6C9A8B), // AppColors.primary
+        width: 4,
+        patterns: [], // Solid line
+      ),
+    };
   }
 
   // Simulate delivery agent movement (for demo purposes)
