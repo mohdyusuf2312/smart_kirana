@@ -1,12 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
 import 'package:smart_kirana/models/admin_dashboard_model.dart';
-import 'package:smart_kirana/models/category_model.dart';
-import 'package:smart_kirana/models/order_model.dart';
-import 'package:smart_kirana/models/product_model.dart';
-import 'package:smart_kirana/models/user_model.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
 
 class AdminProvider extends ChangeNotifier {
@@ -88,7 +83,7 @@ class AdminProvider extends ChangeNotifier {
               try {
                 totalRevenue += double.parse(amount.toString());
               } catch (e) {
-                debugPrint('Error parsing amount: $e');
+                // Error parsing amount - skip this entry
               }
             }
           }
