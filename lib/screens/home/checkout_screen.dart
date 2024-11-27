@@ -7,6 +7,7 @@ import 'package:smart_kirana/providers/order_provider.dart';
 import 'package:smart_kirana/screens/home/address_screen.dart';
 import 'package:smart_kirana/screens/payment/payment_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
+import 'package:smart_kirana/models/payment_model.dart' as payment_model;
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -696,7 +697,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         discount: 0.0, // No discount for now
         totalAmount: cartProvider.total,
         deliveryAddress: _selectedAddress!,
-        paymentMethod: "To be selected on payment screen",
+        paymentMethod: payment_model.PaymentMethod.cashOnDelivery.name,
         deliveryNotes: null, // No delivery notes for now
       );
 
