@@ -15,6 +15,7 @@ class AuthProvider extends ChangeNotifier {
   String? get error => _error;
   bool get isAuthenticated => _authService.currentUser != null;
   bool get isEmailVerified => _authService.isEmailVerified();
+  User? get currentUser => _authService.currentUser;
 
   // Initialize provider
   Future<void> initialize() async {
@@ -80,10 +81,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Sign in
-  Future<bool> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> signIn({required String email, required String password}) async {
     _setLoading(true);
     _clearError();
     try {
