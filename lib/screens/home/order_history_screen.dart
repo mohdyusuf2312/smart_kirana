@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:smart_kirana/utils/constants.dart';
 
 class OrderHistoryScreen extends StatelessWidget {
-  const OrderHistoryScreen({Key? key}) : super(key: key);
+  const OrderHistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     // This is a placeholder screen for order history
     // In a real implementation, we would fetch orders from Firestore
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Orders'),
@@ -25,10 +25,7 @@ class OrderHistoryScreen extends StatelessWidget {
               color: AppColors.textSecondary.withAlpha(128),
             ),
             const SizedBox(height: AppPadding.medium),
-            Text(
-              'No Orders Yet',
-              style: AppTextStyles.heading3,
-            ),
+            Text('No Orders Yet', style: AppTextStyles.heading3),
             const SizedBox(height: AppPadding.small),
             Text(
               'Your order history will appear here',

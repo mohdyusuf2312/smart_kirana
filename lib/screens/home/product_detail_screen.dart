@@ -8,10 +8,7 @@ import 'package:smart_kirana/widgets/custom_button.dart';
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product;
 
-  const ProductDetailScreen({
-    Key? key,
-    required this.product,
-  }) : super(key: key);
+  const ProductDetailScreen({super.key, required this.product});
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -38,7 +35,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
     final isInCart = cartProvider.isInCart(widget.product.id);
-    final cartQuantity = isInCart ? cartProvider.getCartItemQuantity(widget.product.id) : 0;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -71,10 +67,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             leading: IconButton(
               icon: const CircleAvatar(
                 backgroundColor: Colors.white,
-                child: Icon(
-                  Icons.arrow_back,
-                  color: AppColors.textPrimary,
-                ),
+                child: Icon(Icons.arrow_back, color: AppColors.textPrimary),
               ),
               onPressed: () => Navigator.pop(context),
             ),
@@ -83,7 +76,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 icon: CircleAvatar(
                   backgroundColor: Colors.white,
                   child: Icon(
-                    isInCart ? Icons.shopping_cart : Icons.shopping_cart_outlined,
+                    isInCart
+                        ? Icons.shopping_cart
+                        : Icons.shopping_cart_outlined,
                     color: isInCart ? AppColors.primary : AppColors.textPrimary,
                   ),
                 ),
@@ -149,7 +144,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withAlpha(26),
-                          borderRadius: BorderRadius.circular(AppBorderRadius.small),
+                          borderRadius: BorderRadius.circular(
+                            AppBorderRadius.small,
+                          ),
                         ),
                         child: Text(
                           widget.product.categoryName,
@@ -166,17 +163,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: widget.product.stock > 0
-                              ? AppColors.success.withAlpha(26)
-                              : AppColors.error.withAlpha(26),
-                          borderRadius: BorderRadius.circular(AppBorderRadius.small),
+                          color:
+                              widget.product.stock > 0
+                                  ? AppColors.success.withAlpha(26)
+                                  : AppColors.error.withAlpha(26),
+                          borderRadius: BorderRadius.circular(
+                            AppBorderRadius.small,
+                          ),
                         ),
                         child: Text(
-                          widget.product.stock > 0 ? 'In Stock' : 'Out of Stock',
+                          widget.product.stock > 0
+                              ? 'In Stock'
+                              : 'Out of Stock',
                           style: AppTextStyles.bodySmall.copyWith(
-                            color: widget.product.stock > 0
-                                ? AppColors.success
-                                : AppColors.error,
+                            color:
+                                widget.product.stock > 0
+                                    ? AppColors.success
+                                    : AppColors.error,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -186,10 +189,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const SizedBox(height: AppPadding.medium),
 
                   // Description
-                  Text(
-                    'Description',
-                    style: AppTextStyles.heading3,
-                  ),
+                  Text('Description', style: AppTextStyles.heading3),
                   const SizedBox(height: AppPadding.small),
                   Text(
                     widget.product.description,
@@ -199,10 +199,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                   // Quantity Selector
                   if (widget.product.stock > 0) ...[
-                    Text(
-                      'Quantity',
-                      style: AppTextStyles.heading3,
-                    ),
+                    Text('Quantity', style: AppTextStyles.heading3),
                     const SizedBox(height: AppPadding.small),
                     Row(
                       children: [
@@ -243,63 +240,61 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: widget.product.stock > 0
-          ? Container(
-              padding: const EdgeInsets.all(AppPadding.medium),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: CustomButton(
-                      text: isInCart ? 'Update Cart' : 'Add to Cart',
-                      onPressed: () {
-                        if (isInCart) {
-                          cartProvider.updateCartItemQuantity(
-                            widget.product.id,
-                            _quantity,
-                          );
-                        } else {
-                          cartProvider.addToCart(
-                            widget.product,
-                            _quantity,
-                          );
-                        }
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              isInCart
-                                  ? 'Cart updated successfully'
-                                  : 'Added to cart successfully',
-                            ),
-                            backgroundColor: AppColors.success,
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      icon: Icons.shopping_cart,
+      bottomNavigationBar:
+          widget.product.stock > 0
+              ? Container(
+                padding: const EdgeInsets.all(AppPadding.medium),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(13), // 0.05 * 255 = 13
+                      blurRadius: 10,
+                      offset: const Offset(0, -5),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: CustomButton(
+                        text: isInCart ? 'Update Cart' : 'Add to Cart',
+                        onPressed: () {
+                          if (isInCart) {
+                            cartProvider.updateCartItemQuantity(
+                              widget.product.id,
+                              _quantity,
+                            );
+                          } else {
+                            cartProvider.addToCart(widget.product, _quantity);
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isInCart
+                                    ? 'Cart updated successfully'
+                                    : 'Added to cart successfully',
+                              ),
+                              backgroundColor: AppColors.success,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        icon: Icons.shopping_cart,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+              : Container(
+                padding: const EdgeInsets.all(AppPadding.medium),
+                color: Colors.white,
+                child: CustomButton(
+                  text: 'Out of Stock',
+                  onPressed: () {}, // Empty function since button is disabled
+                  enabled: false,
+                ),
               ),
-            )
-          : Container(
-              padding: const EdgeInsets.all(AppPadding.medium),
-              color: Colors.white,
-              child: const CustomButton(
-                text: 'Out of Stock',
-                onPressed: null,
-                enabled: false,
-              ),
-            ),
     );
   }
 
@@ -317,11 +312,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         borderRadius: BorderRadius.circular(AppBorderRadius.small),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Icon(
-            icon,
-            size: 20,
-            color: AppColors.textPrimary,
-          ),
+          child: Icon(icon, size: 20, color: AppColors.textPrimary),
         ),
       ),
     );

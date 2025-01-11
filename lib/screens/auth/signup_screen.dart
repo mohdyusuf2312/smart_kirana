@@ -11,7 +11,7 @@ import 'package:smart_kirana/widgets/custom_input_field.dart';
 class SignupScreen extends StatefulWidget {
   static const String routeName = '/signup';
 
-  const SignupScreen({Key? key}) : super(key: key);
+  const SignupScreen({super.key});
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();

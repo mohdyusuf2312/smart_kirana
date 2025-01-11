@@ -7,17 +7,17 @@ import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
 
 class CartScreen extends StatelessWidget {
-  const CartScreen({Key? key}) : super(key: key);
+  const CartScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
-    
+
     return cartProvider.isLoading
         ? const Center(child: CircularProgressIndicator())
         : cartProvider.cartItems.isEmpty
-            ? _buildEmptyCart()
-            : _buildCartContent(context, cartProvider);
+        ? _buildEmptyCart()
+        : _buildCartContent(context, cartProvider);
   }
 
   Widget _buildEmptyCart() {
@@ -31,10 +31,7 @@ class CartScreen extends StatelessWidget {
             color: AppColors.textSecondary.withAlpha(128),
           ),
           const SizedBox(height: AppPadding.medium),
-          Text(
-            'Your cart is empty',
-            style: AppTextStyles.heading3,
-          ),
+          Text('Your cart is empty', style: AppTextStyles.heading3),
           const SizedBox(height: AppPadding.small),
           Text(
             'Add items to your cart to see them here',
@@ -199,11 +196,7 @@ class CartScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppBorderRadius.small),
         child: Padding(
           padding: const EdgeInsets.all(4.0),
-          child: Icon(
-            icon,
-            size: 16,
-            color: AppColors.textPrimary,
-          ),
+          child: Icon(icon, size: 16, color: AppColors.textPrimary),
         ),
       ),
     );
@@ -216,7 +209,7 @@ class CartScreen extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withAlpha(13), // 0.05 * 255 = 13
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -228,10 +221,7 @@ class CartScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Subtotal',
-                style: AppTextStyles.bodyMedium,
-              ),
+              Text('Subtotal', style: AppTextStyles.bodyMedium),
               Text(
                 '₹${cartProvider.subtotal.toStringAsFixed(2)}',
                 style: AppTextStyles.bodyMedium.copyWith(
@@ -244,10 +234,7 @@ class CartScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Delivery Fee',
-                style: AppTextStyles.bodyMedium,
-              ),
+              Text('Delivery Fee', style: AppTextStyles.bodyMedium),
               Text(
                 '₹${cartProvider.deliveryFee.toStringAsFixed(2)}',
                 style: AppTextStyles.bodyMedium.copyWith(
@@ -281,9 +268,7 @@ class CartScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const CheckoutScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => const CheckoutScreen()),
               );
             },
           ),

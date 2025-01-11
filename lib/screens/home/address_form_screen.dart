@@ -10,11 +10,7 @@ class AddressFormScreen extends StatefulWidget {
   final UserAddress? address;
   final bool isEdit;
 
-  const AddressFormScreen({
-    Key? key,
-    this.address,
-    this.isEdit = false,
-  }) : super(key: key);
+  const AddressFormScreen({super.key, this.address, this.isEdit = false});
 
   @override
   State<AddressFormScreen> createState() => _AddressFormScreenState();
@@ -51,10 +47,16 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
 
   Future<void> _saveAddress() async {
     if (_formKey.currentState!.validate()) {
-      final addressProvider = Provider.of<AddressProvider>(context, listen: false);
-      
+      final addressProvider = Provider.of<AddressProvider>(
+        context,
+        listen: false,
+      );
+
       final address = UserAddress(
-        id: widget.isEdit ? widget.address!.id : DateTime.now().millisecondsSinceEpoch.toString(),
+        id:
+            widget.isEdit
+                ? widget.address!.id
+                : DateTime.now().millisecondsSinceEpoch.toString(),
         addressLine: _addressLineController.text.trim(),
         city: _cityController.text.trim(),
         state: _stateController.text.trim(),
@@ -70,7 +72,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         } else {
           await addressProvider.addAddress(address);
         }
-        
+
         if (mounted) {
           Navigator.pop(context, true);
         }
@@ -90,97 +92,98 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   @override
   Widget build(BuildContext context) {
     final addressProvider = Provider.of<AddressProvider>(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isEdit ? 'Edit Address' : 'Add New Address'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
-      body: addressProvider.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(AppPadding.medium),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CustomInputField(
-                      label: 'Address Line',
-                      hint: 'Enter your full address',
-                      controller: _addressLineController,
-                      keyboardType: TextInputType.streetAddress,
-                      maxLines: 3,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your address';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppPadding.medium),
-                    CustomInputField(
-                      label: 'City',
-                      hint: 'Enter your city',
-                      controller: _cityController,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your city';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppPadding.medium),
-                    CustomInputField(
-                      label: 'State',
-                      hint: 'Enter your state',
-                      controller: _stateController,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your state';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppPadding.medium),
-                    CustomInputField(
-                      label: 'Pincode',
-                      hint: 'Enter your pincode',
-                      controller: _pincodeController,
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your pincode';
-                        }
-                        if (value.length != 6) {
-                          return 'Pincode must be 6 digits';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppPadding.medium),
-                    SwitchListTile(
-                      title: const Text('Set as default address'),
-                      value: _isDefault,
-                      onChanged: (value) {
-                        setState(() {
-                          _isDefault = value;
-                        });
-                      },
-                      activeColor: AppColors.primary,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    const SizedBox(height: AppPadding.large),
-                    CustomButton(
-                      text: widget.isEdit ? 'Update Address' : 'Save Address',
-                      onPressed: _saveAddress,
-                      isLoading: addressProvider.isLoading,
-                    ),
-                  ],
+      body:
+          addressProvider.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(AppPadding.medium),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CustomInputField(
+                        label: 'Address Line',
+                        hint: 'Enter your full address',
+                        controller: _addressLineController,
+                        keyboardType: TextInputType.streetAddress,
+                        maxLines: 3,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your address';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: AppPadding.medium),
+                      CustomInputField(
+                        label: 'City',
+                        hint: 'Enter your city',
+                        controller: _cityController,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your city';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: AppPadding.medium),
+                      CustomInputField(
+                        label: 'State',
+                        hint: 'Enter your state',
+                        controller: _stateController,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your state';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: AppPadding.medium),
+                      CustomInputField(
+                        label: 'Pincode',
+                        hint: 'Enter your pincode',
+                        controller: _pincodeController,
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your pincode';
+                          }
+                          if (value.length != 6) {
+                            return 'Pincode must be 6 digits';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: AppPadding.medium),
+                      SwitchListTile(
+                        title: const Text('Set as default address'),
+                        value: _isDefault,
+                        onChanged: (value) {
+                          setState(() {
+                            _isDefault = value;
+                          });
+                        },
+                        activeColor: AppColors.primary,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      const SizedBox(height: AppPadding.large),
+                      CustomButton(
+                        text: widget.isEdit ? 'Update Address' : 'Save Address',
+                        onPressed: _saveAddress,
+                        isLoading: addressProvider.isLoading,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
     );
   }
 }

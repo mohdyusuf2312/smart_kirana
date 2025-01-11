@@ -8,11 +8,7 @@ class ProductCard extends StatelessWidget {
   final ProductModel product;
   final VoidCallback onTap;
 
-  const ProductCard({
-    Key? key,
-    required this.product,
-    required this.onTap,
-  }) : super(key: key);
+  const ProductCard({super.key, required this.product, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +62,9 @@ class ProductCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.secondary,
-                        borderRadius: BorderRadius.circular(AppBorderRadius.small),
+                        borderRadius: BorderRadius.circular(
+                          AppBorderRadius.small,
+                        ),
                       ),
                       child: Text(
                         '${(((product.price - product.discountPrice) / product.price) * 100).round()}% OFF',
@@ -99,7 +97,7 @@ class ProductCard extends StatelessWidget {
                   ),
               ],
             ),
-            
+
             // Product Details
             Padding(
               padding: const EdgeInsets.all(AppPadding.small),
@@ -145,7 +143,7 @@ class ProductCard extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Add to Cart Button
             if (product.stock > 0)
               Padding(
@@ -170,20 +168,23 @@ class ProductCard extends StatelessWidget {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isInCart ? AppColors.success : AppColors.primary,
+                      backgroundColor:
+                          isInCart ? AppColors.success : AppColors.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppBorderRadius.small),
+                        borderRadius: BorderRadius.circular(
+                          AppBorderRadius.small,
+                        ),
                       ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          isInCart ? Icons.shopping_cart : Icons.add_shopping_cart,
+                          isInCart
+                              ? Icons.shopping_cart
+                              : Icons.add_shopping_cart,
                           size: 16,
                         ),
                         const SizedBox(width: 4),

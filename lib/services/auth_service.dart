@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import 'package:smart_kirana/models/user_model.dart';
 
 class AuthService {
@@ -22,21 +21,14 @@ class AuthService {
   }) async {
     try {
       // Create user with email and password
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       // Send email verification
       await userCredential.user!.sendEmailVerification();
 
       // Create user document in Firestore
-      await _createUserDocument(
-        userCredential.user!.uid,
-        name,
-        email,
-        phone,
-      );
+      await _createUserDocument(userCredential.user!.uid, name, email, phone);
 
       return userCredential;
     } catch (e) {
@@ -79,9 +71,9 @@ class AuthService {
       );
 
       // Update last login
-      await _firestore.collection('users').doc(userCredential.user!.uid).update({
-        'lastLogin': Timestamp.now(),
-      });
+      await _firestore.collection('users').doc(userCredential.user!.uid).update(
+        {'lastLogin': Timestamp.now()},
+      );
 
       return userCredential;
     } catch (e) {
@@ -142,7 +134,8 @@ class AuthService {
     try {
       User? user = _auth.currentUser;
       if (user != null) {
-        DocumentSnapshot doc = await _firestore.collection('users').doc(user.uid).get();
+        DocumentSnapshot doc =
+            await _firestore.collection('users').doc(user.uid).get();
         if (doc.exists) {
           return UserModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
         }

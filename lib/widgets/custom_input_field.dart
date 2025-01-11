@@ -18,7 +18,7 @@ class CustomInputField extends StatefulWidget {
   final Function(String)? onChanged;
 
   const CustomInputField({
-    Key? key,
+    super.key,
     required this.label,
     this.hint,
     required this.controller,
@@ -33,7 +33,7 @@ class CustomInputField extends StatefulWidget {
     this.onEditingComplete,
     this.textInputAction,
     this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<CustomInputField> createState() => _CustomInputFieldState();

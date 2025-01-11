@@ -1,0 +1,148 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:smart_kirana/models/cart_item_model.dart';
+import 'package:smart_kirana/models/order_model.dart';
+import 'package:smart_kirana/models/user_model.dart';
+
+class OrderService {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Create a new order
+  Future<String> createOrder({
+    required String userId,
+    required List<CartItemModel> cartItems,
+    required double subtotal,
+    required double deliveryFee,
+    required double discount,
+    required double totalAmount,
+    required UserAddress deliveryAddress,
+    required String paymentMethod,
+    required String userName,
+    String? deliveryNotes,
+  }) async {
+    try {
+      // Convert cart items to order items
+      final orderItems = cartItems.map((item) => OrderItem.fromCartItem(item)).toList();
+
+      // Create order document
+      final orderRef = _firestore.collection('orders').doc();
+      
+      final order = OrderModel(
+        id: orderRef.id,
+        userId: userId,
+        items: orderItems,
+        subtotal: subtotal,
+        deliveryFee: deliveryFee,
+        discount: discount,
+        totalAmount: totalAmount,
+        orderDate: DateTime.now(),
+        status: OrderStatus.pending,
+        deliveryAddress: deliveryAddress.toMap(),
+        paymentMethod: paymentMethod,
+        deliveryNotes: deliveryNotes,
+        userName: userName,
+        estimatedDeliveryTime: DateTime.now().add(const Duration(hours: 2)),
+      );
+
+      // Save order to Firestore
+      await orderRef.set(order.toMap());
+      
+      return orderRef.id;
+    } catch (e) {
+      throw Exception('Failed to create order: ${e.toString()}');
+    }
+  }
+
+  // Get all orders for a user
+  Future<List<OrderModel>> getUserOrders(String userId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('orders')
+          .where('userId', isEqualTo: userId)
+          .orderBy('orderDate', descending: true)
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => OrderModel.fromMap(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to get user orders: ${e.toString()}');
+    }
+  }
+
+  // Get a specific order by ID
+  Future<OrderModel?> getOrderById(String orderId) async {
+    try {
+      final docSnapshot = await _firestore.collection('orders').doc(orderId).get();
+
+      if (!docSnapshot.exists) {
+        return null;
+      }
+
+      return OrderModel.fromMap(docSnapshot.data()!, docSnapshot.id);
+    } catch (e) {
+      throw Exception('Failed to get order: ${e.toString()}');
+    }
+  }
+
+  // Update order status
+  Future<void> updateOrderStatus(String orderId, OrderStatus status) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({
+        'status': status.name,
+      });
+    } catch (e) {
+      throw Exception('Failed to update order status: ${e.toString()}');
+    }
+  }
+
+  // Update order tracking information
+  Future<void> updateOrderTracking({
+    required String orderId,
+    double? currentLatitude,
+    double? currentLongitude,
+    String? deliveryAgentName,
+    String? deliveryAgentPhone,
+    DateTime? estimatedDeliveryTime,
+  }) async {
+    try {
+      final Map<String, dynamic> updateData = {};
+
+      if (currentLatitude != null) {
+        updateData['currentLatitude'] = currentLatitude;
+      }
+      
+      if (currentLongitude != null) {
+        updateData['currentLongitude'] = currentLongitude;
+      }
+      
+      if (deliveryAgentName != null) {
+        updateData['deliveryAgentName'] = deliveryAgentName;
+      }
+      
+      if (deliveryAgentPhone != null) {
+        updateData['deliveryAgentPhone'] = deliveryAgentPhone;
+      }
+      
+      if (estimatedDeliveryTime != null) {
+        updateData['estimatedDeliveryTime'] = Timestamp.fromDate(estimatedDeliveryTime);
+      }
+
+      if (updateData.isNotEmpty) {
+        await _firestore.collection('orders').doc(orderId).update(updateData);
+      }
+    } catch (e) {
+      throw Exception('Failed to update order tracking: ${e.toString()}');
+    }
+  }
+
+  // Cancel an order
+  Future<void> cancelOrder(String orderId) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({
+        'status': OrderStatus.cancelled.name,
+      });
+    } catch (e) {
+      throw Exception('Failed to cancel order: ${e.toString()}');
+    }
+  }
+}

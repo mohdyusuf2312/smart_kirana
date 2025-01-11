@@ -9,7 +9,7 @@ import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,8 +19,8 @@ class ProfileScreen extends StatelessWidget {
     return authProvider.isLoading
         ? const Center(child: CircularProgressIndicator())
         : user == null
-            ? _buildNotLoggedIn(context)
-            : _buildProfileContent(context, user, authProvider);
+        ? _buildNotLoggedIn(context)
+        : _buildProfileContent(context, user, authProvider);
   }
 
   Widget _buildNotLoggedIn(BuildContext context) {
@@ -34,10 +34,7 @@ class ProfileScreen extends StatelessWidget {
             color: AppColors.textSecondary.withAlpha(128),
           ),
           const SizedBox(height: AppPadding.medium),
-          Text(
-            'You are not logged in',
-            style: AppTextStyles.heading3,
-          ),
+          Text('You are not logged in', style: AppTextStyles.heading3),
           const SizedBox(height: AppPadding.small),
           Text(
             'Please login to view your profile',
@@ -252,11 +249,7 @@ class ProfileScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: textColor ?? AppColors.textPrimary,
-              size: 24,
-            ),
+            Icon(icon, color: textColor ?? AppColors.textPrimary, size: 24),
             const SizedBox(width: AppPadding.medium),
             Expanded(
               child: Text(
