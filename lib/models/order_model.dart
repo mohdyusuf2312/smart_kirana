@@ -1,13 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smart_kirana/models/cart_item_model.dart';
 
-enum OrderStatus {
-  pending,
-  processing,
-  shipped,
-  delivered,
-  cancelled,
-}
+enum OrderStatus { pending, processing, shipped, delivered, cancelled }
+
+enum PaymentStatus { pending, completed, failed, refunded }
 
 class OrderItem {
   final String productId;
@@ -31,9 +27,10 @@ class OrderItem {
       productId: cartItem.product.id,
       productName: cartItem.product.name,
       productImage: cartItem.product.imageUrl,
-      price: cartItem.product.discountPrice > 0
-          ? cartItem.product.discountPrice
-          : cartItem.product.price,
+      price:
+          cartItem.product.discountPrice > 0
+              ? cartItem.product.discountPrice
+              : cartItem.product.price,
       quantity: cartItem.quantity,
       totalPrice: cartItem.totalPrice,
     );
@@ -83,6 +80,9 @@ class OrderModel {
   final double? currentLongitude;
   final String? deliveryAgentName;
   final String? deliveryAgentPhone;
+  final PaymentStatus paymentStatus;
+  final String? paymentId;
+  final String? transactionId;
 
   OrderModel({
     required this.id,
@@ -105,6 +105,9 @@ class OrderModel {
     this.currentLongitude,
     this.deliveryAgentName,
     this.deliveryAgentPhone,
+    this.paymentStatus = PaymentStatus.pending,
+    this.paymentId,
+    this.transactionId,
   });
 
   Map<String, dynamic> toMap() {
@@ -121,9 +124,10 @@ class OrderModel {
       'deliveryAddress': deliveryAddress,
       'paymentMethod': paymentMethod,
       'deliveryNotes': deliveryNotes,
-      'estimatedDeliveryTime': estimatedDeliveryTime != null
-          ? Timestamp.fromDate(estimatedDeliveryTime!)
-          : null,
+      'estimatedDeliveryTime':
+          estimatedDeliveryTime != null
+              ? Timestamp.fromDate(estimatedDeliveryTime!)
+              : null,
       'userName': userName,
       'deliveryLatitude': deliveryLatitude,
       'deliveryLongitude': deliveryLongitude,
@@ -131,6 +135,9 @@ class OrderModel {
       'currentLongitude': currentLongitude,
       'deliveryAgentName': deliveryAgentName,
       'deliveryAgentPhone': deliveryAgentPhone,
+      'paymentStatus': paymentStatus.name,
+      'paymentId': paymentId,
+      'transactionId': transactionId,
     };
   }
 
@@ -164,6 +171,12 @@ class OrderModel {
       currentLongitude: map['currentLongitude'],
       deliveryAgentName: map['deliveryAgentName'],
       deliveryAgentPhone: map['deliveryAgentPhone'],
+      paymentStatus: PaymentStatus.values.firstWhere(
+        (e) => e.name == map['paymentStatus'],
+        orElse: () => PaymentStatus.pending,
+      ),
+      paymentId: map['paymentId'],
+      transactionId: map['transactionId'],
     );
   }
 }
