@@ -10,8 +10,7 @@ class EmailVerificationScreen extends StatefulWidget {
   static const String routeName = '/email-verification';
   final String email;
 
-  const EmailVerificationScreen({Key? key, required this.email})
-    : super(key: key);
+  const EmailVerificationScreen({super.key, required this.email});
 
   @override
   State<EmailVerificationScreen> createState() =>
@@ -99,9 +98,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () async {
+            final navigator = Navigator.of(context);
             await authProvider.signOut();
             if (mounted) {
-              Navigator.pushReplacementNamed(context, LoginScreen.routeName);
+              navigator.pushReplacementNamed(LoginScreen.routeName);
             }
           },
         ),
