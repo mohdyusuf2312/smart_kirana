@@ -10,7 +10,7 @@ import 'package:smart_kirana/widgets/custom_input_field.dart';
 class ForgotPasswordScreen extends StatefulWidget {
   static const String routeName = '/forgot-password';
 
-  const ForgotPasswordScreen({Key? key}) : super(key: key);
+  const ForgotPasswordScreen({super.key});
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
