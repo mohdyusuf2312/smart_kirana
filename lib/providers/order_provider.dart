@@ -14,7 +14,8 @@ class OrderProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  OrderProvider({required AuthProvider authProvider}) : _authProvider = authProvider {
+  OrderProvider({required AuthProvider authProvider})
+    : _authProvider = authProvider {
     _loadOrders();
   }
 
@@ -30,7 +31,9 @@ class OrderProvider extends ChangeNotifier {
 
     _setLoading(true);
     try {
-      _orders = await _orderService.getUserOrders(_authProvider.currentUser!.uid);
+      _orders = await _orderService.getUserOrders(
+        _authProvider.currentUser!.uid,
+      );
       notifyListeners();
     } catch (e) {
       _setError('Failed to load orders: ${e.toString()}');
@@ -71,7 +74,7 @@ class OrderProvider extends ChangeNotifier {
     required String paymentMethod,
     String? deliveryNotes,
   }) async {
-    if (_authProvider.currentUser == null || _authProvider.userData == null) {
+    if (_authProvider.currentUser == null || _authProvider.user == null) {
       _setError('User not authenticated');
       return null;
     }
@@ -87,13 +90,13 @@ class OrderProvider extends ChangeNotifier {
         totalAmount: totalAmount,
         deliveryAddress: deliveryAddress,
         paymentMethod: paymentMethod,
-        userName: _authProvider.userData!.name,
+        userName: _authProvider.user!.name,
         deliveryNotes: deliveryNotes,
       );
 
       // Refresh orders list
       await _loadOrders();
-      
+
       return orderId;
     } catch (e) {
       _setError('Failed to create order: ${e.toString()}');
@@ -108,27 +111,77 @@ class OrderProvider extends ChangeNotifier {
     _setLoading(true);
     try {
       await _orderService.cancelOrder(orderId);
-      
+
       // Update local order status
       final index = _orders.indexWhere((order) => order.id == orderId);
       if (index >= 0) {
-        final updatedOrder = OrderModel.fromMap(
-          {..._orders[index].toMap(), 'status': OrderStatus.cancelled.name},
-          _orders[index].id,
-        );
+        final updatedOrder = OrderModel.fromMap({
+          ..._orders[index].toMap(),
+          'status': OrderStatus.cancelled.name,
+        }, _orders[index].id);
         _orders[index] = updatedOrder;
-        
+
         // If this is the selected order, update it too
         if (_selectedOrder?.id == orderId) {
           _selectedOrder = updatedOrder;
         }
-        
+
         notifyListeners();
       }
-      
+
       return true;
     } catch (e) {
       _setError('Failed to cancel order: ${e.toString()}');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Update order payment information
+  Future<bool> updateOrderPaymentInfo({
+    required String orderId,
+    required String paymentId,
+    required PaymentStatus paymentStatus,
+    String? transactionId,
+  }) async {
+    _setLoading(true);
+    try {
+      // Update order in Firestore
+      await _orderService.updateOrderPaymentInfo(
+        orderId: orderId,
+        paymentId: paymentId,
+        paymentStatus: paymentStatus,
+        transactionId: transactionId,
+      );
+
+      // Update local order if it exists in the list
+      final index = _orders.indexWhere((order) => order.id == orderId);
+      if (index >= 0) {
+        final updatedOrderMap = {..._orders[index].toMap()};
+        updatedOrderMap['paymentStatus'] = paymentStatus.name;
+        updatedOrderMap['paymentId'] = paymentId;
+        if (transactionId != null) {
+          updatedOrderMap['transactionId'] = transactionId;
+        }
+
+        final updatedOrder = OrderModel.fromMap(
+          updatedOrderMap,
+          _orders[index].id,
+        );
+        _orders[index] = updatedOrder;
+
+        // If this is the selected order, update it too
+        if (_selectedOrder?.id == orderId) {
+          _selectedOrder = updatedOrder;
+        }
+
+        notifyListeners();
+      }
+
+      return true;
+    } catch (e) {
+      _setError('Failed to update order payment info: ${e.toString()}');
       return false;
     } finally {
       _setLoading(false);
