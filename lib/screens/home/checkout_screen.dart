@@ -3,7 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/user_model.dart';
 import 'package:smart_kirana/providers/address_provider.dart';
 import 'package:smart_kirana/providers/cart_provider.dart';
+import 'package:smart_kirana/providers/order_provider.dart';
 import 'package:smart_kirana/screens/home/address_screen.dart';
+import 'package:smart_kirana/screens/orders/order_detail_screen.dart';
+import 'package:smart_kirana/screens/payment/payment_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
 
@@ -336,26 +339,67 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
 
     try {
-      // Simulate order processing delay
-      await Future.delayed(const Duration(seconds: 2));
+      // Get the order provider
+      final orderProvider = Provider.of<OrderProvider>(context, listen: false);
+
+      // Create the order
+      final orderId = await orderProvider.createOrder(
+        cartItems: cartProvider.cartItems,
+        subtotal: cartProvider.subtotal,
+        deliveryFee: cartProvider.deliveryFee,
+        discount: 0.0, // No discount for now
+        totalAmount: cartProvider.total,
+        deliveryAddress: _selectedAddress!,
+        paymentMethod: _paymentMethods[_selectedPaymentMethod],
+        deliveryNotes: null, // No delivery notes for now
+      );
 
       // Close loading dialog
       if (mounted) navigator.pop();
 
-      // Show success message
-      if (mounted) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('Order placed successfully!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
+      if (orderId != null) {
+        // Show success message
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Order placed successfully!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
 
-      // Clear cart and navigate back to home
-      await cartProvider.clearCart();
-      if (mounted) {
-        navigator.popUntil((route) => route.isFirst);
+        // For Cash on Delivery, navigate directly to order details
+        if (_selectedPaymentMethod == 0) {
+          // Clear cart
+          await cartProvider.clearCart();
+
+          // Navigate to order details screen
+          if (mounted) {
+            navigator.pushNamedAndRemoveUntil(
+              OrderDetailScreen.routeName,
+              (route) => route.isFirst,
+              arguments: orderId,
+            );
+          }
+        } else {
+          // For other payment methods, navigate to payment screen
+          if (mounted) {
+            navigator.pushNamed(
+              PaymentScreen.routeName,
+              arguments: {'orderId': orderId, 'amount': cartProvider.total},
+            );
+          }
+        }
+      } else {
+        // Show error message
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Failed to place order: ${orderProvider.error}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
       }
     } catch (e) {
       // Close loading dialog
