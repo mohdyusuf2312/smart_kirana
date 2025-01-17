@@ -4,7 +4,7 @@ import 'package:smart_kirana/models/user_model.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/screens/auth/login_screen.dart';
 import 'package:smart_kirana/screens/home/address_screen.dart';
-import 'package:smart_kirana/screens/home/order_history_screen.dart';
+import 'package:smart_kirana/screens/orders/order_history_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
 
