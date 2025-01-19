@@ -21,11 +21,12 @@ class OrderService {
   }) async {
     try {
       // Convert cart items to order items
-      final orderItems = cartItems.map((item) => OrderItem.fromCartItem(item)).toList();
+      final orderItems =
+          cartItems.map((item) => OrderItem.fromCartItem(item)).toList();
 
       // Create order document
       final orderRef = _firestore.collection('orders').doc();
-      
+
       final order = OrderModel(
         id: orderRef.id,
         userId: userId,
@@ -45,7 +46,7 @@ class OrderService {
 
       // Save order to Firestore
       await orderRef.set(order.toMap());
-      
+
       return orderRef.id;
     } catch (e) {
       throw Exception('Failed to create order: ${e.toString()}');
@@ -55,11 +56,12 @@ class OrderService {
   // Get all orders for a user
   Future<List<OrderModel>> getUserOrders(String userId) async {
     try {
-      final querySnapshot = await _firestore
-          .collection('orders')
-          .where('userId', isEqualTo: userId)
-          .orderBy('orderDate', descending: true)
-          .get();
+      final querySnapshot =
+          await _firestore
+              .collection('orders')
+              .where('userId', isEqualTo: userId)
+              .orderBy('orderDate', descending: true)
+              .get();
 
       return querySnapshot.docs
           .map((doc) => OrderModel.fromMap(doc.data(), doc.id))
@@ -72,7 +74,8 @@ class OrderService {
   // Get a specific order by ID
   Future<OrderModel?> getOrderById(String orderId) async {
     try {
-      final docSnapshot = await _firestore.collection('orders').doc(orderId).get();
+      final docSnapshot =
+          await _firestore.collection('orders').doc(orderId).get();
 
       if (!docSnapshot.exists) {
         return null;
@@ -110,21 +113,23 @@ class OrderService {
       if (currentLatitude != null) {
         updateData['currentLatitude'] = currentLatitude;
       }
-      
+
       if (currentLongitude != null) {
         updateData['currentLongitude'] = currentLongitude;
       }
-      
+
       if (deliveryAgentName != null) {
         updateData['deliveryAgentName'] = deliveryAgentName;
       }
-      
+
       if (deliveryAgentPhone != null) {
         updateData['deliveryAgentPhone'] = deliveryAgentPhone;
       }
-      
+
       if (estimatedDeliveryTime != null) {
-        updateData['estimatedDeliveryTime'] = Timestamp.fromDate(estimatedDeliveryTime);
+        updateData['estimatedDeliveryTime'] = Timestamp.fromDate(
+          estimatedDeliveryTime,
+        );
       }
 
       if (updateData.isNotEmpty) {
@@ -143,6 +148,29 @@ class OrderService {
       });
     } catch (e) {
       throw Exception('Failed to cancel order: ${e.toString()}');
+    }
+  }
+
+  // Update order payment information
+  Future<void> updateOrderPaymentInfo({
+    required String orderId,
+    required String paymentId,
+    required PaymentStatus paymentStatus,
+    String? transactionId,
+  }) async {
+    try {
+      final Map<String, dynamic> updateData = {
+        'paymentStatus': paymentStatus.name,
+        'paymentId': paymentId,
+      };
+
+      if (transactionId != null) {
+        updateData['transactionId'] = transactionId;
+      }
+
+      await _firestore.collection('orders').doc(orderId).update(updateData);
+    } catch (e) {
+      throw Exception('Failed to update order payment info: ${e.toString()}');
     }
   }
 }
