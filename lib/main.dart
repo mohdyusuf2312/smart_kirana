@@ -1,21 +1,31 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/firebase_options.dart';
 import 'package:smart_kirana/providers/address_provider.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/providers/cart_provider.dart';
+import 'package:smart_kirana/providers/order_provider.dart';
+import 'package:smart_kirana/providers/payment_provider.dart';
 import 'package:smart_kirana/providers/product_provider.dart';
 import 'package:smart_kirana/screens/auth/email_verification_screen.dart';
 import 'package:smart_kirana/screens/auth/forgot_password_screen.dart';
 import 'package:smart_kirana/screens/auth/login_screen.dart';
 import 'package:smart_kirana/screens/auth/signup_screen.dart';
 import 'package:smart_kirana/screens/home/home_screen.dart';
+import 'package:smart_kirana/screens/orders/order_detail_screen.dart';
+import 'package:smart_kirana/screens/orders/order_history_screen.dart';
+import 'package:smart_kirana/screens/orders/order_tracking_screen.dart';
+import 'package:smart_kirana/screens/payment/payment_failure_screen.dart';
+import 'package:smart_kirana/screens/payment/payment_screen.dart';
+import 'package:smart_kirana/screens/payment/payment_success_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -56,6 +66,24 @@ class MyApp extends StatelessWidget {
                     authProvider: authProvider,
                     productProvider: productProvider,
                   ),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, OrderProvider>(
+          create:
+              (context) => OrderProvider(
+                authProvider: Provider.of<AuthProvider>(context, listen: false),
+              ),
+          update:
+              (context, authProvider, previous) =>
+                  OrderProvider(authProvider: authProvider),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, PaymentProvider>(
+          create:
+              (context) => PaymentProvider(
+                authProvider: Provider.of<AuthProvider>(context, listen: false),
+              ),
+          update:
+              (context, authProvider, previous) =>
+                  PaymentProvider(authProvider: authProvider),
         ),
       ],
       child: MaterialApp(
@@ -159,6 +187,7 @@ class MyApp extends StatelessWidget {
           ForgotPasswordScreen.routeName:
               (context) => const ForgotPasswordScreen(),
           HomeScreen.routeName: (context) => const HomeScreen(),
+          OrderHistoryScreen.routeName: (context) => const OrderHistoryScreen(),
         },
         onGenerateRoute: (settings) {
           if (settings.name == EmailVerificationScreen.routeName) {
@@ -166,6 +195,48 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder:
                   (context) => EmailVerificationScreen(email: args['email']),
+            );
+          } else if (settings.name == OrderDetailScreen.routeName) {
+            final orderId = settings.arguments as String;
+            return MaterialPageRoute(
+              builder: (context) => OrderDetailScreen(orderId: orderId),
+            );
+          } else if (settings.name == OrderTrackingScreen.routeName) {
+            final orderId = settings.arguments as String;
+            return MaterialPageRoute(
+              builder: (context) => OrderTrackingScreen(orderId: orderId),
+            );
+          } else if (settings.name == PaymentScreen.routeName) {
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+              builder:
+                  (context) => PaymentScreen(
+                    orderId: args['orderId'],
+                    amount: args['amount'],
+                  ),
+            );
+          } else if (settings.name == PaymentSuccessScreen.routeName) {
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+              builder:
+                  (context) => PaymentSuccessScreen(
+                    orderId: args['orderId'],
+                    paymentId: args['paymentId'],
+                    amount: args['amount'],
+                    method: args['method'],
+                  ),
+            );
+          } else if (settings.name == PaymentFailureScreen.routeName) {
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+              builder:
+                  (context) => PaymentFailureScreen(
+                    orderId: args['orderId'],
+                    paymentId: args['paymentId'],
+                    amount: args['amount'],
+                    method: args['method'],
+                    errorMessage: args['errorMessage'],
+                  ),
             );
           }
           return null;
