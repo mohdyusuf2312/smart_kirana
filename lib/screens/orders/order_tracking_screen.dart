@@ -26,7 +26,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     // Load order details when screen is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadOrderDetails();
-      
+
       // Set up a timer to refresh order details every 30 seconds
       _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
         _loadOrderDetails();
@@ -42,8 +42,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   Future<void> _loadOrderDetails() async {
     if (mounted) {
-      await Provider.of<OrderProvider>(context, listen: false)
-          .getOrderById(widget.orderId);
+      await Provider.of<OrderProvider>(
+        context,
+        listen: false,
+      ).getOrderById(widget.orderId);
     }
   }
 
@@ -94,9 +96,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
           final order = orderProvider.selectedOrder;
           if (order == null) {
-            return const Center(
-              child: Text('Order not found'),
-            );
+            return const Center(child: Text('Order not found'));
           }
 
           return _buildOrderTracking(context, order);
@@ -120,9 +120,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           const SizedBox(height: AppPadding.medium),
 
           // Delivery Agent Info
-          if (order.deliveryAgentName != null && order.deliveryAgentPhone != null)
+          if (order.deliveryAgentName != null &&
+              order.deliveryAgentPhone != null)
             _buildDeliveryAgentCard(order),
-          
+
           const SizedBox(height: AppPadding.medium),
 
           // Order Timeline
@@ -136,7 +137,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     // Get status color
     Color statusColor;
     String statusText;
-    
+
     switch (order.status) {
       case OrderStatus.delivered:
         statusColor = AppColors.success;
@@ -175,7 +176,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -191,7 +192,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     children: [
                       Text(
                         statusText,
-                        style: AppTextStyles.heading3.copyWith(color: statusColor),
+                        style: AppTextStyles.heading3.copyWith(
+                          color: statusColor,
+                        ),
                       ),
                       if (order.estimatedDeliveryTime != null &&
                           order.status != OrderStatus.cancelled &&
@@ -241,16 +244,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.map,
-                size: 60,
-                color: AppColors.primary,
-              ),
+              const Icon(Icons.map, size: 60, color: AppColors.primary),
               const SizedBox(height: AppPadding.small),
-              Text(
-                'Map View',
-                style: AppTextStyles.heading3,
-              ),
+              Text('Map View', style: AppTextStyles.heading3),
               const SizedBox(height: AppPadding.small),
               Text(
                 'In a real app, this would be a Google Map\nshowing the delivery location and current position',
@@ -283,7 +279,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
@@ -323,10 +319,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       ),
                     );
                   },
-                  icon: const Icon(
-                    Icons.phone,
-                    color: AppColors.primary,
-                  ),
+                  icon: const Icon(Icons.phone, color: AppColors.primary),
                 ),
               ],
             ),
@@ -374,8 +367,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               order.status == OrderStatus.delivered
                   ? 'Your order has been delivered'
                   : order.status == OrderStatus.cancelled
-                      ? 'Order was cancelled'
-                      : 'Pending',
+                  ? 'Order was cancelled'
+                  : 'Pending',
               isCompleted: order.status == OrderStatus.delivered,
               isLast: true,
               isCancelled: order.status == OrderStatus.cancelled,
@@ -403,33 +396,28 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               width: 20,
               height: 20,
               decoration: BoxDecoration(
-                color: isCompleted
-                    ? AppColors.primary
-                    : isCancelled
+                color:
+                    isCompleted
+                        ? AppColors.primary
+                        : isCancelled
                         ? AppColors.error
                         : Colors.grey.shade300,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isCompleted
-                      ? AppColors.primary
-                      : isCancelled
+                  color:
+                      isCompleted
+                          ? AppColors.primary
+                          : isCancelled
                           ? AppColors.error
                           : Colors.grey.shade300,
                   width: 2,
                 ),
               ),
-              child: isCompleted
-                  ? const Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 12,
-                    )
-                  : isCancelled
-                      ? const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 12,
-                        )
+              child:
+                  isCompleted
+                      ? const Icon(Icons.check, color: Colors.white, size: 12)
+                      : isCancelled
+                      ? const Icon(Icons.close, color: Colors.white, size: 12)
                       : null,
             ),
             if (!isLast)
@@ -449,9 +437,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 title,
                 style: AppTextStyles.bodyMedium.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: isCompleted
-                      ? AppColors.textPrimary
-                      : isCancelled
+                  color:
+                      isCompleted
+                          ? AppColors.textPrimary
+                          : isCancelled
                           ? AppColors.error
                           : AppColors.textSecondary,
                 ),
