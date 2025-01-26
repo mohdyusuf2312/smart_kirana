@@ -1,14 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:smart_kirana/models/payment_model.dart';
 
 class PaymentService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
-  // Razorpay API keys (in a real app, these would be stored in .env file)
-  String get _razorpayKeyId => dotenv.env['RAZORPAY_KEY_ID'] ?? 'rzp_test_1DP5mmOlF5G5ag';
-  String get _razorpayKeySecret => dotenv.env['RAZORPAY_KEY_SECRET'] ?? 'secret_key_placeholder';
+
+  // Razorpay API key (in a real app, this would be stored in .env file)
+  String get _razorpayKeyId =>
+      dotenv.env['RAZORPAY_KEY_ID'] ?? 'rzp_test_1DP5mmOlF5G5ag';
 
   // Create a new payment record
   Future<String> createPayment({
@@ -20,7 +19,7 @@ class PaymentService {
     try {
       // Create payment document
       final paymentRef = _firestore.collection('payments').doc();
-      
+
       final payment = PaymentModel(
         id: paymentRef.id,
         orderId: orderId,
@@ -33,7 +32,7 @@ class PaymentService {
 
       // Save payment to Firestore
       await paymentRef.set(payment.toMap());
-      
+
       return paymentRef.id;
     } catch (e) {
       throw Exception('Failed to create payment: ${e.toString()}');
@@ -43,7 +42,8 @@ class PaymentService {
   // Get payment by ID
   Future<PaymentModel?> getPaymentById(String paymentId) async {
     try {
-      final docSnapshot = await _firestore.collection('payments').doc(paymentId).get();
+      final docSnapshot =
+          await _firestore.collection('payments').doc(paymentId).get();
 
       if (!docSnapshot.exists) {
         return null;
@@ -58,11 +58,12 @@ class PaymentService {
   // Get payments for an order
   Future<List<PaymentModel>> getPaymentsForOrder(String orderId) async {
     try {
-      final querySnapshot = await _firestore
-          .collection('payments')
-          .where('orderId', isEqualTo: orderId)
-          .orderBy('timestamp', descending: true)
-          .get();
+      final querySnapshot =
+          await _firestore
+              .collection('payments')
+              .where('orderId', isEqualTo: orderId)
+              .orderBy('timestamp', descending: true)
+              .get();
 
       return querySnapshot.docs
           .map((doc) => PaymentModel.fromMap(doc.data(), doc.id))
@@ -81,18 +82,16 @@ class PaymentService {
     String? failureReason,
   }) async {
     try {
-      final Map<String, dynamic> updateData = {
-        'status': status.name,
-      };
+      final Map<String, dynamic> updateData = {'status': status.name};
 
       if (transactionId != null) {
         updateData['transactionId'] = transactionId;
       }
-      
+
       if (paymentGatewayResponse != null) {
         updateData['paymentGatewayResponse'] = paymentGatewayResponse;
       }
-      
+
       if (failureReason != null) {
         updateData['failureReason'] = failureReason;
       }
@@ -132,23 +131,18 @@ class PaymentService {
     try {
       // In a real app, this would make an API call to Razorpay to create an order
       // For now, we'll simulate the response
-      
+
       // Convert amount to paise (Razorpay uses smallest currency unit)
       final amountInPaise = (amount * 100).toInt();
-      
+
       return {
         'key': _razorpayKeyId,
         'amount': amountInPaise,
         'name': name,
         'description': description,
         'order_id': 'order_${DateTime.now().millisecondsSinceEpoch}',
-        'prefill': {
-          'email': email,
-          'contact': contact,
-        },
-        'theme': {
-          'color': '#6C9A8B',
-        },
+        'prefill': {'email': email, 'contact': contact},
+        'theme': {'color': '#6C9A8B'},
       };
     } catch (e) {
       throw Exception('Failed to initialize Razorpay payment: ${e.toString()}');
@@ -164,7 +158,7 @@ class PaymentService {
     try {
       // In a real app, this would verify the payment signature with Razorpay
       // For now, we'll simulate the verification
-      
+
       // Simulate successful verification
       return true;
     } catch (e) {
