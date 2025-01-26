@@ -23,8 +23,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     super.initState();
     // Load order details when screen is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<OrderProvider>(context, listen: false)
-          .getOrderById(widget.orderId);
+      Provider.of<OrderProvider>(
+        context,
+        listen: false,
+      ).getOrderById(widget.orderId);
     });
   }
 
@@ -65,8 +67,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   ),
                   const SizedBox(height: AppPadding.medium),
                   ElevatedButton(
-                    onPressed: () =>
-                        orderProvider.getOrderById(widget.orderId),
+                    onPressed: () => orderProvider.getOrderById(widget.orderId),
                     child: const Text('Retry'),
                   ),
                 ],
@@ -76,9 +77,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
           final order = orderProvider.selectedOrder;
           if (order == null) {
-            return const Center(
-              child: Text('Order not found'),
-            );
+            return const Center(child: Text('Order not found'));
           }
 
           return _buildOrderDetails(context, order, orderProvider);
@@ -146,13 +145,25 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   Text('Order Summary', style: AppTextStyles.heading3),
                   const SizedBox(height: AppPadding.medium),
                   _buildSummaryRow('Order ID', '#${order.id.substring(0, 8)}'),
-                  _buildSummaryRow('Order Date', dateFormat.format(order.orderDate)),
+                  _buildSummaryRow(
+                    'Order Date',
+                    dateFormat.format(order.orderDate),
+                  ),
                   _buildSummaryRow('Payment Method', order.paymentMethod),
                   const Divider(height: 20),
-                  _buildSummaryRow('Subtotal', '₹${order.subtotal.toStringAsFixed(2)}'),
-                  _buildSummaryRow('Delivery Fee', '₹${order.deliveryFee.toStringAsFixed(2)}'),
+                  _buildSummaryRow(
+                    'Subtotal',
+                    '₹${order.subtotal.toStringAsFixed(2)}',
+                  ),
+                  _buildSummaryRow(
+                    'Delivery Fee',
+                    '₹${order.deliveryFee.toStringAsFixed(2)}',
+                  ),
                   if (order.discount > 0)
-                    _buildSummaryRow('Discount', '-₹${order.discount.toStringAsFixed(2)}'),
+                    _buildSummaryRow(
+                      'Discount',
+                      '-₹${order.discount.toStringAsFixed(2)}',
+                    ),
                   const Divider(height: 20),
                   _buildSummaryRow(
                     'Total',
@@ -231,8 +242,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 if (order.status == OrderStatus.pending)
                   CustomButton(
                     text: 'Cancel Order',
-                    onPressed: () => _showCancelDialog(context, order, orderProvider),
-                    buttonType: ButtonType.outlined,
+                    onPressed:
+                        () => _showCancelDialog(context, order, orderProvider),
+                    type: ButtonType.outline,
                     icon: Icons.cancel_outlined,
                   ),
               ],
@@ -246,7 +258,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     // Get status color
     Color statusColor;
     IconData statusIcon;
-    
+
     switch (order.status) {
       case OrderStatus.delivered:
         statusColor = AppColors.success;
@@ -356,9 +368,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         // Item Total
         Text(
           '₹${item.totalPrice.toStringAsFixed(2)}',
-          style: AppTextStyles.bodyMedium.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -372,20 +382,24 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         children: [
           Text(
             label,
-            style: isTotal
-                ? AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold)
-                : AppTextStyles.bodyMedium,
+            style:
+                isTotal
+                    ? AppTextStyles.bodyLarge.copyWith(
+                      fontWeight: FontWeight.bold,
+                    )
+                    : AppTextStyles.bodyMedium,
           ),
           Text(
             value,
-            style: isTotal
-                ? AppTextStyles.bodyLarge.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  )
-                : AppTextStyles.bodyMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+            style:
+                isTotal
+                    ? AppTextStyles.bodyLarge.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    )
+                    : AppTextStyles.bodyMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
           ),
         ],
       ),
@@ -399,61 +413,63 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   ) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cancel Order'),
-        content: const Text(
-          'Are you sure you want to cancel this order? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('No, Keep Order'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              
-              // Show loading dialog
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => const AlertDialog(
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: AppPadding.medium),
-                      Text('Cancelling order...'),
-                    ],
-                  ),
-                ),
-              );
-              
-              final success = await orderProvider.cancelOrder(order.id);
-              
-              if (context.mounted) {
-                Navigator.pop(context); // Close loading dialog
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      success
-                          ? 'Order cancelled successfully'
-                          : 'Failed to cancel order: ${orderProvider.error}',
-                    ),
-                    backgroundColor:
-                        success ? AppColors.success : AppColors.error,
-                  ),
-                );
-              }
-            },
-            child: const Text(
-              'Yes, Cancel Order',
-              style: TextStyle(color: AppColors.error),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Cancel Order'),
+            content: const Text(
+              'Are you sure you want to cancel this order? This action cannot be undone.',
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('No, Keep Order'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+
+                  // Show loading dialog
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder:
+                        (context) => const AlertDialog(
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: AppPadding.medium),
+                              Text('Cancelling order...'),
+                            ],
+                          ),
+                        ),
+                  );
+
+                  final success = await orderProvider.cancelOrder(order.id);
+
+                  if (context.mounted) {
+                    Navigator.pop(context); // Close loading dialog
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success
+                              ? 'Order cancelled successfully'
+                              : 'Failed to cancel order: ${orderProvider.error}',
+                        ),
+                        backgroundColor:
+                            success ? AppColors.success : AppColors.error,
+                      ),
+                    );
+                  }
+                },
+                child: const Text(
+                  'Yes, Cancel Order',
+                  style: TextStyle(color: AppColors.error),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }
