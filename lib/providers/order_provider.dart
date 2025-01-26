@@ -74,8 +74,15 @@ class OrderProvider extends ChangeNotifier {
     required String paymentMethod,
     String? deliveryNotes,
   }) async {
-    if (_authProvider.currentUser == null || _authProvider.user == null) {
+    if (_authProvider.currentUser == null) {
       _setError('User not authenticated');
+      return null;
+    }
+
+    // Get user data
+    final userData = _authProvider.user;
+    if (userData == null) {
+      _setError('User data not available');
       return null;
     }
 
@@ -90,7 +97,7 @@ class OrderProvider extends ChangeNotifier {
         totalAmount: totalAmount,
         deliveryAddress: deliveryAddress,
         paymentMethod: paymentMethod,
-        userName: _authProvider.user!.name,
+        userName: userData.name,
         deliveryNotes: deliveryNotes,
       );
 
