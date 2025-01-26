@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/order_model.dart' as order_model;
-import 'package:smart_kirana/models/payment_model.dart';
+import 'package:smart_kirana/models/payment_model.dart' as payment_model;
 import 'package:smart_kirana/providers/order_provider.dart';
 import 'package:smart_kirana/providers/payment_provider.dart';
-import 'package:smart_kirana/screens/orders/order_detail_screen.dart';
 import 'package:smart_kirana/screens/payment/payment_failure_screen.dart';
 import 'package:smart_kirana/screens/payment/payment_success_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
@@ -27,25 +26,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
     {
       'name': 'Cash on Delivery',
       'icon': Icons.money,
-      'method': PaymentMethod.cashOnDelivery,
+      'method': payment_model.PaymentMethod.cashOnDelivery,
       'description': 'Pay when your order is delivered',
     },
     {
       'name': 'Credit/Debit Card',
       'icon': Icons.credit_card,
-      'method': PaymentMethod.creditCard,
+      'method': payment_model.PaymentMethod.creditCard,
       'description': 'Pay securely with your card',
     },
     {
       'name': 'UPI',
       'icon': Icons.account_balance,
-      'method': PaymentMethod.upi,
+      'method': payment_model.PaymentMethod.upi,
       'description': 'Pay using UPI apps like Google Pay, PhonePe, etc.',
     },
     {
       'name': 'Net Banking',
       'icon': Icons.account_balance_wallet,
-      'method': PaymentMethod.netBanking,
+      'method': payment_model.PaymentMethod.netBanking,
       'description': 'Pay using your bank account',
     },
   ];
@@ -157,8 +156,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
             // Payment Button
             CustomButton(
               text: 'Pay Now',
-              onPressed: () => _isProcessing ? null : _processPayment(context),
+              onPressed: () => _processPayment(context),
               isLoading: _isProcessing,
+              enabled: !_isProcessing,
             ),
           ],
         ),
@@ -166,20 +166,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Future<void> _processPayment(BuildContext context) async {
+  Future<void> _processPayment(BuildContext contextArg) async {
+    // Store context-related objects before the async gap
+    final navigator = Navigator.of(contextArg);
+    final scaffoldMessenger = ScaffoldMessenger.of(contextArg);
+    final selectedMethod =
+        _paymentMethods[_selectedPaymentMethod]['method']
+            as payment_model.PaymentMethod;
+    final paymentProvider = Provider.of<PaymentProvider>(
+      contextArg,
+      listen: false,
+    );
+    final orderProvider = Provider.of<OrderProvider>(contextArg, listen: false);
+
     setState(() {
       _isProcessing = true;
     });
 
     try {
-      final selectedMethod =
-          _paymentMethods[_selectedPaymentMethod]['method'] as PaymentMethod;
-      final paymentProvider = Provider.of<PaymentProvider>(
-        context,
-        listen: false,
-      );
-      final orderProvider = Provider.of<OrderProvider>(context, listen: false);
-
       // Create payment record
       final paymentId = await paymentProvider.createPayment(
         orderId: widget.orderId,
@@ -192,11 +196,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
 
       // For Cash on Delivery, mark as pending and proceed
-      if (selectedMethod == PaymentMethod.cashOnDelivery) {
+      if (selectedMethod == payment_model.PaymentMethod.cashOnDelivery) {
         // Update payment status
         await paymentProvider.updatePaymentStatus(
           paymentId: paymentId,
-          status: PaymentStatus.pending,
+          status: payment_model.PaymentStatus.pending,
         );
 
         // Update order payment info
@@ -207,8 +211,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         );
 
         if (mounted) {
-          Navigator.pushReplacementNamed(
-            context,
+          navigator.pushReplacementNamed(
             PaymentSuccessScreen.routeName,
             arguments: {
               'orderId': widget.orderId,
@@ -232,7 +235,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         // Update payment status
         await paymentProvider.updatePaymentStatus(
           paymentId: paymentId,
-          status: PaymentStatus.completed,
+          status: payment_model.PaymentStatus.completed,
           transactionId: 'txn_${DateTime.now().millisecondsSinceEpoch}',
           paymentGatewayResponse: '{"status": "success"}',
         );
@@ -246,8 +249,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         );
 
         if (mounted) {
-          Navigator.pushReplacementNamed(
-            context,
+          navigator.pushReplacementNamed(
             PaymentSuccessScreen.routeName,
             arguments: {
               'orderId': widget.orderId,
@@ -261,7 +263,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         // Update payment status
         await paymentProvider.updatePaymentStatus(
           paymentId: paymentId,
-          status: PaymentStatus.failed,
+          status: payment_model.PaymentStatus.failed,
           failureReason: 'Transaction declined by bank',
         );
 
@@ -273,8 +275,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         );
 
         if (mounted) {
-          Navigator.pushReplacementNamed(
-            context,
+          navigator.pushReplacementNamed(
             PaymentFailureScreen.routeName,
             arguments: {
               'orderId': widget.orderId,
@@ -288,7 +289,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text('Payment processing failed: ${e.toString()}'),
             backgroundColor: AppColors.error,
