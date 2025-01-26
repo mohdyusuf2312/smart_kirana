@@ -50,10 +50,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     color: AppColors.error,
                   ),
                   const SizedBox(height: AppPadding.medium),
-                  Text(
-                    'Error loading orders',
-                    style: AppTextStyles.heading3,
-                  ),
+                  Text('Error loading orders', style: AppTextStyles.heading3),
                   const SizedBox(height: AppPadding.small),
                   Text(
                     orderProvider.error!,
@@ -116,7 +113,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
   Widget _buildOrderCard(BuildContext context, OrderModel order) {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
-    
+
     // Get status color
     Color statusColor;
     switch (order.status) {
@@ -175,7 +172,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ],
               ),
               const Divider(),
-              
+
               // Order Items Preview
               SizedBox(
                 height: 60,
@@ -189,11 +186,15 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppBorderRadius.small),
+                        borderRadius: BorderRadius.circular(
+                          AppBorderRadius.small,
+                        ),
                         border: Border.all(color: Colors.grey.shade300),
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppBorderRadius.small),
+                        borderRadius: BorderRadius.circular(
+                          AppBorderRadius.small,
+                        ),
                         child: Image.network(
                           item.productImage,
                           fit: BoxFit.cover,
@@ -216,9 +217,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     style: AppTextStyles.bodySmall,
                   ),
                 ),
-              
+
               const SizedBox(height: AppPadding.medium),
-              
+
               // Order Total and Status
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -236,8 +237,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       vertical: AppPadding.small / 2,
                     ),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(AppBorderRadius.small),
+                      color: statusColor.withAlpha(25),
+                      borderRadius: BorderRadius.circular(
+                        AppBorderRadius.small,
+                      ),
                     ),
                     child: Text(
                       order.status.name.toUpperCase(),
