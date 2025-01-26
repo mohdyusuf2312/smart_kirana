@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:smart_kirana/models/payment_model.dart';
+import 'package:smart_kirana/models/payment_model.dart' as payment_model;
 import 'package:smart_kirana/screens/orders/order_detail_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
@@ -10,7 +10,7 @@ class PaymentSuccessScreen extends StatelessWidget {
   final String orderId;
   final String paymentId;
   final double amount;
-  final PaymentMethod method;
+  final payment_model.PaymentMethod method;
 
   const PaymentSuccessScreen({
     super.key,
@@ -22,113 +22,107 @@ class PaymentSuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        _navigateToOrderDetails(context);
-        return false;
-      },
-      child: Scaffold(
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppPadding.medium),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(),
-                // Success Icon
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check_circle,
-                    color: AppColors.success,
-                    size: 80,
-                  ),
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppPadding.medium),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(),
+              // Success Icon
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: AppColors.success.withAlpha(25),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: AppPadding.large),
-                
-                // Success Message
-                Text(
-                  'Payment Successful!',
-                  style: AppTextStyles.heading1.copyWith(
-                    color: AppColors.success,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
+                child: const Icon(
+                  Icons.check_circle,
+                  color: AppColors.success,
+                  size: 80,
                 ),
-                const SizedBox(height: AppPadding.medium),
-                Text(
-                  'Your order has been placed successfully.',
-                  style: AppTextStyles.bodyLarge,
-                  textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppPadding.large),
+              
+              // Success Message
+              Text(
+                'Payment Successful!',
+                style: AppTextStyles.heading1.copyWith(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: AppPadding.large),
-                
-                // Payment Details
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppBorderRadius.medium),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppPadding.medium),
-                    child: Column(
-                      children: [
-                        _buildDetailRow(
-                          'Order ID',
-                          '#${orderId.substring(0, 8)}',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppPadding.medium),
+              Text(
+                'Your order has been placed successfully.',
+                style: AppTextStyles.bodyLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppPadding.large),
+              
+              // Payment Details
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppPadding.medium),
+                  child: Column(
+                    children: [
+                      _buildDetailRow(
+                        'Order ID',
+                        '#${orderId.substring(0, 8)}',
+                      ),
+                      const Divider(height: 20),
+                      _buildDetailRow(
+                        'Amount',
+                        '₹${amount.toStringAsFixed(2)}',
+                        valueStyle: AppTextStyles.bodyLarge.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
                         ),
+                      ),
+                      const Divider(height: 20),
+                      _buildDetailRow(
+                        'Payment Method',
+                        _getPaymentMethodName(method),
+                      ),
+                      const Divider(height: 20),
+                      _buildDetailRow(
+                        'Date & Time',
+                        DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now()),
+                      ),
+                      if (method != payment_model.PaymentMethod.cashOnDelivery) ...[
                         const Divider(height: 20),
                         _buildDetailRow(
-                          'Amount',
-                          '₹${amount.toStringAsFixed(2)}',
-                          valueStyle: AppTextStyles.bodyLarge.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
+                          'Transaction ID',
+                          'txn_${paymentId.substring(0, 8)}',
                         ),
-                        const Divider(height: 20),
-                        _buildDetailRow(
-                          'Payment Method',
-                          _getPaymentMethodName(method),
-                        ),
-                        const Divider(height: 20),
-                        _buildDetailRow(
-                          'Date & Time',
-                          DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now()),
-                        ),
-                        if (method != PaymentMethod.cashOnDelivery) ...[
-                          const Divider(height: 20),
-                          _buildDetailRow(
-                            'Transaction ID',
-                            'txn_${paymentId.substring(0, 8)}',
-                          ),
-                        ],
                       ],
-                    ),
+                    ],
                   ),
                 ),
-                const Spacer(),
-                
-                // Action Buttons
-                CustomButton(
-                  text: 'View Order Details',
-                  onPressed: () => _navigateToOrderDetails(context),
-                ),
-                const SizedBox(height: AppPadding.medium),
-                CustomButton(
-                  text: 'Continue Shopping',
-                  onPressed: () {
-                    Navigator.popUntil(context, (route) => route.isFirst);
-                  },
-                  buttonType: ButtonType.outlined,
-                ),
-              ],
-            ),
+              ),
+              const Spacer(),
+              
+              // Action Buttons
+              CustomButton(
+                text: 'View Order Details',
+                onPressed: () => _navigateToOrderDetails(context),
+              ),
+              const SizedBox(height: AppPadding.medium),
+              CustomButton(
+                text: 'Continue Shopping',
+                onPressed: () {
+                  Navigator.popUntil(context, (route) => route.isFirst);
+                },
+                type: ButtonType.outline,
+              ),
+            ],
           ),
         ),
       ),
@@ -155,22 +149,20 @@ class PaymentSuccessScreen extends StatelessWidget {
     );
   }
 
-  String _getPaymentMethodName(PaymentMethod method) {
+  String _getPaymentMethodName(payment_model.PaymentMethod method) {
     switch (method) {
-      case PaymentMethod.cashOnDelivery:
+      case payment_model.PaymentMethod.cashOnDelivery:
         return 'Cash on Delivery';
-      case PaymentMethod.razorpay:
+      case payment_model.PaymentMethod.razorpay:
         return 'Razorpay';
-      case PaymentMethod.upi:
+      case payment_model.PaymentMethod.upi:
         return 'UPI';
-      case PaymentMethod.creditCard:
+      case payment_model.PaymentMethod.creditCard:
         return 'Credit/Debit Card';
-      case PaymentMethod.debitCard:
+      case payment_model.PaymentMethod.debitCard:
         return 'Debit Card';
-      case PaymentMethod.netBanking:
+      case payment_model.PaymentMethod.netBanking:
         return 'Net Banking';
-      default:
-        return 'Unknown';
     }
   }
 
