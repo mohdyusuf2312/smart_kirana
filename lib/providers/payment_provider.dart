@@ -12,7 +12,8 @@ class PaymentProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  PaymentProvider({required AuthProvider authProvider}) : _authProvider = authProvider;
+  PaymentProvider({required AuthProvider authProvider})
+    : _authProvider = authProvider;
 
   // Getters
   PaymentModel? get currentPayment => _currentPayment;
@@ -170,15 +171,15 @@ class PaymentProvider extends ChangeNotifier {
     required String name,
     required String description,
   }) async {
-    if (_authProvider.currentUser == null || _authProvider.userData == null) {
+    if (_authProvider.currentUser == null || _authProvider.user == null) {
       _setError('User not authenticated');
       return null;
     }
 
     _setLoading(true);
     try {
-      final userData = _authProvider.userData!;
-      
+      final userData = _authProvider.user!;
+
       final razorpayOptions = await _paymentService.initializeRazorpayPayment(
         orderId: orderId,
         amount: amount,
