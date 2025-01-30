@@ -4,11 +4,17 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/firebase_options.dart';
 import 'package:smart_kirana/providers/address_provider.dart';
+import 'package:smart_kirana/providers/admin_provider.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/providers/cart_provider.dart';
 import 'package:smart_kirana/providers/order_provider.dart';
 import 'package:smart_kirana/providers/payment_provider.dart';
 import 'package:smart_kirana/providers/product_provider.dart';
+import 'package:smart_kirana/screens/admin/admin_dashboard_screen.dart';
+import 'package:smart_kirana/screens/admin/category_management_screen.dart';
+import 'package:smart_kirana/screens/admin/order_management_screen.dart';
+import 'package:smart_kirana/screens/admin/product_management_screen.dart';
+import 'package:smart_kirana/screens/admin/user_management_screen.dart';
 import 'package:smart_kirana/screens/auth/email_verification_screen.dart';
 import 'package:smart_kirana/screens/auth/forgot_password_screen.dart';
 import 'package:smart_kirana/screens/auth/login_screen.dart';
@@ -84,6 +90,15 @@ class MyApp extends StatelessWidget {
           update:
               (context, authProvider, previous) =>
                   PaymentProvider(authProvider: authProvider),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, AdminProvider>(
+          create:
+              (context) => AdminProvider(
+                authProvider: Provider.of<AuthProvider>(context, listen: false),
+              ),
+          update:
+              (context, authProvider, previous) =>
+                  AdminProvider(authProvider: authProvider),
         ),
       ],
       child: MaterialApp(
@@ -188,6 +203,17 @@ class MyApp extends StatelessWidget {
               (context) => const ForgotPasswordScreen(),
           HomeScreen.routeName: (context) => const HomeScreen(),
           OrderHistoryScreen.routeName: (context) => const OrderHistoryScreen(),
+          // Admin Routes
+          AdminDashboardScreen.routeName:
+              (context) => const AdminDashboardScreen(),
+          ProductManagementScreen.routeName:
+              (context) => const ProductManagementScreen(),
+          CategoryManagementScreen.routeName:
+              (context) => const CategoryManagementScreen(),
+          OrderManagementScreen.routeName:
+              (context) => const OrderManagementScreen(),
+          UserManagementScreen.routeName:
+              (context) => const UserManagementScreen(),
         },
         onGenerateRoute: (settings) {
           if (settings.name == EmailVerificationScreen.routeName) {
