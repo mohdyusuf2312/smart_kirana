@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/user_model.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
+import 'package:smart_kirana/screens/admin/admin_dashboard_screen.dart';
 import 'package:smart_kirana/screens/auth/login_screen.dart';
 import 'package:smart_kirana/screens/home/address_screen.dart';
 import 'package:smart_kirana/screens/orders/order_history_screen.dart';
@@ -181,6 +182,24 @@ class ProfileScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
+                if (user.role == 'ADMIN')
+                  Column(
+                    children: [
+                      _buildProfileOption(
+                        context,
+                        icon: Icons.admin_panel_settings,
+                        title: 'Admin Panel',
+                        textColor: AppColors.primary,
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            AdminDashboardScreen.routeName,
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                    ],
+                  ),
                 _buildProfileOption(
                   context,
                   icon: Icons.help_outline,
