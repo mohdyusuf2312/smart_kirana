@@ -25,17 +25,17 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   String? _selectedOrderId;
   final List<String> _statusOptions = [
     'All',
-    'PENDING',
-    'PROCESSING',
-    'SHIPPED',
-    'DELIVERED',
-    'CANCELLED',
+    'pending',
+    'processing',
+    'shipped',
+    'delivered',
+    'cancelled',
   ];
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // Check if we have arguments for filtering
     if (widget.arguments != null) {
       if (widget.arguments!.containsKey('filter')) {
@@ -50,7 +50,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    
+
     // Check if user is admin
     if (authProvider.user?.role != 'ADMIN') {
       return Scaffold(
@@ -58,10 +58,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'Unauthorized Access',
-                style: AppTextStyles.heading1,
-              ),
+              const Text('Unauthorized Access', style: AppTextStyles.heading1),
               const SizedBox(height: AppPadding.medium),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
@@ -74,17 +71,16 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Order Management'),
-      ),
+      appBar: AppBar(title: const Text('Order Management')),
       drawer: const AdminDrawer(),
       body: Column(
         children: [
           _buildSearchAndFilter(),
           Expanded(
-            child: _selectedOrderId != null
-                ? _buildOrderDetails()
-                : _buildOrderList(),
+            child:
+                _selectedOrderId != null
+                    ? _buildOrderDetails()
+                    : _buildOrderList(),
           ),
         ],
       ),
@@ -117,7 +113,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
               itemBuilder: (context, index) {
                 final status = _statusOptions[index];
                 final isSelected = status == _selectedStatus;
-                
+
                 return Padding(
                   padding: const EdgeInsets.only(right: AppPadding.small),
                   child: ChoiceChip(
@@ -133,8 +129,12 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                     backgroundColor: Colors.white,
                     selectedColor: AppColors.primary.withOpacity(0.2),
                     labelStyle: TextStyle(
-                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color:
+                          isSelected
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 );
@@ -148,47 +148,51 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
   Widget _buildOrderList() {
     return StreamBuilder<QuerySnapshot>(
-      stream: _firestore.collection('orders').orderBy('orderDate', descending: true).snapshots(),
+      stream:
+          _firestore
+              .collection('orders')
+              .orderBy('orderDate', descending: true)
+              .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
-          return Center(
-            child: Text('Error: ${snapshot.error}'),
-          );
+          return Center(child: Text('Error: ${snapshot.error}'));
         }
-        
+
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(
-            child: Text('No orders found'),
-          );
+          return const Center(child: Text('No orders found'));
         }
-        
+
         // Filter orders based on search query and status
         var filteredDocs = snapshot.data!.docs;
-        
+
         if (_searchQuery.isNotEmpty) {
-          filteredDocs = filteredDocs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final orderId = doc.id;
-            final userName = data['userName'] as String? ?? '';
-            
-            return orderId.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                userName.toLowerCase().contains(_searchQuery.toLowerCase());
-          }).toList();
+          filteredDocs =
+              filteredDocs.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final orderId = doc.id;
+                final userName = data['userName'] as String? ?? '';
+
+                return orderId.toLowerCase().contains(
+                      _searchQuery.toLowerCase(),
+                    ) ||
+                    userName.toLowerCase().contains(_searchQuery.toLowerCase());
+              }).toList();
         }
-        
+
         if (_selectedStatus != 'All') {
-          filteredDocs = filteredDocs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final status = data['status'] as String? ?? '';
-            
-            return status == _selectedStatus;
-          }).toList();
+          filteredDocs =
+              filteredDocs.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final status = data['status'] as String? ?? '';
+
+                return status == _selectedStatus;
+              }).toList();
         }
-        
+
         return ListView.builder(
           padding: const EdgeInsets.all(AppPadding.medium),
           itemCount: filteredDocs.length,
@@ -196,7 +200,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
             final doc = filteredDocs[index];
             final data = doc.data() as Map<String, dynamic>;
             final order = OrderModel.fromMap(data, doc.id);
-            
+
             return Card(
               margin: const EdgeInsets.only(bottom: AppPadding.medium),
               child: ListTile(
@@ -216,7 +220,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                     Row(
                       children: [
                         Text('Status: '),
-                        _buildStatusChip(order.status),
+                        _buildStatusChip(order.status.name),
                       ],
                     ),
                   ],
@@ -248,13 +252,11 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
-          return Center(
-            child: Text('Error: ${snapshot.error}'),
-          );
+          return Center(child: Text('Error: ${snapshot.error}'));
         }
-        
+
         if (!snapshot.hasData || !snapshot.data!.exists) {
           return Center(
             child: Column(
@@ -274,10 +276,10 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
             ),
           );
         }
-        
+
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final order = OrderModel.fromMap(data, snapshot.data!.id);
-        
+
         return SingleChildScrollView(
           padding: const EdgeInsets.all(AppPadding.medium),
           child: Column(
@@ -351,7 +353,8 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                         'Payment Method: ${order.paymentMethod}',
                         style: AppTextStyles.bodyMedium,
                       ),
-                      if (order.deliveryNotes.isNotEmpty) ...[
+                      if (order.deliveryNotes != null &&
+                          order.deliveryNotes!.isNotEmpty) ...[
                         const SizedBox(height: AppPadding.small),
                         Text(
                           'Delivery Notes: ${order.deliveryNotes}',
@@ -375,7 +378,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                       ),
                       const SizedBox(height: AppPadding.small),
                       Text(
-                        order.deliveryAddress,
+                        order.deliveryAddress.toString(),
                         style: AppTextStyles.bodyMedium,
                       ),
                     ],
@@ -389,10 +392,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Order Items',
-                        style: AppTextStyles.heading3,
-                      ),
+                      const Text('Order Items', style: AppTextStyles.heading3),
                       const SizedBox(height: AppPadding.medium),
                       ListView.builder(
                         shrinkWrap: true,
@@ -401,7 +401,9 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                         itemBuilder: (context, index) {
                           final item = order.items[index];
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: AppPadding.small),
+                            padding: const EdgeInsets.only(
+                              bottom: AppPadding.small,
+                            ),
                             child: Row(
                               children: [
                                 Expanded(
@@ -478,13 +480,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     }
 
     return Chip(
-      label: Text(
-        status,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-        ),
-      ),
+      label: Text(status, style: TextStyle(color: Colors.white, fontSize: 12)),
       backgroundColor: color,
       padding: EdgeInsets.zero,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -493,40 +489,35 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
   Widget _buildStatusDropdown(OrderModel order) {
     return DropdownButton<String>(
-      value: order.status,
-      items: [
-        'PENDING',
-        'PROCESSING',
-        'SHIPPED',
-        'DELIVERED',
-        'CANCELLED',
-      ].map((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
+      value: order.status.name,
+      items:
+          ['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((
+            String value,
+          ) {
+            return DropdownMenuItem<String>(value: value, child: Text(value));
+          }).toList(),
       onChanged: (newValue) async {
-        if (newValue != null && newValue != order.status) {
+        if (newValue != null && newValue != order.status.name) {
           try {
             await _firestore.collection('orders').doc(order.id).update({
               'status': newValue,
             });
-            
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Order status updated to $newValue')),
-            );
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Order status updated to $newValue')),
+              );
+            }
           } catch (e) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to update order status: $e')),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to update order status: $e')),
+              );
+            }
           }
         }
       },
-      underline: Container(
-        height: 2,
-        color: AppColors.primary,
-      ),
+      underline: Container(height: 2, color: AppColors.primary),
     );
   }
 
@@ -562,10 +553,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Total',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
             Text(
               '₹${order.totalAmount.toStringAsFixed(2)}',
               style: const TextStyle(
