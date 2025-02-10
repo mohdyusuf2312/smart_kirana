@@ -31,7 +31,14 @@ import 'package:smart_kirana/utils/constants.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await dotenv.load(fileName: ".env");
+
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    // Silently continue without .env file
+    // In a production app, use a proper logging framework
+  }
+
   runApp(const MyApp());
 }
 
