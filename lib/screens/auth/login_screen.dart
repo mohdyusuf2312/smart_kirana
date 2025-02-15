@@ -158,18 +158,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: AppPadding.small),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        ForgotPasswordScreen.routeName,
-                      );
-                    },
-                    child: Text(
-                      AppStrings.forgotPassword,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          ForgotPasswordScreen.routeName,
+                        );
+                      },
+                      child: Text(
+                        AppStrings.forgotPassword,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -213,18 +216,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       AppStrings.dontHaveAccount,
                       style: AppTextStyles.bodyMedium,
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacementNamed(
-                          context,
-                          SignupScreen.routeName,
-                        );
-                      },
-                      child: Text(
-                        AppStrings.signup,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.pushReplacementNamed(
+                            context,
+                            SignupScreen.routeName,
+                          );
+                        },
+                        child: Text(
+                          AppStrings.signup,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
