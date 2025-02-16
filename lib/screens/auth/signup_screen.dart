@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
@@ -204,18 +205,21 @@ class _SignupScreenState extends State<SignupScreen> {
                       AppStrings.alreadyHaveAccount,
                       style: AppTextStyles.bodyMedium,
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacementNamed(
-                          context,
-                          LoginScreen.routeName,
-                        );
-                      },
-                      child: Text(
-                        AppStrings.login,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.pushReplacementNamed(
+                            context,
+                            LoginScreen.routeName,
+                          );
+                        },
+                        child: Text(
+                          AppStrings.login,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
