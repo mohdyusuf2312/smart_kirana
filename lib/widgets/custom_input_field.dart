@@ -32,7 +32,7 @@ class CustomInputField extends StatefulWidget {
     this.focusNode,
     this.onEditingComplete,
     this.textInputAction,
-    this.onChanged,
+    this.onChanged, required bool obscureText,
   });
 
   @override
