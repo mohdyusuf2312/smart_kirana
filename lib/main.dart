@@ -18,14 +18,17 @@ import 'package:smart_kirana/screens/admin/user_management_screen.dart';
 import 'package:smart_kirana/screens/auth/email_verification_screen.dart';
 import 'package:smart_kirana/screens/auth/forgot_password_screen.dart';
 import 'package:smart_kirana/screens/auth/login_screen.dart';
+import 'package:smart_kirana/screens/auth/reset_password_confirm_screen.dart';
 import 'package:smart_kirana/screens/auth/signup_screen.dart';
 import 'package:smart_kirana/screens/home/home_screen.dart';
+import 'package:smart_kirana/screens/home/home_wrapper.dart';
 import 'package:smart_kirana/screens/orders/order_detail_screen.dart';
 import 'package:smart_kirana/screens/orders/order_history_screen.dart';
 import 'package:smart_kirana/screens/orders/order_tracking_screen.dart';
 import 'package:smart_kirana/screens/payment/payment_failure_screen.dart';
 import 'package:smart_kirana/screens/payment/payment_screen.dart';
 import 'package:smart_kirana/screens/payment/payment_success_screen.dart';
+import 'package:smart_kirana/services/dynamic_link_service.dart';
 import 'package:smart_kirana/utils/constants.dart';
 
 void main() async {
@@ -202,7 +205,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        initialRoute: LoginScreen.routeName,
+        home: const HomeWrapper(),
         routes: {
           LoginScreen.routeName: (context) => const LoginScreen(),
           SignupScreen.routeName: (context) => const SignupScreen(),
@@ -270,6 +273,11 @@ class MyApp extends StatelessWidget {
                     method: args['method'],
                     errorMessage: args['errorMessage'],
                   ),
+            );
+          } else if (settings.name == ResetPasswordConfirmScreen.routeName) {
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+              builder: (context) => ResetPasswordConfirmScreen(arguments: args),
             );
           }
           return null;
