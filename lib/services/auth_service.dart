@@ -24,8 +24,19 @@ class AuthService {
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
 
+      // Create action code settings for verification
+      ActionCodeSettings actionCodeSettings = ActionCodeSettings(
+        url:
+            'https://smart-kirana-81629.firebaseapp.com/finishSignUp?email=$email',
+        handleCodeInApp: true,
+        androidPackageName: 'com.example.smart_kirana',
+        androidInstallApp: true,
+        androidMinimumVersion: '12',
+        iOSBundleId: 'com.example.smartKirana',
+      );
+
       // Send email verification
-      await userCredential.user!.sendEmailVerification();
+      await userCredential.user!.sendEmailVerification(actionCodeSettings);
 
       // Create user document in Firestore
       await _createUserDocument(userCredential.user!.uid, name, email, phone);
@@ -93,7 +104,21 @@ class AuthService {
   // Reset password
   Future<void> resetPassword(String email) async {
     try {
-      await _auth.sendPasswordResetEmail(email: email);
+      // Create action code settings for password reset
+      ActionCodeSettings actionCodeSettings = ActionCodeSettings(
+        url:
+            'https://smart-kirana-81629.firebaseapp.com/resetPassword?email=$email',
+        handleCodeInApp: true,
+        androidPackageName: 'com.example.smart_kirana',
+        androidInstallApp: true,
+        androidMinimumVersion: '12',
+        iOSBundleId: 'com.example.smartKirana',
+      );
+
+      await _auth.sendPasswordResetEmail(
+        email: email,
+        actionCodeSettings: actionCodeSettings,
+      );
     } catch (e) {
       rethrow;
     }
@@ -110,7 +135,18 @@ class AuthService {
     try {
       User? user = _auth.currentUser;
       if (user != null && !user.emailVerified) {
-        await user.sendEmailVerification();
+        // Create action code settings
+        ActionCodeSettings actionCodeSettings = ActionCodeSettings(
+          url:
+              'https://smart-kirana-81629.firebaseapp.com/finishSignUp?email=${user.email}',
+          handleCodeInApp: true,
+          androidPackageName: 'com.example.smart_kirana',
+          androidInstallApp: true,
+          androidMinimumVersion: '12',
+          iOSBundleId: 'com.example.smartKirana',
+        );
+
+        await user.sendEmailVerification(actionCodeSettings);
       }
     } catch (e) {
       rethrow;
