@@ -9,18 +9,21 @@ class ResetPasswordConfirmScreen extends StatefulWidget {
   static const String routeName = '/reset-password-confirm';
   final Map<String, dynamic> arguments;
 
-  const ResetPasswordConfirmScreen({Key? key, required this.arguments}) : super(key: key);
+  const ResetPasswordConfirmScreen({Key? key, required this.arguments})
+    : super(key: key);
 
   @override
-  State<ResetPasswordConfirmScreen> createState() => _ResetPasswordConfirmScreenState();
+  State<ResetPasswordConfirmScreen> createState() =>
+      _ResetPasswordConfirmScreenState();
 }
 
-class _ResetPasswordConfirmScreenState extends State<ResetPasswordConfirmScreen> {
+class _ResetPasswordConfirmScreenState
+    extends State<ResetPasswordConfirmScreen> {
   final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _auth = FirebaseAuth.instance;
-  
+
   bool _isLoading = false;
   String? _error;
   bool _isSuccess = false;
@@ -43,13 +46,13 @@ class _ResetPasswordConfirmScreenState extends State<ResetPasswordConfirmScreen>
     try {
       // Get the action code from arguments
       final actionCode = widget.arguments['actionCode'] as String;
-      
+
       // Confirm password reset with the new password
       await _auth.confirmPasswordReset(
         code: actionCode,
         newPassword: _passwordController.text,
       );
-      
+
       setState(() {
         _isSuccess = true;
       });
@@ -107,10 +110,7 @@ class _ResetPasswordConfirmScreenState extends State<ResetPasswordConfirmScreen>
               children: [
                 const SizedBox(height: AppPadding.large),
                 if (!_isSuccess) ...[
-                  Text(
-                    'Create New Password',
-                    style: AppTextStyles.heading1,
-                  ),
+                  Text('Create New Password', style: AppTextStyles.heading1),
                   const SizedBox(height: AppPadding.small),
                   Text(
                     'Please enter your new password below.',
@@ -123,7 +123,7 @@ class _ResetPasswordConfirmScreenState extends State<ResetPasswordConfirmScreen>
                     label: 'New Password',
                     hint: 'Enter your new password',
                     controller: _passwordController,
-                    obscureText: true,
+                    isPassword: true,
                     prefixIcon: const Icon(Icons.lock_outline),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -140,7 +140,7 @@ class _ResetPasswordConfirmScreenState extends State<ResetPasswordConfirmScreen>
                     label: 'Confirm Password',
                     hint: 'Confirm your new password',
                     controller: _confirmPasswordController,
-                    obscureText: true,
+                    isPassword: true,
                     prefixIcon: const Icon(Icons.lock_outline),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -158,11 +158,16 @@ class _ResetPasswordConfirmScreenState extends State<ResetPasswordConfirmScreen>
                       padding: const EdgeInsets.all(AppPadding.medium),
                       decoration: BoxDecoration(
                         color: AppColors.error.withAlpha(26),
-                        borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+                        borderRadius: BorderRadius.circular(
+                          AppBorderRadius.medium,
+                        ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline, color: AppColors.error),
+                          const Icon(
+                            Icons.error_outline,
+                            color: AppColors.error,
+                          ),
                           const SizedBox(width: AppPadding.small),
                           Expanded(
                             child: Text(
@@ -186,7 +191,9 @@ class _ResetPasswordConfirmScreenState extends State<ResetPasswordConfirmScreen>
                     padding: const EdgeInsets.all(AppPadding.large),
                     decoration: BoxDecoration(
                       color: AppColors.success.withAlpha(26),
-                      borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+                      borderRadius: BorderRadius.circular(
+                        AppBorderRadius.medium,
+                      ),
                     ),
                     child: Column(
                       children: [
