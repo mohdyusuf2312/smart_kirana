@@ -18,29 +18,41 @@ class _HomeWrapperState extends State<HomeWrapper> {
   bool _initialized = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    
-    // Initialize dynamic links only once
+  void initState() {
+    super.initState();
+
+    // Initialize dynamic links
     if (!_initialized) {
       _initDynamicLinks();
       _initialized = true;
     }
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Initialize auth provider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Provider.of<AuthProvider>(context, listen: false).initialize();
+      }
+    });
+  }
+
   Future<void> _initDynamicLinks() async {
-    // Initialize dynamic links
-    await _dynamicLinkService.initDynamicLinks(context);
+    try {
+      // Initialize dynamic links
+      await _dynamicLinkService.initDynamicLinks(context);
+    } catch (e) {
+      // Silently continue without dynamic links
+      // In a production app, use a proper logging framework
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    
-    // Initialize auth provider
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      authProvider.initialize();
-    });
 
     if (authProvider.isAuthenticated) {
       if (!authProvider.isEmailVerified) {
