@@ -11,24 +11,27 @@ class DynamicLinkService {
     if (kIsWeb) {
       return;
     }
-    
+
     // Dynamic links are not used in this version
     // We'll implement a different approach for handling verification
     // and password reset links
   }
 
   // Handle email verification manually
-  Future<void> handleEmailVerification(String actionCode, BuildContext context) async {
+  Future<void> handleEmailVerification(
+    String actionCode,
+    BuildContext context,
+  ) async {
     try {
       // Apply the verification code
       await _auth.applyActionCode(actionCode);
-      
+
       // Update user profile
       User? user = _auth.currentUser;
       if (user != null) {
         await user.reload();
       }
-      
+
       // Show success message
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -51,19 +54,20 @@ class DynamicLinkService {
   }
 
   // Handle password reset manually
-  Future<void> handlePasswordReset(String actionCode, String email, BuildContext context) async {
+  Future<void> handlePasswordReset(
+    String actionCode,
+    String email,
+    BuildContext context,
+  ) async {
     try {
       // Verify the action code is valid
       await _auth.verifyPasswordResetCode(actionCode);
-      
+
       // Navigate to password reset screen with the code
       if (context.mounted) {
         Navigator.of(context).pushNamed(
           '/reset-password-confirm',
-          arguments: {
-            'actionCode': actionCode,
-            'email': email,
-          },
+          arguments: {'actionCode': actionCode, 'email': email},
         );
       }
     } catch (e) {
