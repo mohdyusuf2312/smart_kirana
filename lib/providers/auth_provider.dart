@@ -32,8 +32,14 @@ class AuthProvider extends ChangeNotifier {
   // Load user data
   Future<void> _loadUserData() async {
     if (_authService.currentUser != null) {
-      _user = await _authService.getUserData();
-      notifyListeners();
+      final userData = await _authService.getUserData();
+      if (_user?.id != userData?.id ||
+          _user?.email != userData?.email ||
+          _user?.name != userData?.name ||
+          _user?.isVerified != userData?.isVerified) {
+        _user = userData;
+        notifyListeners();
+      }
     }
   }
 
@@ -200,17 +206,23 @@ class AuthProvider extends ChangeNotifier {
 
   // Helper methods
   void _setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
+    if (_isLoading != value) {
+      _isLoading = value;
+      notifyListeners();
+    }
   }
 
   void _setError(String? error) {
-    _error = error;
-    notifyListeners();
+    if (_error != error) {
+      _error = error;
+      notifyListeners();
+    }
   }
 
   void _clearError() {
-    _error = null;
-    notifyListeners();
+    if (_error != null) {
+      _error = null;
+      notifyListeners();
+    }
   }
 }
