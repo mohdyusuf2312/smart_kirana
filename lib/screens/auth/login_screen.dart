@@ -103,8 +103,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -178,35 +176,48 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: AppPadding.medium),
-                if (authProvider.error != null)
-                  Container(
-                    padding: const EdgeInsets.all(AppPadding.medium),
-                    decoration: BoxDecoration(
-                      color: AppColors.error.withAlpha(26), // 0.1 * 255 = 26
-                      borderRadius: BorderRadius.circular(
-                        AppBorderRadius.medium,
-                      ),
-                    ),
-                    child: Row(
+                Consumer<AuthProvider>(
+                  builder: (context, authProvider, _) {
+                    return Column(
                       children: [
-                        const Icon(Icons.error_outline, color: AppColors.error),
-                        const SizedBox(width: AppPadding.small),
-                        Expanded(
-                          child: Text(
-                            authProvider.error!,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.error,
+                        if (authProvider.error != null)
+                          Container(
+                            padding: const EdgeInsets.all(AppPadding.medium),
+                            decoration: BoxDecoration(
+                              color: AppColors.error.withAlpha(
+                                26,
+                              ), // 0.1 * 255 = 26
+                              borderRadius: BorderRadius.circular(
+                                AppBorderRadius.medium,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  color: AppColors.error,
+                                ),
+                                const SizedBox(width: AppPadding.small),
+                                Expanded(
+                                  child: Text(
+                                    authProvider.error!,
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: AppColors.error,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                        const SizedBox(height: AppPadding.large),
+                        CustomButton(
+                          text: AppStrings.login,
+                          onPressed: _login,
+                          isLoading: authProvider.isLoading,
                         ),
                       ],
-                    ),
-                  ),
-                const SizedBox(height: AppPadding.large),
-                CustomButton(
-                  text: AppStrings.login,
-                  onPressed: _login,
-                  isLoading: authProvider.isLoading,
+                    );
+                  },
                 ),
                 const SizedBox(height: AppPadding.medium),
                 Row(
