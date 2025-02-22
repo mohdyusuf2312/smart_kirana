@@ -23,6 +23,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   bool _canResendEmail = true;
   int _resendCooldown = 0;
   Timer? _cooldownTimer;
+  bool _isCheckingVerification = false;
 
   @override
   void initState() {
@@ -38,69 +39,110 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   }
 
   Future<void> _checkEmailVerification() async {
-    if (!mounted) return;
+    // Prevent multiple simultaneous checks
+    if (_isCheckingVerification || !mounted) return;
+
+    // Set checking state only once at the beginning
+    setState(() {
+      _isCheckingVerification = true;
+    });
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    // Check immediately
-    bool isVerified = await authProvider.checkEmailVerification();
-    if (isVerified && mounted) {
-      setState(() {
-        _isVerified = true;
-      });
-      _timer?.cancel();
-      return;
-    }
-
-    // Check periodically
-    _timer?.cancel(); // Cancel existing timer if any
-    _timer = Timer.periodic(const Duration(seconds: 3), (_) async {
-      if (!mounted) {
-        _timer?.cancel();
-        return;
-      }
-
+    try {
+      // Check immediately
       bool isVerified = await authProvider.checkEmailVerification();
-      if (isVerified && mounted) {
+      if (!mounted) return;
+
+      if (isVerified) {
         setState(() {
           _isVerified = true;
         });
-        _timer?.cancel();
+        _timer?.cancel(); // Cancel any existing timer
+        return;
       }
-    });
+
+      // Set up periodic check with a longer interval (30 seconds)
+      // This reduces API calls and prevents UI flickering
+      _timer?.cancel(); // Cancel existing timer if any
+      _timer = Timer.periodic(const Duration(seconds: 30), (_) async {
+        // Skip if already checking or component unmounted
+        if (_isCheckingVerification || !mounted) return;
+
+        try {
+          // Use the silent check method to prevent UI updates during background checks
+          bool isVerified = await authProvider.checkEmailVerificationSilently();
+          if (!mounted) return;
+
+          if (isVerified) {
+            setState(() {
+              _isVerified = true;
+            });
+            _timer?.cancel();
+          }
+        } catch (e) {
+          // Silently handle errors during background checks
+          // to prevent UI disruption
+        }
+      });
+    } finally {
+      // Only update state if still mounted
+      if (mounted) {
+        setState(() {
+          _isCheckingVerification = false;
+        });
+      }
+    }
   }
 
   Future<void> _resendVerificationEmail() async {
+    // Prevent resending if already in cooldown or component unmounted
     if (!_canResendEmail || !mounted) return;
 
     setState(() {
       _canResendEmail = false;
-      _resendCooldown = 60;
+      _resendCooldown = 60; // 1 minute cooldown
     });
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    await authProvider.resendVerificationEmail();
 
-    // Cancel existing timer if any
-    _cooldownTimer?.cancel();
+    try {
+      // Attempt to resend verification email
+      await authProvider.resendVerificationEmail();
 
-    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
+      if (!mounted) return;
 
-      if (_resendCooldown > 0) {
+      // If successful, show a brief message or toast here if needed
+
+      // Start cooldown timer regardless of success to prevent spam
+      // Cancel existing timer if any
+      _cooldownTimer?.cancel();
+
+      _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+
+        if (_resendCooldown > 0) {
+          setState(() {
+            _resendCooldown--;
+          });
+        } else {
+          setState(() {
+            _canResendEmail = true;
+          });
+          timer.cancel();
+        }
+      });
+    } catch (e) {
+      // Handle any errors that weren't caught by the provider
+      if (mounted) {
         setState(() {
-          _resendCooldown--;
+          _canResendEmail = true; // Allow retry on error
         });
-      } else {
-        setState(() {
-          _canResendEmail = true;
-        });
-        timer.cancel();
       }
-    });
+    }
   }
 
   @override
@@ -244,6 +286,37 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                       ],
                     ),
                   ),
+                if (_isCheckingVerification)
+                  Container(
+                    padding: const EdgeInsets.all(AppPadding.medium),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withAlpha(26),
+                      borderRadius: BorderRadius.circular(
+                        AppBorderRadius.medium,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(width: AppPadding.small),
+                        Expanded(
+                          child: Text(
+                            'Checking verification status...',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 const SizedBox(height: AppPadding.large),
                 CustomButton(
                   text:
@@ -263,8 +336,22 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 const SizedBox(height: AppPadding.medium),
                 CustomButton(
                   text: 'Check Verification Status',
-                  onPressed: () => _checkEmailVerification(),
-                  isLoading: authProvider.isLoading,
+                  onPressed:
+                      _isCheckingVerification
+                          ? null
+                          : () {
+                            // Show a brief message to indicate checking is in progress
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Checking verification status...',
+                                ),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                            _checkEmailVerification();
+                          },
+                  isLoading: _isCheckingVerification,
                 ),
               ],
             );
