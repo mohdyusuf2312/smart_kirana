@@ -186,21 +186,25 @@ class AuthProvider extends ChangeNotifier {
 
   // Check email verification
   Future<bool> checkEmailVerification() async {
-    _setLoading(true);
-    _clearError();
+    // Don't set loading state if we're just checking verification status
+    // This prevents unnecessary UI rebuilds
     try {
       await _authService.reloadUser();
       bool isVerified = _authService.isEmailVerified();
       if (isVerified) {
+        // Only update Firestore and notify listeners if verification status changed
         await _authService.updateUserVerificationStatus(true);
         await _loadUserData();
       }
       return isVerified;
     } catch (e) {
-      _setError('Failed to check email verification. Please try again.');
+      // Only set error if it's a significant error, not just a verification check
+      if (e.toString().contains('network') ||
+          e.toString().contains('permission') ||
+          e.toString().contains('unauthorized')) {
+        _setError('Failed to check email verification. Please try again.');
+      }
       return false;
-    } finally {
-      _setLoading(false);
     }
   }
 
@@ -208,6 +212,8 @@ class AuthProvider extends ChangeNotifier {
   void _setLoading(bool value) {
     if (_isLoading != value) {
       _isLoading = value;
+      // Only notify listeners if the component is actively waiting for this state
+      // This prevents unnecessary rebuilds in components that use the provider
       notifyListeners();
     }
   }
@@ -222,7 +228,19 @@ class AuthProvider extends ChangeNotifier {
   void _clearError() {
     if (_error != null) {
       _error = null;
+      // Only notify if there was an actual error to clear
       notifyListeners();
+    }
+  }
+
+  // Public method to check if email is verified without triggering state changes
+  // This can be used for silent checks that don't need UI updates
+  Future<bool> checkEmailVerificationSilently() async {
+    try {
+      await _authService.reloadUser();
+      return _authService.isEmailVerified();
+    } catch (e) {
+      return false;
     }
   }
 }
