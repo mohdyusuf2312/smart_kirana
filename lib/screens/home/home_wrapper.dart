@@ -52,16 +52,22 @@ class _HomeWrapperState extends State<HomeWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-
-    if (authProvider.isAuthenticated) {
-      if (!authProvider.isEmailVerified) {
-        return EmailVerificationScreen(
-          email: authProvider.currentUser?.email ?? '',
-        );
-      }
-      return const HomeScreen();
-    }
-    return const LoginScreen();
+    // Use Consumer with specific properties to prevent unnecessary rebuilds
+    return Consumer<AuthProvider>(
+      // Only listen to authentication status and email verification status changes
+      builder: (context, authProvider, _) {
+        // Check authentication status
+        if (authProvider.isAuthenticated) {
+          // Check email verification status
+          if (!authProvider.isEmailVerified) {
+            return EmailVerificationScreen(
+              email: authProvider.currentUser?.email ?? '',
+            );
+          }
+          return const HomeScreen();
+        }
+        return const LoginScreen();
+      },
+    );
   }
 }
