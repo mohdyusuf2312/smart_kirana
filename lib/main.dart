@@ -28,7 +28,6 @@ import 'package:smart_kirana/screens/orders/order_tracking_screen.dart';
 import 'package:smart_kirana/screens/payment/payment_failure_screen.dart';
 import 'package:smart_kirana/screens/payment/payment_screen.dart';
 import 'package:smart_kirana/screens/payment/payment_success_screen.dart';
-import 'package:smart_kirana/services/dynamic_link_service.dart';
 import 'package:smart_kirana/utils/constants.dart';
 
 void main() async {
