@@ -26,10 +26,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<String> _titles = ['Products', 'Cart', 'Profile'];
 
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _checkAuthentication();
+  // }
+
   @override
   void initState() {
     super.initState();
-    _checkAuthentication();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAuthentication();
+    });
   }
 
   Future<void> _checkAuthentication() async {
@@ -57,12 +65,63 @@ class _HomeScreenState extends State<HomeScreen> {
     await authProvider.initialize();
   }
 
+  // void _showVerifyEmailDialog() {
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder:
+  //         (context) => AlertDialog(
+  //           title: const Text('Email Verification Required'),
+  //           content: const Text(
+  //             'Please verify your email address before continuing. '
+  //             'Check your inbox for a verification link.',
+  //           ),
+  //           actions: [
+  //             TextButton(
+  //               onPressed: () async {
+  //                 final authProvider = Provider.of<AuthProvider>(
+  //                   context,
+  //                   listen: false,
+  //                 );
+  //                 final scaffoldMessenger = ScaffoldMessenger.of(context);
+  //                 await authProvider.resendVerificationEmail();
+  //                 if (mounted) {
+  //                   scaffoldMessenger.showSnackBar(
+  //                     const SnackBar(
+  //                       content: Text('Verification email sent'),
+  //                       backgroundColor: AppColors.success,
+  //                     ),
+  //                   );
+  //                   Navigator.pop(context); // ✅ Close the dialog here
+  //                 }
+  //               },
+  //               child: const Text('Resend Email'),
+  //             ),
+  //             TextButton(
+  //               onPressed: () async {
+  //                 final authProvider = Provider.of<AuthProvider>(
+  //                   context,
+  //                   listen: false,
+  //                 );
+  //                 final navigator = Navigator.of(context);
+  //                 await authProvider.signOut();
+  //                 if (mounted) {
+  //                   navigator.pushReplacementNamed('/login');
+  //                 }
+  //               },
+  //               child: const Text('Back to Login'),
+  //             ),
+  //           ],
+  //         ),
+  //   );
+  // }
+
   void _showVerifyEmailDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder:
-          (context) => AlertDialog(
+          (dialogContext) => AlertDialog(
             title: const Text('Email Verification Required'),
             content: const Text(
               'Please verify your email address before continuing. '
@@ -72,18 +131,19 @@ class _HomeScreenState extends State<HomeScreen> {
               TextButton(
                 onPressed: () async {
                   final authProvider = Provider.of<AuthProvider>(
-                    context,
+                    dialogContext, // ✅ Use dialogContext here
                     listen: false,
                   );
-                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  final scaffoldMessenger = ScaffoldMessenger.of(dialogContext);
                   await authProvider.resendVerificationEmail();
-                  if (mounted) {
+                  if (dialogContext.mounted) {
                     scaffoldMessenger.showSnackBar(
                       const SnackBar(
                         content: Text('Verification email sent'),
                         backgroundColor: AppColors.success,
                       ),
                     );
+                    Navigator.pop(dialogContext); // ✅ Properly close the dialog
                   }
                 },
                 child: const Text('Resend Email'),
@@ -91,13 +151,12 @@ class _HomeScreenState extends State<HomeScreen> {
               TextButton(
                 onPressed: () async {
                   final authProvider = Provider.of<AuthProvider>(
-                    context,
+                    dialogContext, // ✅ Again, correct context
                     listen: false,
                   );
-                  final navigator = Navigator.of(context);
                   await authProvider.signOut();
-                  if (mounted) {
-                    navigator.pushReplacementNamed('/login');
+                  if (dialogContext.mounted) {
+                    Navigator.pushReplacementNamed(dialogContext, '/login');
                   }
                 },
                 child: const Text('Back to Login'),
