@@ -147,6 +147,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // We'll use a safer approach to handle dialogs
+    // Instead of trying to dismiss dialogs automatically, we'll let the user handle it
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -334,24 +337,30 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   enabled: _canResendEmail,
                 ),
                 const SizedBox(height: AppPadding.medium),
-                CustomButton(
-                  text: 'Check Verification Status',
-                  onPressed:
-                      _isCheckingVerification
-                          ? null
-                          : () {
-                            // Show a brief message to indicate checking is in progress
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Checking verification status...',
-                                ),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                            _checkEmailVerification();
-                          },
-                  isLoading: _isCheckingVerification,
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomButton(
+                        text: 'Check Verification Status',
+                        onPressed:
+                            _isCheckingVerification
+                                ? null
+                                : () {
+                                  // Show a brief message to indicate checking is in progress
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Checking verification status...',
+                                      ),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  _checkEmailVerification();
+                                },
+                        isLoading: _isCheckingVerification,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             );
