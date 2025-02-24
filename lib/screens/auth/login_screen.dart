@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       barrierDismissible: false,
       builder:
-          (context) => AlertDialog(
+          (dialogContext) => AlertDialog(
             title: const Text('Email Verification Required'),
             content: const Text(
               'Please verify your email address before continuing. '
@@ -66,18 +66,23 @@ class _LoginScreenState extends State<LoginScreen> {
               TextButton(
                 onPressed: () async {
                   final authProvider = Provider.of<AuthProvider>(
-                    context,
+                    dialogContext, // ✅ Use dialogContext here
                     listen: false,
                   );
-                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  final scaffoldMessenger = ScaffoldMessenger.of(dialogContext);
+
                   await authProvider.resendVerificationEmail();
-                  if (mounted) {
+
+                  if (dialogContext.mounted) {
                     scaffoldMessenger.showSnackBar(
                       const SnackBar(
                         content: Text('Verification email sent'),
                         backgroundColor: AppColors.success,
                       ),
                     );
+                    Navigator.of(
+                      dialogContext,
+                    ).pop(); // ✅ Dismiss with correct context
                   }
                 },
                 child: const Text('Resend Email'),
@@ -85,13 +90,12 @@ class _LoginScreenState extends State<LoginScreen> {
               TextButton(
                 onPressed: () async {
                   final authProvider = Provider.of<AuthProvider>(
-                    context,
+                    dialogContext, // ✅ Again, use the correct context
                     listen: false,
                   );
-                  final navigator = Navigator.of(context);
                   await authProvider.signOut();
-                  if (mounted) {
-                    navigator.pop();
+                  if (dialogContext.mounted) {
+                    Navigator.of(dialogContext).pop(); // ✅ Close the dialog
                   }
                 },
                 child: const Text('OK'),
@@ -117,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(AppStrings.login, style: AppTextStyles.heading1),
                 const SizedBox(height: AppPadding.small),
                 Text(
-                  'Welcome back to Smart Kirana',
+                  'Welcome to Smart Kirana',
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textSecondary,
                   ),
