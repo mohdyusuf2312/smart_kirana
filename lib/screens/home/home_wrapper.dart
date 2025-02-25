@@ -4,7 +4,6 @@ import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/screens/auth/email_verification_screen.dart';
 import 'package:smart_kirana/screens/auth/login_screen.dart';
 import 'package:smart_kirana/screens/home/home_screen.dart';
-import 'package:smart_kirana/services/dynamic_link_service.dart';
 
 class HomeWrapper extends StatefulWidget {
   const HomeWrapper({Key? key}) : super(key: key);
@@ -14,18 +13,9 @@ class HomeWrapper extends StatefulWidget {
 }
 
 class _HomeWrapperState extends State<HomeWrapper> {
-  final DynamicLinkService _dynamicLinkService = DynamicLinkService();
-  bool _initialized = false;
-
   @override
   void initState() {
     super.initState();
-
-    // Initialize dynamic links
-    if (!_initialized) {
-      _initDynamicLinks();
-      _initialized = true;
-    }
   }
 
   @override
@@ -40,16 +30,6 @@ class _HomeWrapperState extends State<HomeWrapper> {
     });
   }
 
-  Future<void> _initDynamicLinks() async {
-    try {
-      // Initialize dynamic links
-      await _dynamicLinkService.initDynamicLinks(context);
-    } catch (e) {
-      // Silently continue without dynamic links
-      // In a production app, use a proper logging framework
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     // Use Consumer with specific properties to prevent unnecessary rebuilds
@@ -60,6 +40,7 @@ class _HomeWrapperState extends State<HomeWrapper> {
         if (authProvider.isAuthenticated) {
           // Check email verification status
           if (!authProvider.isEmailVerified) {
+            // Return the verification screen but don't show Firebase's dialog
             return EmailVerificationScreen(
               email: authProvider.currentUser?.email ?? '',
             );
