@@ -24,8 +24,16 @@ class AuthService {
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
 
-      // Send email verification
-      await userCredential.user!.sendEmailVerification();
+      // Send email verification with standard Firebase flow and longer expiration
+      await userCredential.user!.sendEmailVerification(
+        ActionCodeSettings(
+          // No URL needed for standard verification
+          url: 'https://smart-kirana-81629.firebaseapp.com',
+          handleCodeInApp: false,
+          // Set to null to use standard email verification
+          dynamicLinkDomain: null,
+        ),
+      );
 
       // Create user document in Firestore
       await _createUserDocument(userCredential.user!.uid, name, email, phone);
@@ -110,7 +118,16 @@ class AuthService {
     try {
       User? user = _auth.currentUser;
       if (user != null && !user.emailVerified) {
-        await user.sendEmailVerification();
+        // Use standard Firebase email verification with longer expiration
+        await user.sendEmailVerification(
+          ActionCodeSettings(
+            // No URL needed for standard verification
+            url: 'https://smart-kirana-81629.firebaseapp.com',
+            handleCodeInApp: false,
+            // Set to null to use standard email verification
+            dynamicLinkDomain: null,
+          ),
+        );
       }
     } catch (e) {
       rethrow;
