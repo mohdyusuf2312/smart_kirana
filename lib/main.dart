@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/firebase_options.dart';
@@ -10,10 +11,12 @@ import 'package:smart_kirana/providers/cart_provider.dart';
 import 'package:smart_kirana/providers/order_provider.dart';
 import 'package:smart_kirana/providers/payment_provider.dart';
 import 'package:smart_kirana/providers/product_provider.dart';
+import 'package:smart_kirana/services/admin_initialization_service.dart';
 import 'package:smart_kirana/screens/admin/admin_dashboard_screen.dart';
 import 'package:smart_kirana/screens/admin/category_management_screen.dart';
 import 'package:smart_kirana/screens/admin/order_management_screen.dart';
 import 'package:smart_kirana/screens/admin/product_management_screen.dart';
+import 'package:smart_kirana/screens/admin/simple_admin_dashboard.dart';
 import 'package:smart_kirana/screens/admin/user_management_screen.dart';
 import 'package:smart_kirana/screens/auth/email_verification_screen.dart';
 import 'package:smart_kirana/screens/auth/forgot_password_screen.dart';
@@ -39,6 +42,15 @@ void main() async {
   } catch (e) {
     // Silently continue without .env file
     // In a production app, use a proper logging framework
+  }
+
+  // Initialize default admin user
+  try {
+    final adminInitService = AdminInitializationService();
+    await adminInitService.initializeDefaultAdmin();
+  } catch (e) {
+    // Log error but continue with app startup
+    debugPrint('Failed to initialize admin user: $e');
   }
 
   runApp(const MyApp());
@@ -213,8 +225,7 @@ class MyApp extends StatelessWidget {
           HomeScreen.routeName: (context) => const HomeScreen(),
           OrderHistoryScreen.routeName: (context) => const OrderHistoryScreen(),
           // Admin Routes
-          AdminDashboardScreen.routeName:
-              (context) => const AdminDashboardScreen(),
+          '/admin-dashboard': (context) => const SimpleAdminDashboard(),
           ProductManagementScreen.routeName:
               (context) => const ProductManagementScreen(),
           CategoryManagementScreen.routeName:
