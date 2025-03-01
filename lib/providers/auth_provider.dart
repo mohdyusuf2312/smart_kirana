@@ -2,9 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_kirana/models/user_model.dart';
 import 'package:smart_kirana/services/auth_service.dart';
+import 'package:smart_kirana/services/firebase_auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final FirebaseAuthService _firebaseAuthService = FirebaseAuthService();
   UserModel? _user;
   bool _isLoading = false;
   String? _error;
@@ -14,7 +16,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _authService.currentUser != null;
-  bool get isEmailVerified => _authService.isEmailVerified();
+  bool get isEmailVerified => _firebaseAuthService.isEmailVerified();
   User? get currentUser => _authService.currentUser;
 
   // Initialize provider
@@ -174,7 +176,8 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(true);
     _clearError();
     try {
-      await _authService.resendVerificationEmail();
+      // Use the new FirebaseAuthService
+      await _firebaseAuthService.sendVerificationEmail();
       return true;
     } catch (e) {
       _setError('Failed to send verification email. Please try again.');
@@ -189,8 +192,9 @@ class AuthProvider extends ChangeNotifier {
     // Don't set loading state if we're just checking verification status
     // This prevents unnecessary UI rebuilds
     try {
-      await _authService.reloadUser();
-      bool isVerified = _authService.isEmailVerified();
+      // Use the new FirebaseAuthService
+      await _firebaseAuthService.reloadUser();
+      bool isVerified = _firebaseAuthService.isEmailVerified();
       if (isVerified) {
         // Only update Firestore and notify listeners if verification status changed
         await _authService.updateUserVerificationStatus(true);
@@ -237,8 +241,9 @@ class AuthProvider extends ChangeNotifier {
   // This can be used for silent checks that don't need UI updates
   Future<bool> checkEmailVerificationSilently() async {
     try {
-      await _authService.reloadUser();
-      return _authService.isEmailVerified();
+      // Use the new FirebaseAuthService
+      await _firebaseAuthService.reloadUser();
+      return _firebaseAuthService.isEmailVerified();
     } catch (e) {
       return false;
     }
