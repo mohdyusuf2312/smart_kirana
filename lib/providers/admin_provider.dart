@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_kirana/models/admin_dashboard_model.dart';
 import 'package:smart_kirana/models/category_model.dart';
@@ -11,7 +12,7 @@ import 'package:smart_kirana/providers/auth_provider.dart';
 class AdminProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final AuthProvider _authProvider;
-  
+
   AdminDashboardModel _dashboardData = AdminDashboardModel.empty();
   bool _isLoading = false;
   String? _error;
@@ -21,7 +22,8 @@ class AdminProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  AdminProvider({required AuthProvider authProvider}) : _authProvider = authProvider;
+  AdminProvider({required AuthProvider authProvider})
+    : _authProvider = authProvider;
 
   // Check if current user is admin
   bool get isAdmin {
@@ -47,7 +49,7 @@ class AdminProvider extends ChangeNotifier {
       final ordersSnapshot = await _firestore.collection('orders').get();
       final orders = ordersSnapshot.docs;
       final totalOrders = orders.length;
-      
+
       // Calculate revenue and order status counts
       double totalRevenue = 0;
       int pendingOrders = 0;
@@ -57,7 +59,7 @@ class AdminProvider extends ChangeNotifier {
       for (var order in orders) {
         final orderData = order.data();
         totalRevenue += (orderData['totalAmount'] ?? 0).toDouble();
-        
+
         switch (orderData['status']) {
           case 'PENDING':
           case 'PROCESSING':
@@ -74,19 +76,21 @@ class AdminProvider extends ChangeNotifier {
       }
 
       // Get recent orders (last 10)
-      final recentOrdersSnapshot = await _firestore
-          .collection('orders')
-          .orderBy('orderDate', descending: true)
-          .limit(10)
-          .get();
-      
-      final recentOrders = recentOrdersSnapshot.docs
-          .map((doc) => OrderAnalytics.fromMap(doc.data(), doc.id))
-          .toList();
+      final recentOrdersSnapshot =
+          await _firestore
+              .collection('orders')
+              .orderBy('orderDate', descending: true)
+              .limit(10)
+              .get();
+
+      final recentOrders =
+          recentOrdersSnapshot.docs
+              .map((doc) => OrderAnalytics.fromMap(doc.data(), doc.id))
+              .toList();
 
       // Generate revenue data for the last 7 days
       final revenueData = await _generateRevenueData();
-      
+
       // Generate user growth data for the last 7 days
       final userGrowthData = await _generateUserGrowthData();
 
@@ -114,59 +118,98 @@ class AdminProvider extends ChangeNotifier {
   // Generate revenue data for the last 7 days
   Future<List<RevenueData>> _generateRevenueData() async {
     List<RevenueData> revenueData = [];
-    
-    // Get today's date
-    final now = DateTime.now();
-    
-    // Generate data for the last 7 days
-    for (int i = 6; i >= 0; i--) {
-      final date = DateTime(now.year, now.month, now.day - i);
-      final nextDate = DateTime(now.year, now.month, now.day - i + 1);
-      
-      // Query orders for this day
-      final ordersSnapshot = await _firestore
-          .collection('orders')
-          .where('orderDate', isGreaterThanOrEqualTo: Timestamp.fromDate(date))
-          .where('orderDate', isLessThan: Timestamp.fromDate(nextDate))
-          .get();
-      
-      // Calculate total revenue for this day
-      double dailyRevenue = 0;
-      for (var order in ordersSnapshot.docs) {
-        dailyRevenue += (order.data()['totalAmount'] ?? 0).toDouble();
+
+    try {
+      // Get today's date
+      final now = DateTime.now();
+
+      // Generate data for the last 7 days
+      for (int i = 6; i >= 0; i--) {
+        final date = DateTime(now.year, now.month, now.day - i);
+        final nextDate = DateTime(now.year, now.month, now.day - i + 1);
+
+        try {
+          // Query orders for this day
+          final ordersSnapshot =
+              await _firestore
+                  .collection('orders')
+                  .where(
+                    'orderDate',
+                    isGreaterThanOrEqualTo: Timestamp.fromDate(date),
+                  )
+                  .where('orderDate', isLessThan: Timestamp.fromDate(nextDate))
+                  .get();
+
+          // Calculate total revenue for this day
+          double dailyRevenue = 0;
+          for (var order in ordersSnapshot.docs) {
+            dailyRevenue += (order.data()['totalAmount'] ?? 0).toDouble();
+          }
+
+          revenueData.add(RevenueData(date: date, amount: dailyRevenue));
+        } catch (e) {
+          // If there's an error for a specific day, add zero revenue
+          debugPrint('Error fetching revenue data for day $i: $e');
+          revenueData.add(RevenueData(date: date, amount: 0));
+        }
       }
-      
-      revenueData.add(RevenueData(date: date, amount: dailyRevenue));
+    } catch (e) {
+      debugPrint('Error generating revenue data: $e');
+      // Return empty data in case of error
+      final now = DateTime.now();
+      for (int i = 6; i >= 0; i--) {
+        final date = DateTime(now.year, now.month, now.day - i);
+        revenueData.add(RevenueData(date: date, amount: 0));
+      }
     }
-    
+
     return revenueData;
   }
 
   // Generate user growth data for the last 7 days
   Future<List<UserGrowthData>> _generateUserGrowthData() async {
     List<UserGrowthData> userGrowthData = [];
-    
-    // Get today's date
-    final now = DateTime.now();
-    
-    // Generate data for the last 7 days
-    for (int i = 6; i >= 0; i--) {
-      final date = DateTime(now.year, now.month, now.day - i);
-      final nextDate = DateTime(now.year, now.month, now.day - i + 1);
-      
-      // Query users created on this day
-      final usersSnapshot = await _firestore
-          .collection('users')
-          .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(date))
-          .where('createdAt', isLessThan: Timestamp.fromDate(nextDate))
-          .get();
-      
-      userGrowthData.add(UserGrowthData(
-        date: date,
-        count: usersSnapshot.docs.length,
-      ));
+
+    try {
+      // Get today's date
+      final now = DateTime.now();
+
+      // Generate data for the last 7 days
+      for (int i = 6; i >= 0; i--) {
+        final date = DateTime(now.year, now.month, now.day - i);
+        final nextDate = DateTime(now.year, now.month, now.day - i + 1);
+
+        try {
+          // Query users created on this day
+          final usersSnapshot =
+              await _firestore
+                  .collection('users')
+                  .where(
+                    'createdAt',
+                    isGreaterThanOrEqualTo: Timestamp.fromDate(date),
+                  )
+                  .where('createdAt', isLessThan: Timestamp.fromDate(nextDate))
+                  .get();
+
+          userGrowthData.add(
+            UserGrowthData(date: date, count: usersSnapshot.docs.length),
+          );
+        } catch (e) {
+          // If there's an error for a specific day, add zero count
+          debugPrint('Error fetching user growth data for day $i: $e');
+          userGrowthData.add(UserGrowthData(date: date, count: 0));
+        }
+      }
+    } catch (e) {
+      debugPrint('Error generating user growth data: $e');
+      // Return empty data in case of error
+      final now = DateTime.now();
+      for (int i = 6; i >= 0; i--) {
+        final date = DateTime(now.year, now.month, now.day - i);
+        userGrowthData.add(UserGrowthData(date: date, count: 0));
+      }
     }
-    
+
     return userGrowthData;
   }
 
