@@ -36,7 +36,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     final adminProvider = Provider.of<AdminProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
-    
+
     // Check if user is admin
     if (authProvider.user?.role != 'ADMIN') {
       return Scaffold(
@@ -44,10 +44,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'Unauthorized Access',
-                style: AppTextStyles.heading1,
-              ),
+              const Text('Unauthorized Access', style: AppTextStyles.heading1),
               const SizedBox(height: AppPadding.medium),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
@@ -60,58 +57,57 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-      ),
+      appBar: AppBar(title: const Text('Admin Dashboard')),
       drawer: const AdminDrawer(),
-      body: adminProvider.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : adminProvider.error != null
+      body:
+          adminProvider.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : adminProvider.error != null
               ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Error: ${adminProvider.error}',
+                      style: const TextStyle(color: AppColors.error),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppPadding.medium),
+                    ElevatedButton(
+                      onPressed: () => adminProvider.fetchDashboardData(),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              )
+              : RefreshIndicator(
+                onRefresh: () => adminProvider.fetchDashboardData(),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(AppPadding.medium),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Error: ${adminProvider.error}',
-                        style: const TextStyle(color: AppColors.error),
-                        textAlign: TextAlign.center,
+                      const Text(
+                        'Dashboard Overview',
+                        style: AppTextStyles.heading1,
                       ),
                       const SizedBox(height: AppPadding.medium),
-                      ElevatedButton(
-                        onPressed: () => adminProvider.fetchDashboardData(),
-                        child: const Text('Retry'),
-                      ),
+                      _buildAnalyticsCards(adminProvider.dashboardData),
+                      const SizedBox(height: AppPadding.large),
+                      _buildCharts(adminProvider.dashboardData),
+                      const SizedBox(height: AppPadding.large),
+                      _buildRecentOrders(adminProvider.dashboardData),
                     ],
                   ),
-                )
-              : RefreshIndicator(
-                  onRefresh: () => adminProvider.fetchDashboardData(),
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(AppPadding.medium),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Dashboard Overview',
-                          style: AppTextStyles.heading1,
-                        ),
-                        const SizedBox(height: AppPadding.medium),
-                        _buildAnalyticsCards(adminProvider.dashboardData),
-                        const SizedBox(height: AppPadding.large),
-                        _buildCharts(adminProvider.dashboardData),
-                        const SizedBox(height: AppPadding.large),
-                        _buildRecentOrders(adminProvider.dashboardData),
-                      ],
-                    ),
-                  ),
                 ),
+              ),
     );
   }
 
   Widget _buildAnalyticsCards(AdminDashboardModel data) {
     final currencyFormat = NumberFormat.currency(symbol: '₹');
-    
+
     return GridView.count(
       crossAxisCount: 2,
       crossAxisSpacing: AppPadding.medium,
@@ -124,10 +120,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           value: data.totalUsers.toString(),
           icon: Icons.people,
           color: AppColors.primary,
-          onTap: () => Navigator.pushNamed(
-            context,
-            UserManagementScreen.routeName,
-          ),
+          onTap:
+              () =>
+                  Navigator.pushNamed(context, UserManagementScreen.routeName),
         ),
         AnalyticsCard(
           title: 'Total Revenue',
@@ -141,36 +136,40 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           value: data.totalOrders.toString(),
           icon: Icons.shopping_bag,
           color: AppColors.secondary,
-          onTap: () => Navigator.pushNamed(
-            context,
-            OrderManagementScreen.routeName,
-          ),
+          onTap:
+              () =>
+                  Navigator.pushNamed(context, OrderManagementScreen.routeName),
         ),
         AnalyticsCard(
           title: 'Pending Orders',
           value: data.pendingOrders.toString(),
           icon: Icons.pending_actions,
           color: Colors.orange,
-          onTap: () => Navigator.pushNamed(
-            context,
-            OrderManagementScreen.routeName,
-            arguments: {'filter': 'PENDING'},
-          ),
+          onTap:
+              () => Navigator.pushNamed(
+                context,
+                OrderManagementScreen.routeName,
+                arguments: {'filter': 'PENDING'},
+              ),
         ),
       ],
     );
   }
 
+  // Flag to enable/disable charts
+  bool get enableCharts => true; // or use a runtime flag/provider
+
   Widget _buildCharts(AdminDashboardModel data) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Revenue (Last 7 Days)',
-          style: AppTextStyles.heading2,
-        ),
+        const Text('Revenue (Last 7 Days)', style: AppTextStyles.heading2),
         const SizedBox(height: AppPadding.medium),
         Container(
+          constraints: const BoxConstraints(
+            minHeight: 200,
+            minWidth: double.infinity,
+          ),
           height: 200,
           padding: const EdgeInsets.all(AppPadding.medium),
           decoration: BoxDecoration(
@@ -178,22 +177,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             borderRadius: BorderRadius.circular(AppBorderRadius.medium),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.grey.withAlpha(26), // 0.1 * 255 = 25.5 ≈ 26
                 spreadRadius: 1,
                 blurRadius: 2,
                 offset: const Offset(0, 1),
               ),
             ],
           ),
-          child: _buildRevenueChart(data.revenueData),
+          // Use a placeholder instead of the chart
+          child:
+              enableCharts
+                  ? _buildRevenueChart(data.revenueData)
+                  : _buildPlaceholderWidget(
+                    'Revenue Chart',
+                    'Total Revenue: ₹${data.totalRevenue.toStringAsFixed(2)}',
+                  ),
         ),
         const SizedBox(height: AppPadding.large),
-        const Text(
-          'New Users (Last 7 Days)',
-          style: AppTextStyles.heading2,
-        ),
+        const Text('New Users (Last 7 Days)', style: AppTextStyles.heading2),
         const SizedBox(height: AppPadding.medium),
         Container(
+          constraints: const BoxConstraints(
+            minHeight: 200,
+            minWidth: double.infinity,
+          ),
           height: 200,
           padding: const EdgeInsets.all(AppPadding.medium),
           decoration: BoxDecoration(
@@ -201,16 +208,51 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             borderRadius: BorderRadius.circular(AppBorderRadius.medium),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.grey.withAlpha(26), // 0.1 * 255 = 25.5 ≈ 26
                 spreadRadius: 1,
                 blurRadius: 2,
                 offset: const Offset(0, 1),
               ),
             ],
           ),
-          child: _buildUserGrowthChart(data.userGrowthData),
+          // Use a placeholder instead of the chart
+          child:
+              enableCharts
+                  ? _buildUserGrowthChart(data.userGrowthData)
+                  : _buildPlaceholderWidget(
+                    'User Growth Chart',
+                    'Total Users: ${data.totalUsers}',
+                  ),
         ),
       ],
+    );
+  }
+
+  // Simple placeholder widget to replace charts
+  Widget _buildPlaceholderWidget(String title, String data) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.heading3,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            data,
+            style: AppTextStyles.bodyLarge,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Charts temporarily disabled',
+            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
@@ -219,10 +261,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       return const Center(child: Text('No revenue data available'));
     }
 
+    // Calculate max Y value safely
+    double maxY = 1.0; // Default value if all amounts are 0
+    try {
+      final maxAmount = revenueData
+          .map((e) => e.amount)
+          .reduce((a, b) => a > b ? a : b);
+      maxY = maxAmount > 0 ? maxAmount * 1.2 : 1.0;
+    } catch (e) {
+      // Handle any errors in calculation
+      debugPrint('Error calculating maxY: $e');
+    }
+
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
-        maxY: revenueData.map((e) => e.amount).reduce((a, b) => a > b ? a : b) * 1.2,
+        maxY: maxY,
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
             tooltipBgColor: Colors.blueGrey,
@@ -279,40 +333,139 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         gridData: FlGridData(
           show: true,
-          horizontalInterval: revenueData.map((e) => e.amount).reduce((a, b) => a > b ? a : b) / 5,
+          horizontalInterval: _calculateHorizontalInterval(revenueData),
           getDrawingHorizontalLine: (value) {
             return FlLine(
-              color: Colors.grey.withOpacity(0.2),
+              color: Colors.grey.withAlpha(51),
               strokeWidth: 1,
-            );
+            ); // 0.2 * 255 = 51
           },
         ),
         borderData: FlBorderData(show: false),
-        barGroups: revenueData.asMap().entries.map((entry) {
-          final index = entry.key;
-          final data = entry.value;
-          return BarChartGroupData(
-            x: index,
-            barRods: [
-              BarChartRodData(
-                toY: data.amount,
-                color: AppColors.primary,
-                width: 20,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(AppBorderRadius.small),
-                  topRight: Radius.circular(AppBorderRadius.small),
-                ),
-              ),
-            ],
-          );
-        }).toList(),
+        barGroups: _createBarGroups(revenueData),
       ),
     );
+  }
+
+  // Helper method to create bar groups with error handling
+  List<BarChartGroupData> _createBarGroups(List<RevenueData> revenueData) {
+    try {
+      return revenueData.asMap().entries.map((entry) {
+        final index = entry.key;
+        final data = entry.value;
+        // Ensure amount is not negative and is a double
+        final amount = data.amount < 0 ? 0.0 : data.amount.toDouble();
+
+        return BarChartGroupData(
+          x: index,
+          barRods: [
+            BarChartRodData(
+              toY: amount,
+              color: AppColors.primary,
+              width: 20,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(AppBorderRadius.small),
+                topRight: Radius.circular(AppBorderRadius.small),
+              ),
+            ),
+          ],
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Error creating bar groups: $e');
+      // Return a single empty bar if there's an error
+      return [
+        BarChartGroupData(
+          x: 0,
+          barRods: [
+            BarChartRodData(
+              toY: 0,
+              color: AppColors.primary,
+              width: 20,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(AppBorderRadius.small),
+                topRight: Radius.circular(AppBorderRadius.small),
+              ),
+            ),
+          ],
+        ),
+      ];
+    }
+  }
+
+  // Helper method to calculate horizontal interval for charts
+  double _calculateHorizontalInterval(List<RevenueData> revenueData) {
+    // If the list is empty, return a default value
+    if (revenueData.isEmpty) {
+      return 1.0;
+    }
+
+    try {
+      // Get the maximum amount
+      final maxAmount = revenueData
+          .map((e) => e.amount)
+          .reduce((a, b) => a > b ? a : b);
+
+      // If max amount is 0 or very small, return a default value
+      if (maxAmount <= 0) {
+        return 1.0; // Default interval when there's no revenue
+      }
+
+      // Otherwise, calculate a reasonable interval
+      return maxAmount / 5;
+    } catch (e) {
+      debugPrint('Error calculating horizontal interval: $e');
+      return 1.0; // Default value in case of error
+    }
+  }
+
+  // Helper method to calculate horizontal interval for user growth chart
+  double _calculateUserGrowthInterval(List<UserGrowthData> userGrowthData) {
+    // If the list is empty, return a default value
+    if (userGrowthData.isEmpty) {
+      return 1.0;
+    }
+
+    try {
+      // Get the maximum count
+      final maxCount = userGrowthData
+          .map((e) => e.count)
+          .reduce((a, b) => a > b ? a : b);
+
+      // If max count is 0 or very small, return a default value
+      if (maxCount <= 0) {
+        return 1.0; // Default interval when there are no users
+      }
+
+      // Otherwise, calculate a reasonable interval
+      return maxCount / 5;
+    } catch (e) {
+      debugPrint('Error calculating user growth interval: $e');
+      return 1.0; // Default value in case of error
+    }
   }
 
   Widget _buildUserGrowthChart(List<UserGrowthData> userGrowthData) {
     if (userGrowthData.isEmpty) {
       return const Center(child: Text('No user growth data available'));
+    }
+
+    // Ensure we have valid data points
+    if (userGrowthData.length < 2) {
+      return const Center(child: Text('Insufficient data for chart'));
+    }
+
+    // Ensure all spots have valid values
+    final spots =
+        userGrowthData.asMap().entries.map((entry) {
+          final index = entry.key;
+          final data = entry.value;
+          return FlSpot(index.toDouble(), data.count.toDouble());
+        }).toList();
+
+    // Check if we have any valid spots
+    if (spots.isEmpty) {
+      return const Center(child: Text('No valid data points'));
     }
 
     return LineChart(
@@ -337,7 +490,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             sideTitles: SideTitles(
               showTitles: true,
               getTitlesWidget: (value, meta) {
-                if (value.toInt() >= 0 && value.toInt() < userGrowthData.length) {
+                if (value.toInt() >= 0 &&
+                    value.toInt() < userGrowthData.length) {
                   final date = userGrowthData[value.toInt()].date;
                   return Padding(
                     padding: const EdgeInsets.only(top: 8.0),
@@ -374,21 +528,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         gridData: FlGridData(
           show: true,
+          horizontalInterval: _calculateUserGrowthInterval(userGrowthData),
           getDrawingHorizontalLine: (value) {
             return FlLine(
-              color: Colors.grey.withOpacity(0.2),
+              color: Colors.grey.withAlpha(51),
               strokeWidth: 1,
-            );
+            ); // 0.2 * 255 = 51
           },
         ),
         borderData: FlBorderData(show: false),
         lineBarsData: [
           LineChartBarData(
-            spots: userGrowthData.asMap().entries.map((entry) {
-              final index = entry.key;
-              final data = entry.value;
-              return FlSpot(index.toDouble(), data.count.toDouble());
-            }).toList(),
+            spots: spots,
             isCurved: true,
             color: AppColors.secondary,
             barWidth: 3,
@@ -396,7 +547,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             dotData: FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
-              color: AppColors.secondary.withOpacity(0.2),
+              color: AppColors.secondary.withAlpha(51), // 0.2 * 255 = 51
             ),
           ),
         ],
@@ -411,15 +562,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Recent Orders',
-              style: AppTextStyles.heading2,
-            ),
+            const Text('Recent Orders', style: AppTextStyles.heading2),
             TextButton(
-              onPressed: () => Navigator.pushNamed(
-                context,
-                OrderManagementScreen.routeName,
-              ),
+              onPressed:
+                  () => Navigator.pushNamed(
+                    context,
+                    OrderManagementScreen.routeName,
+                  ),
               child: const Text('View All'),
             ),
           ],
