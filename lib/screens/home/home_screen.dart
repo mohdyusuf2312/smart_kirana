@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
+import 'package:smart_kirana/screens/admin/simple_admin_dashboard.dart';
 import 'package:smart_kirana/screens/home/cart_screen.dart';
 import 'package:smart_kirana/screens/home/product_screen.dart';
 import 'package:smart_kirana/screens/home/profile_screen.dart';
@@ -52,17 +53,29 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    // Check if email is verified
-    if (!authProvider.isEmailVerified) {
+    // Load user data
+    await authProvider.initialize();
+
+    // Check if user is admin - redirect to admin dashboard
+    if (authProvider.user?.role == 'ADMIN') {
+      if (mounted) {
+        // Navigate to the simple admin dashboard directly
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SimpleAdminDashboard()),
+        );
+        return;
+      }
+    }
+
+    // Check if email is verified (only for non-admin users)
+    if (!authProvider.isEmailVerified && authProvider.user?.role != 'ADMIN') {
       // Show dialog to verify email
       if (mounted) {
         _showVerifyEmailDialog();
       }
       return;
     }
-
-    // Load user data
-    await authProvider.initialize();
   }
 
   // void _showVerifyEmailDialog() {
