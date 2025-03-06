@@ -28,8 +28,9 @@ class OrderItem {
       productName: cartItem.product.name,
       productImage: cartItem.product.imageUrl,
       price:
-          cartItem.product.discountPrice > 0
-              ? cartItem.product.discountPrice
+          (cartItem.product.discountPrice != null &&
+                  cartItem.product.discountPrice! > 0)
+              ? cartItem.product.discountPrice!
               : cartItem.product.price,
       quantity: cartItem.quantity,
       totalPrice: cartItem.totalPrice,
