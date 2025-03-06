@@ -26,7 +26,9 @@ class CartItemModel {
 
   double get totalPrice {
     final price =
-        product.discountPrice > 0 ? product.discountPrice : product.price;
+        (product.discountPrice != null && product.discountPrice! > 0)
+            ? product.discountPrice!
+            : product.price;
     return price * quantity;
   }
 }
