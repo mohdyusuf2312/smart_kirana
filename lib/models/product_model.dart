@@ -3,7 +3,7 @@ class ProductModel {
   final String name;
   final String description;
   final double price;
-  final double discountPrice;
+  final double? discountPrice;
   final String imageUrl;
   final String categoryId;
   final String categoryName;
@@ -17,7 +17,7 @@ class ProductModel {
     required this.name,
     required this.description,
     required this.price,
-    required this.discountPrice,
+    this.discountPrice,
     required this.imageUrl,
     required this.categoryId,
     required this.categoryName,
@@ -33,7 +33,10 @@ class ProductModel {
       name: map['name'] ?? '',
       description: map['description'] ?? '',
       price: (map['price'] ?? 0).toDouble(),
-      discountPrice: (map['discountPrice'] ?? 0).toDouble(),
+      discountPrice:
+          map['discountPrice'] != null
+              ? (map['discountPrice']).toDouble()
+              : null,
       imageUrl: map['imageUrl'] ?? '',
       categoryId: map['categoryId'] ?? '',
       categoryName: map['categoryName'] ?? '',
