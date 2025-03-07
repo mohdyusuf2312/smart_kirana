@@ -13,7 +13,9 @@ class CartProvider extends ChangeNotifier {
   List<CartItemModel> _cartItems = [];
   bool _isLoading = false;
   String? _error;
-  final double _deliveryFee = 40.0; // Default delivery fee
+  final double _baseDeliveryFee = 40.0; // Default delivery fee
+  final double _freeDeliveryThreshold =
+      200.0; // Free delivery above this amount
 
   CartProvider({
     required AuthProvider authProvider,
@@ -27,7 +29,11 @@ class CartProvider extends ChangeNotifier {
   List<CartItemModel> get cartItems => _cartItems;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  double get deliveryFee => _deliveryFee;
+
+  // Calculate delivery fee based on subtotal
+  double get deliveryFee {
+    return subtotal >= _freeDeliveryThreshold ? 0.0 : _baseDeliveryFee;
+  }
 
   // Calculate subtotal
   double get subtotal {
@@ -39,7 +45,7 @@ class CartProvider extends ChangeNotifier {
 
   // Calculate total
   double get total {
-    return subtotal + (_cartItems.isNotEmpty ? _deliveryFee : 0);
+    return subtotal + (_cartItems.isNotEmpty ? deliveryFee : 0);
   }
 
   // Load cart from Firestore
@@ -207,7 +213,7 @@ class CartProvider extends ChangeNotifier {
               name: '',
               description: '',
               price: 0,
-              discountPrice: 0,
+              discountPrice: null,
               imageUrl: '',
               categoryId: '',
               categoryName: '',
