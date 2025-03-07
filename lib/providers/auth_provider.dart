@@ -248,4 +248,194 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  // Update user profile
+  Future<bool> updateUserProfile(UserModel updatedUser) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      // Update user data in Firestore
+      await _authService.updateUserProfile(updatedUser);
+
+      // Reload user data
+      await _loadUserData();
+      return true;
+    } catch (e) {
+      _setError('Failed to update profile: ${e.toString()}');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Phone Authentication Methods
+
+  // Send phone verification code
+  Future<void> sendPhoneVerificationCode({
+    required String phoneNumber,
+    required Function(String verificationId, int? resendToken) onCodeSent,
+    required Function(String error) onVerificationFailed,
+  }) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      await _firebaseAuthService.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        onCodeSent: onCodeSent,
+        onVerificationFailed: (e) {
+          String errorMessage;
+          if (e is FirebaseAuthException) {
+            switch (e.code) {
+              case 'invalid-phone-number':
+                errorMessage = 'The phone number is invalid.';
+                break;
+              case 'too-many-requests':
+                errorMessage = 'Too many requests. Try again later.';
+                break;
+              case 'quota-exceeded':
+                errorMessage = 'SMS quota exceeded. Try again later.';
+                break;
+              default:
+                errorMessage = 'An error occurred: ${e.message}';
+            }
+          } else {
+            errorMessage = 'An unexpected error occurred. Please try again.';
+          }
+          onVerificationFailed(errorMessage);
+        },
+      );
+    } catch (e) {
+      onVerificationFailed('Failed to send verification code: ${e.toString()}');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Verify phone OTP
+  Future<bool> verifyPhoneOTP({
+    required String verificationId,
+    required String otp,
+  }) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      final userCredential = await _firebaseAuthService
+          .signInWithPhoneCredential(
+            verificationId: verificationId,
+            smsCode: otp,
+          );
+
+      if (userCredential.user != null) {
+        // Check if user exists in Firestore
+        final userData = await _authService.getUserDataByUid(
+          userCredential.user!.uid,
+        );
+
+        if (userData == null) {
+          // Create new user in Firestore if not exists
+          await _authService.createUserFromPhone(
+            uid: userCredential.user!.uid,
+            phoneNumber: userCredential.user!.phoneNumber ?? '',
+          );
+        }
+
+        // Load user data
+        await _loadUserData();
+        return true;
+      } else {
+        _setError('Failed to verify OTP. Please try again.');
+        return false;
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMessage;
+      switch (e.code) {
+        case 'invalid-verification-code':
+          errorMessage = 'The verification code is invalid.';
+          break;
+        case 'invalid-verification-id':
+          errorMessage = 'The verification ID is invalid.';
+          break;
+        default:
+          errorMessage =
+              'An error occurred during verification. Please try again.';
+      }
+      _setError(errorMessage);
+      return false;
+    } catch (e) {
+      _setError('An unexpected error occurred. Please try again.');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Check if phone number exists
+  Future<bool> checkPhoneNumberExists(String phoneNumber) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      // Format phone number to include country code if not already present
+      if (!phoneNumber.startsWith('+')) {
+        // Add India country code (+91) if not present
+        phoneNumber = '+91$phoneNumber';
+      }
+
+      return await _authService.checkPhoneNumberExists(phoneNumber);
+    } catch (e) {
+      _setError('Failed to check phone number: ${e.toString()}');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Sign in with phone number and password
+  Future<bool> signInWithPhoneAndPassword({
+    required String phoneNumber,
+    required String password,
+  }) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      // Format phone number to include country code if not already present
+      if (!phoneNumber.startsWith('+')) {
+        // Add India country code (+91) if not present
+        phoneNumber = '+91$phoneNumber';
+      }
+
+      await _authService.signInWithPhoneAndPassword(
+        phoneNumber: phoneNumber,
+        password: password,
+      );
+
+      await _loadUserData();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      String errorMessage;
+      switch (e.code) {
+        case 'user-not-found':
+          errorMessage = 'No user found with this phone number.';
+          break;
+        case 'wrong-password':
+          errorMessage = 'Wrong password provided.';
+          break;
+        case 'invalid-login-method':
+          errorMessage =
+              e.message ?? 'This account cannot be accessed with password.';
+          break;
+        case 'user-disabled':
+          errorMessage = 'This user has been disabled.';
+          break;
+        default:
+          errorMessage = 'An error occurred during sign in. Please try again.';
+      }
+      _setError(errorMessage);
+      return false;
+    } catch (e) {
+      _setError('An unexpected error occurred. Please try again.');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
 }
