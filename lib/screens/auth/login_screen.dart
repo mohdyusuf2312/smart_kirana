@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/screens/auth/forgot_password_screen.dart';
+import 'package:smart_kirana/screens/auth/phone_login_screen.dart';
+import 'package:smart_kirana/screens/auth/phone_password_login_screen.dart';
 import 'package:smart_kirana/screens/auth/signup_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
@@ -218,6 +220,42 @@ class _LoginScreenState extends State<LoginScreen> {
                           text: AppStrings.login,
                           onPressed: _login,
                           isLoading: authProvider.isLoading,
+                        ),
+                        const SizedBox(height: AppPadding.medium),
+                        // Phone login with OTP button
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.sms),
+                          label: const Text('Login with OTP'),
+                          onPressed:
+                              authProvider.isLoading
+                                  ? null
+                                  : () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      PhoneLoginScreen.routeName,
+                                    );
+                                  },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                        const SizedBox(height: AppPadding.small),
+                        // Phone login with password button
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.phone),
+                          label: const Text('Login with Phone & Password'),
+                          onPressed:
+                              authProvider.isLoading
+                                  ? null
+                                  : () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      PhonePasswordLoginScreen.routeName,
+                                    );
+                                  },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
                         ),
                       ],
                     );
