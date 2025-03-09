@@ -25,7 +25,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   bool _isEdit = false;
   File? _imageFile;
   String _imageUrl = '';
-  List<String> _categories = [];
+  List<String> _categoryIds = [];
+  Map<String, String> _categoryMap = {}; // Map of category IDs to names
   String? _selectedCategoryId;
 
   // Form fields
@@ -61,16 +62,32 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   Future<void> _loadCategories() async {
     try {
-      final categoriesSnapshot = await _firestore.collection('categories').get();
+      final categoriesSnapshot =
+          await _firestore.collection('categories').get();
       final categories = categoriesSnapshot.docs;
-      
+
+      // Create a map of category IDs to names
+      final Map<String, String> categoryMap = {};
+      final List<String> categoryIds = [];
+
+      for (var doc in categories) {
+        final data = doc.data();
+        final categoryId = doc.id;
+        final categoryName = data['name'] as String;
+        categoryMap[categoryId] = categoryName;
+        categoryIds.add(categoryId);
+      }
+
       setState(() {
-        _categories = categories.map((doc) => doc.data()['name'] as String).toList();
+        _categoryMap = categoryMap;
+        _categoryIds = categoryIds;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load categories: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load categories: $e')),
+        );
+      }
     }
   }
 
@@ -80,12 +97,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     });
 
     try {
-      final productDoc = await _firestore.collection('products').doc(widget.productId).get();
-      
+      final productDoc =
+          await _firestore.collection('products').doc(widget.productId).get();
+
       if (productDoc.exists) {
         final productData = productDoc.data() as Map<String, dynamic>;
         final product = ProductModel.fromMap(productData, productDoc.id);
-        
+
         _nameController.text = product.name;
         _descriptionController.text = product.description;
         _priceController.text = product.price.toString();
@@ -98,9 +116,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         _selectedCategoryId = product.categoryId;
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load product data: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load product data: $e')),
+        );
+      }
     } finally {
       setState(() {
         _isLoading = false;
@@ -110,7 +130,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    
+
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
@@ -120,42 +140,46 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   Future<String> _uploadImage() async {
     if (_imageFile == null) return _imageUrl;
-    
+
     try {
-      final fileName = 'products/${DateTime.now().millisecondsSinceEpoch}_${_nameController.text.replaceAll(' ', '_')}';
+      final fileName =
+          'products/${DateTime.now().millisecondsSinceEpoch}_${_nameController.text.replaceAll(' ', '_')}';
       final ref = _storage.ref().child(fileName);
-      
+
       await ref.putFile(_imageFile!);
       final url = await ref.getDownloadURL();
-      
+
       return url;
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to upload image: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to upload image: $e')));
+      }
       return '';
     }
   }
 
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       // Upload image if selected
       final imageUrl = await _uploadImage();
-      
+
       // Prepare product data
       final productData = {
         'name': _nameController.text,
         'description': _descriptionController.text,
         'price': double.parse(_priceController.text),
-        'discountPrice': _discountPriceController.text.isNotEmpty
-            ? double.parse(_discountPriceController.text)
-            : null,
+        'discountPrice':
+            _discountPriceController.text.isNotEmpty
+                ? double.parse(_discountPriceController.text)
+                : null,
         'imageUrl': imageUrl,
         'categoryId': _selectedCategoryId,
         'stock': int.parse(_stockController.text),
@@ -163,10 +187,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         'isPopular': _isPopular,
         'isFeatured': _isFeatured,
       };
-      
+
       if (_isEdit) {
         // Update existing product
-        await _firestore.collection('products').doc(widget.productId).update(productData);
+        await _firestore
+            .collection('products')
+            .doc(widget.productId)
+            .update(productData);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Product updated successfully')),
@@ -181,15 +208,15 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           );
         }
       }
-      
+
       if (mounted) {
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save product: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save product: $e')));
       }
     } finally {
       setState(() {
@@ -201,30 +228,29 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEdit ? 'Edit Product' : 'Add Product'),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(AppPadding.medium),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildImagePicker(),
-                    const SizedBox(height: AppPadding.large),
-                    _buildFormFields(),
-                    const SizedBox(height: AppPadding.large),
-                    ElevatedButton(
-                      onPressed: _saveProduct,
-                      child: Text(_isEdit ? 'Update Product' : 'Add Product'),
-                    ),
-                  ],
+      appBar: AppBar(title: Text(_isEdit ? 'Edit Product' : 'Add Product')),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(AppPadding.medium),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildImagePicker(),
+                      const SizedBox(height: AppPadding.large),
+                      _buildFormFields(),
+                      const SizedBox(height: AppPadding.large),
+                      ElevatedButton(
+                        onPressed: _saveProduct,
+                        child: Text(_isEdit ? 'Update Product' : 'Add Product'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
     );
   }
 
@@ -240,34 +266,28 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             borderRadius: BorderRadius.circular(AppBorderRadius.medium),
             border: Border.all(color: Colors.grey.shade300),
           ),
-          child: _imageFile != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(AppBorderRadius.medium),
-                  child: Image.file(
-                    _imageFile!,
-                    fit: BoxFit.cover,
-                  ),
-                )
-              : _imageUrl.isNotEmpty
+          child:
+              _imageFile != null
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(AppBorderRadius.medium),
-                      child: Image.network(
-                        _imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.image,
-                            size: 50,
-                            color: Colors.grey,
-                          );
-                        },
-                      ),
-                    )
-                  : const Icon(
-                      Icons.add_a_photo,
-                      size: 50,
-                      color: Colors.grey,
+                    borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+                    child: Image.file(_imageFile!, fit: BoxFit.cover),
+                  )
+                  : _imageUrl.isNotEmpty
+                  ? ClipRRect(
+                    borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+                    child: Image.network(
+                      _imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.image,
+                          size: 50,
+                          color: Colors.grey,
+                        );
+                      },
                     ),
+                  )
+                  : const Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
         ),
       ),
     );
@@ -343,7 +363,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     if (double.tryParse(value) == null) {
                       return 'Please enter a valid number';
                     }
-                    if (double.parse(value) >= double.parse(_priceController.text)) {
+                    if (double.parse(value) >=
+                        double.parse(_priceController.text)) {
                       return 'Discount price should be less than regular price';
                     }
                   }
@@ -360,12 +381,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             hintText: 'Select category',
           ),
           value: _selectedCategoryId,
-          items: _categories.map((category) {
-            return DropdownMenuItem<String>(
-              value: category,
-              child: Text(category),
-            );
-          }).toList(),
+          items:
+              _categoryIds.map((categoryId) {
+                return DropdownMenuItem<String>(
+                  value: categoryId,
+                  child: Text(_categoryMap[categoryId] ?? 'Unknown Category'),
+                );
+              }).toList(),
           onChanged: (value) {
             setState(() {
               _selectedCategoryId = value;
