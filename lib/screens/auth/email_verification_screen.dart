@@ -311,7 +311,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                         const SizedBox(width: AppPadding.small),
                         Expanded(
                           child: Text(
-                            'Checking verification status...',
+                            'Email is not verified. Please check your email.',
                             style: AppTextStyles.bodySmall.copyWith(
                               color: AppColors.primary,
                             ),
