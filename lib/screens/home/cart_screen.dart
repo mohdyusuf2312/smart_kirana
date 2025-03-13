@@ -110,13 +110,14 @@ class CartScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppPadding.small),
                   Text(
-                    '₹${cartItem.product.discountPrice > 0 ? cartItem.product.discountPrice : cartItem.product.price}',
+                    '₹${(cartItem.product.discountPrice != null && cartItem.product.discountPrice! > 0) ? cartItem.product.discountPrice! : cartItem.product.price}',
                     style: AppTextStyles.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
                     ),
                   ),
-                  if (cartItem.product.discountPrice > 0)
+                  if (cartItem.product.discountPrice != null &&
+                      cartItem.product.discountPrice! > 0)
                     Text(
                       '₹${cartItem.product.price}',
                       style: AppTextStyles.bodySmall.copyWith(
@@ -243,6 +244,35 @@ class CartScreen extends StatelessWidget {
               ),
             ],
           ),
+          // Free delivery message
+          if (cartProvider.subtotal < 200)
+            Container(
+              padding: const EdgeInsets.all(8),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withAlpha(26),
+                borderRadius: BorderRadius.circular(AppBorderRadius.small),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.local_shipping_outlined,
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Add ₹${(200 - cartProvider.subtotal).toStringAsFixed(2)} more to get FREE delivery!',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           const Divider(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
