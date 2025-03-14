@@ -191,11 +191,38 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Delivery Fee', style: AppTextStyles.bodyMedium),
-                        Text(
-                          '₹${cartProvider.deliveryFee.toStringAsFixed(2)}',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          children: [
+                            if (cartProvider.deliveryFee == 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                margin: const EdgeInsets.only(right: 6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.success.withAlpha(26),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'FREE',
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: AppColors.success,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            Text(
+                              '₹${cartProvider.deliveryFee.toStringAsFixed(2)}',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                fontWeight: FontWeight.bold,
+                                decoration:
+                                    cartProvider.deliveryFee == 0
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
