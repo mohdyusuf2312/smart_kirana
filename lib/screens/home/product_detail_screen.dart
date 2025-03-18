@@ -114,13 +114,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '₹${widget.product.discountPrice > 0 ? widget.product.discountPrice : widget.product.price}',
+                            '₹${(widget.product.discountPrice != null && widget.product.discountPrice! > 0) ? widget.product.discountPrice! : widget.product.price}',
                             style: AppTextStyles.heading2.copyWith(
                               color: AppColors.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          if (widget.product.discountPrice > 0)
+                          if (widget.product.discountPrice != null &&
+                              widget.product.discountPrice! > 0)
                             Text(
                               '₹${widget.product.price}',
                               style: AppTextStyles.bodyMedium.copyWith(
