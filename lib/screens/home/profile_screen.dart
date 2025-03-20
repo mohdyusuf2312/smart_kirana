@@ -4,7 +4,10 @@ import 'package:smart_kirana/models/user_model.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/screens/admin/admin_dashboard_screen.dart';
 import 'package:smart_kirana/screens/auth/login_screen.dart';
+import 'package:smart_kirana/screens/home/about_us_screen.dart';
 import 'package:smart_kirana/screens/home/address_screen.dart';
+import 'package:smart_kirana/screens/home/edit_profile_screen.dart';
+import 'package:smart_kirana/screens/home/help_support_screen.dart';
 import 'package:smart_kirana/screens/orders/order_history_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
@@ -166,7 +169,12 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.edit_outlined,
                   title: 'Edit Profile',
                   onTap: () {
-                    // TODO: Implement edit profile screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EditProfileScreen(),
+                      ),
+                    );
                   },
                 ),
               ],
@@ -205,7 +213,12 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.help_outline,
                   title: 'Help & Support',
                   onTap: () {
-                    // TODO: Implement help & support screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HelpSupportScreen(),
+                      ),
+                    );
                   },
                 ),
                 const Divider(height: 1),
@@ -214,7 +227,12 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.info_outline,
                   title: 'About Us',
                   onTap: () {
-                    // TODO: Implement about us screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AboutUsScreen(),
+                      ),
+                    );
                   },
                 ),
                 const Divider(height: 1),
