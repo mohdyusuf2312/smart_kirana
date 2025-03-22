@@ -9,6 +9,8 @@ class UserAddress {
   final double latitude;
   final double longitude;
   final bool isDefault;
+  final String? label; // Optional label like "Home", "Work", etc.
+  final String? phoneNumber; // Optional phone number for delivery
 
   UserAddress({
     required this.id,
@@ -19,6 +21,8 @@ class UserAddress {
     required this.latitude,
     required this.longitude,
     this.isDefault = false,
+    this.label,
+    this.phoneNumber,
   });
 
   factory UserAddress.fromMap(Map<String, dynamic> map, String id) {
@@ -31,6 +35,8 @@ class UserAddress {
       latitude: map['latitude'] ?? 0.0,
       longitude: map['longitude'] ?? 0.0,
       isDefault: map['isDefault'] ?? false,
+      label: map['label'],
+      phoneNumber: map['phoneNumber'],
     );
   }
 
@@ -44,6 +50,8 @@ class UserAddress {
       'latitude': latitude,
       'longitude': longitude,
       'isDefault': isDefault,
+      'label': label,
+      'phoneNumber': phoneNumber,
     };
   }
 
@@ -56,6 +64,8 @@ class UserAddress {
     double? latitude,
     double? longitude,
     bool? isDefault,
+    String? label,
+    String? phoneNumber,
   }) {
     return UserAddress(
       id: id ?? this.id,
@@ -66,6 +76,8 @@ class UserAddress {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       isDefault: isDefault ?? this.isDefault,
+      label: label ?? this.label,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
     );
   }
 }
