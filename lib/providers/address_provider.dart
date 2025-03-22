@@ -6,48 +6,72 @@ import 'package:smart_kirana/providers/auth_provider.dart';
 class AddressProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final AuthProvider _authProvider;
-  
+
   List<UserAddress> _addresses = [];
   bool _isLoading = false;
   String? _error;
 
-  AddressProvider({
-    required AuthProvider authProvider,
-  }) : _authProvider = authProvider {
-    _loadAddresses();
+  AddressProvider({required AuthProvider authProvider})
+    : _authProvider = authProvider {
+    loadAddresses();
   }
 
   // Getters
   List<UserAddress> get addresses => _addresses;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  UserAddress? get defaultAddress => _addresses.isNotEmpty 
-      ? _addresses.firstWhere((address) => address.isDefault, orElse: () => _addresses.first)
-      : null;
+  UserAddress? get defaultAddress =>
+      _addresses.isNotEmpty
+          ? _addresses.firstWhere(
+            (address) => address.isDefault,
+            orElse: () => _addresses.first,
+          )
+          : null;
 
   // Load addresses from Firestore
-  Future<void> _loadAddresses() async {
+  Future<void> loadAddresses() async {
     if (_authProvider.currentUser == null) return;
-    
+
     _setLoading(true);
     try {
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(_authProvider.currentUser!.uid)
-          .get();
-      
+      final userDoc =
+          await _firestore
+              .collection('users')
+              .doc(_authProvider.currentUser!.uid)
+              .get();
+
       if (userDoc.exists && userDoc.data()!.containsKey('addresses')) {
         final addressesData = userDoc.data()!['addresses'] as List<dynamic>;
-        
-        _addresses = addressesData.map((data) {
-          return UserAddress.fromMap(data as Map<String, dynamic>, data['id'] as String);
-        }).toList();
+
+        if (addressesData.isEmpty) {
+          _addresses = [];
+        } else {
+          _addresses =
+              addressesData
+                  .map((data) {
+                    try {
+                      if (data is Map<String, dynamic> &&
+                          data.containsKey('id')) {
+                        return UserAddress.fromMap(data, data['id'] as String);
+                      } else {
+                        debugPrint('Invalid address data: $data');
+                        return null;
+                      }
+                    } catch (e) {
+                      debugPrint('Error parsing address: $e');
+                      return null;
+                    }
+                  })
+                  .whereType<UserAddress>()
+                  .toList();
+        }
       } else {
         _addresses = [];
       }
-      
+
       notifyListeners();
     } catch (e) {
+      debugPrint('Failed to load addresses: $e');
       _setError('Failed to load addresses: ${e.toString()}');
     } finally {
       _setLoading(false);
@@ -57,7 +81,7 @@ class AddressProvider extends ChangeNotifier {
   // Add new address
   Future<void> addAddress(UserAddress address) async {
     if (_authProvider.currentUser == null) return;
-    
+
     _setLoading(true);
     try {
       // If this is the first address or marked as default, ensure it's the only default
@@ -69,13 +93,13 @@ class AddressProvider extends ChangeNotifier {
           }
         }
       }
-      
+
       // Add the new address
       _addresses.add(address);
-      
+
       // Update Firestore
       await _updateFirestoreAddresses();
-      
+
       notifyListeners();
     } catch (e) {
       _setError('Failed to add address: ${e.toString()}');
@@ -88,11 +112,13 @@ class AddressProvider extends ChangeNotifier {
   // Update existing address
   Future<void> updateAddress(UserAddress updatedAddress) async {
     if (_authProvider.currentUser == null) return;
-    
+
     _setLoading(true);
     try {
-      final index = _addresses.indexWhere((address) => address.id == updatedAddress.id);
-      
+      final index = _addresses.indexWhere(
+        (address) => address.id == updatedAddress.id,
+      );
+
       if (index >= 0) {
         // If this address is being set as default, update all others
         if (updatedAddress.isDefault && !_addresses[index].isDefault) {
@@ -102,13 +128,13 @@ class AddressProvider extends ChangeNotifier {
             }
           }
         }
-        
+
         // Update the address
         _addresses[index] = updatedAddress;
-        
+
         // Update Firestore
         await _updateFirestoreAddresses();
-        
+
         notifyListeners();
       } else {
         throw Exception('Address not found');
@@ -124,26 +150,26 @@ class AddressProvider extends ChangeNotifier {
   // Delete address
   Future<void> deleteAddress(String addressId) async {
     if (_authProvider.currentUser == null) return;
-    
+
     _setLoading(true);
     try {
       final index = _addresses.indexWhere((address) => address.id == addressId);
-      
+
       if (index >= 0) {
         final wasDefault = _addresses[index].isDefault;
-        
+
         // Remove the address
         _addresses.removeAt(index);
-        
+
         // If the deleted address was the default and we have other addresses,
         // set the first one as default
         if (wasDefault && _addresses.isNotEmpty) {
           _addresses[0] = _addresses[0].copyWith(isDefault: true);
         }
-        
+
         // Update Firestore
         await _updateFirestoreAddresses();
-        
+
         notifyListeners();
       } else {
         throw Exception('Address not found');
@@ -159,7 +185,7 @@ class AddressProvider extends ChangeNotifier {
   // Set address as default
   Future<void> setDefaultAddress(String addressId) async {
     if (_authProvider.currentUser == null) return;
-    
+
     _setLoading(true);
     try {
       // Update all addresses
@@ -168,10 +194,10 @@ class AddressProvider extends ChangeNotifier {
           isDefault: _addresses[i].id == addressId,
         );
       }
-      
+
       // Update Firestore
       await _updateFirestoreAddresses();
-      
+
       notifyListeners();
     } catch (e) {
       _setError('Failed to set default address: ${e.toString()}');
@@ -184,15 +210,36 @@ class AddressProvider extends ChangeNotifier {
   // Update addresses in Firestore
   Future<void> _updateFirestoreAddresses() async {
     if (_authProvider.currentUser == null) return;
-    
+
     try {
-      await _firestore
-          .collection('users')
-          .doc(_authProvider.currentUser!.uid)
-          .update({
-        'addresses': _addresses.map((address) => address.toMap()).toList(),
-      });
+      // First check if the user document exists
+      final userDoc =
+          await _firestore
+              .collection('users')
+              .doc(_authProvider.currentUser!.uid)
+              .get();
+
+      if (!userDoc.exists) {
+        // Create the user document if it doesn't exist
+        await _firestore
+            .collection('users')
+            .doc(_authProvider.currentUser!.uid)
+            .set({
+              'addresses':
+                  _addresses.map((address) => address.toMap()).toList(),
+            }, SetOptions(merge: true));
+      } else {
+        // Update the existing document
+        await _firestore
+            .collection('users')
+            .doc(_authProvider.currentUser!.uid)
+            .update({
+              'addresses':
+                  _addresses.map((address) => address.toMap()).toList(),
+            });
+      }
     } catch (e) {
+      debugPrint('Failed to update addresses in Firestore: $e');
       _setError('Failed to update addresses in Firestore: ${e.toString()}');
       rethrow;
     }
