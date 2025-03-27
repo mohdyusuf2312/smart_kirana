@@ -22,9 +22,7 @@ class AdminDrawer extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
-            ),
+            decoration: const BoxDecoration(color: AppColors.primary),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -39,25 +37,16 @@ class AdminDrawer extends StatelessWidget {
                 const SizedBox(height: 8),
                 const Text(
                   'Admin Panel',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   user?.name ?? '',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
                 ),
                 Text(
                   user?.email ?? '',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ],
             ),
@@ -67,8 +56,12 @@ class AdminDrawer extends StatelessWidget {
             title: const Text('Dashboard'),
             onTap: () {
               Navigator.pop(context);
-              if (ModalRoute.of(context)?.settings.name != AdminDashboardScreen.routeName) {
-                Navigator.pushReplacementNamed(context, AdminDashboardScreen.routeName);
+              if (ModalRoute.of(context)?.settings.name !=
+                  AdminDashboardScreen.routeName) {
+                Navigator.pushReplacementNamed(
+                  context,
+                  AdminDashboardScreen.routeName,
+                );
               }
             },
           ),
@@ -110,7 +103,11 @@ class AdminDrawer extends StatelessWidget {
             title: const Text('Go to Store'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, HomeScreen.routeName);
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                HomeScreen.routeName,
+                (route) => false,
+              );
             },
           ),
           ListTile(
