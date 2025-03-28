@@ -37,12 +37,12 @@ class ProductCard extends StatelessWidget {
                     ),
                     child: Image.network(
                       product.imageUrl,
-                      height: 120,
+                      height: 100,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          height: 120,
+                          height: 100,
                           width: double.infinity,
                           color: AppColors.background,
                           child: const Icon(Icons.image_not_supported),
@@ -51,7 +51,7 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (product.discountPrice > 0)
+                if (product.discountPrice != null && product.discountPrice! > 0)
                   Positioned(
                     top: 8,
                     left: 8,
@@ -67,7 +67,7 @@ class ProductCard extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        '${(((product.price - product.discountPrice) / product.price) * 100).round()}% OFF',
+                        '${(((product.price - product.discountPrice!) / product.price) * 100).round()}% OFF',
                         style: AppTextStyles.bodySmall.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -100,42 +100,45 @@ class ProductCard extends StatelessWidget {
 
             // Product Details
             Padding(
-              padding: const EdgeInsets.all(AppPadding.small),
+              padding: const EdgeInsets.all(6.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     product.name,
-                    style: AppTextStyles.bodyMedium.copyWith(
+                    style: AppTextStyles.bodySmall.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     product.unit,
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.textSecondary,
+                      fontSize: 10,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Row(
                     children: [
                       Text(
-                        '₹${product.discountPrice > 0 ? product.discountPrice : product.price}',
-                        style: AppTextStyles.bodyMedium.copyWith(
+                        '₹${(product.discountPrice != null && product.discountPrice! > 0) ? product.discountPrice! : product.price}',
+                        style: AppTextStyles.bodySmall.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
                         ),
                       ),
                       const SizedBox(width: 4),
-                      if (product.discountPrice > 0)
+                      if (product.discountPrice != null &&
+                          product.discountPrice! > 0)
                         Text(
                           '₹${product.price}',
                           style: AppTextStyles.bodySmall.copyWith(
                             decoration: TextDecoration.lineThrough,
                             color: AppColors.textSecondary,
+                            fontSize: 10,
                           ),
                         ),
                     ],
@@ -147,9 +150,13 @@ class ProductCard extends StatelessWidget {
             // Add to Cart Button
             if (product.stock > 0)
               Padding(
-                padding: const EdgeInsets.all(AppPadding.small),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6.0,
+                  vertical: 4.0,
+                ),
                 child: SizedBox(
                   width: double.infinity,
+                  height: 30,
                   child: ElevatedButton(
                     onPressed: () {
                       if (isInCart) {
@@ -171,7 +178,8 @@ class ProductCard extends StatelessWidget {
                       backgroundColor:
                           isInCart ? AppColors.success : AppColors.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(double.infinity, 30),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
                           AppBorderRadius.small,
@@ -185,14 +193,15 @@ class ProductCard extends StatelessWidget {
                           isInCart
                               ? Icons.shopping_cart
                               : Icons.add_shopping_cart,
-                          size: 16,
+                          size: 14,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 2),
                         Text(
-                          isInCart ? 'View Cart' : 'Add to Cart',
+                          isInCart ? 'View Cart' : 'Add',
                           style: AppTextStyles.bodySmall.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
+                            fontSize: 10,
                           ),
                         ),
                       ],
