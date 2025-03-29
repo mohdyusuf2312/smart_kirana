@@ -176,4 +176,31 @@ class AuthService {
       rethrow;
     }
   }
+
+  // Get user data by UID
+  Future<UserModel?> getUserDataByUid(String uid) async {
+    try {
+      DocumentSnapshot doc =
+          await _firestore.collection('users').doc(uid).get();
+      if (doc.exists) {
+        return UserModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }
+      return null;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Update user profile
+  Future<void> updateUserProfile(UserModel user) async {
+    try {
+      await _firestore.collection('users').doc(user.id).update({
+        'name': user.name,
+        'phone': user.phone,
+        // Don't update email or other sensitive fields
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
