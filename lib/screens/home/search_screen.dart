@@ -9,10 +9,7 @@ import 'package:smart_kirana/widgets/product_card.dart';
 class SearchScreen extends StatefulWidget {
   final String? initialQuery;
 
-  const SearchScreen({
-    super.key,
-    this.initialQuery,
-  });
+  const SearchScreen({super.key, this.initialQuery});
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -52,16 +49,24 @@ class _SearchScreenState extends State<SearchScreen> {
       _isSearching = true;
     });
 
-    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
     final allProducts = productProvider.products;
 
     // Filter products based on search query
-    final results = allProducts.where((product) {
-      final nameMatch = product.name.toLowerCase().contains(query);
-      final descriptionMatch = product.description.toLowerCase().contains(query);
-      final categoryMatch = product.categoryName.toLowerCase().contains(query);
-      return nameMatch || descriptionMatch || categoryMatch;
-    }).toList();
+    final results =
+        allProducts.where((product) {
+          final nameMatch = product.name.toLowerCase().contains(query);
+          final descriptionMatch = product.description.toLowerCase().contains(
+            query,
+          );
+          final categoryMatch = product.categoryName.toLowerCase().contains(
+            query,
+          );
+          return nameMatch || descriptionMatch || categoryMatch;
+        }).toList();
 
     setState(() {
       _searchResults = results;
@@ -79,8 +84,12 @@ class _SearchScreenState extends State<SearchScreen> {
             hintText: 'Search products...',
             hintStyle: const TextStyle(color: Colors.white70),
             border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            filled: true,
+            fillColor: Colors.white24,
+            prefixIcon: const Icon(Icons.search, color: Colors.white70),
             suffixIcon: IconButton(
-              icon: const Icon(Icons.clear, color: Colors.white),
+              icon: const Icon(Icons.clear, color: Colors.white70),
               onPressed: () {
                 _searchController.clear();
                 setState(() {
@@ -103,15 +112,13 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         backgroundColor: AppColors.primary,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: _performSearch,
-          ),
+          IconButton(icon: const Icon(Icons.search), onPressed: _performSearch),
         ],
       ),
-      body: _isSearching
-          ? const Center(child: CircularProgressIndicator())
-          : _searchResults.isEmpty
+      body:
+          _isSearching
+              ? const Center(child: CircularProgressIndicator())
+              : _searchResults.isEmpty
               ? _buildEmptyState()
               : _buildSearchResults(),
     );
@@ -123,9 +130,7 @@ class _SearchScreenState extends State<SearchScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            _searchController.text.isEmpty
-                ? Icons.search
-                : Icons.search_off,
+            _searchController.text.isEmpty ? Icons.search : Icons.search_off,
             size: 100,
             color: AppColors.textSecondary.withAlpha(128),
           ),
