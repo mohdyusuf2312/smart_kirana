@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
-import 'package:smart_kirana/screens/admin/simple_admin_dashboard.dart';
+import 'package:smart_kirana/screens/admin/admin_dashboard_screen.dart';
 import 'package:smart_kirana/screens/auth/email_verification_screen.dart';
 import 'package:smart_kirana/screens/auth/login_screen.dart';
 import 'package:smart_kirana/screens/home/home_screen.dart';
@@ -17,18 +17,22 @@ class _HomeWrapperState extends State<HomeWrapper> {
   @override
   void initState() {
     super.initState();
+
+    // Initialize auth provider
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        await Provider.of<AuthProvider>(context, listen: false).initialize();
+        // Force a rebuild after initialization
+        if (mounted) {
+          setState(() {});
+        }
+      }
+    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    // Initialize auth provider
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        Provider.of<AuthProvider>(context, listen: false).initialize();
-      }
-    });
   }
 
   @override
@@ -47,7 +51,7 @@ class _HomeWrapperState extends State<HomeWrapper> {
             return Navigator(
               onGenerateRoute:
                   (_) => MaterialPageRoute(
-                    builder: (_) => const SimpleAdminDashboard(),
+                    builder: (_) => const AdminDashboardScreen(),
                   ),
             );
           }
