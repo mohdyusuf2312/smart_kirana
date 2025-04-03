@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/screens/auth/login_screen.dart';
+import 'package:smart_kirana/screens/home/home_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
 
@@ -245,7 +246,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         CustomButton(
           text: AppStrings.continueToLogin,
           onPressed: () {
-            Navigator.pushReplacementNamed(context, '/home');
+            Navigator.pushReplacementNamed(context, HomeScreen.routeName);
           },
         ),
       ],
