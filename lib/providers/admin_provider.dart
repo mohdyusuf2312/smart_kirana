@@ -27,7 +27,9 @@ class AdminProvider extends ChangeNotifier {
 
   // Check if current user is admin
   bool get isAdmin {
-    return _authProvider.user?.role == 'ADMIN';
+    final isAdmin = _authProvider.user?.role == 'ADMIN';
+    debugPrint('User is admin: $isAdmin');
+    return isAdmin;
   }
 
   // Fetch dashboard data
@@ -41,58 +43,123 @@ class AdminProvider extends ChangeNotifier {
     _clearError();
 
     try {
-      // Fetch total users
-      final usersSnapshot = await _firestore.collection('users').get();
-      final totalUsers = usersSnapshot.docs.length;
-
-      // Fetch orders data
-      final ordersSnapshot = await _firestore.collection('orders').get();
-      final orders = ordersSnapshot.docs;
-      final totalOrders = orders.length;
-
-      // Calculate revenue and order status counts
+      // Initialize with default values in case of partial failures
+      int totalUsers = 0;
+      int totalOrders = 0;
       double totalRevenue = 0;
       int pendingOrders = 0;
       int completedOrders = 0;
       int cancelledOrders = 0;
+      List<OrderAnalytics> recentOrders = [];
+      List<RevenueData> revenueData = [];
+      List<UserGrowthData> userGrowthData = [];
 
-      for (var order in orders) {
-        final orderData = order.data();
-        totalRevenue += (orderData['totalAmount'] ?? 0).toDouble();
-
-        switch (orderData['status']) {
-          case 'PENDING':
-          case 'PROCESSING':
-          case 'SHIPPED':
-            pendingOrders++;
-            break;
-          case 'DELIVERED':
-            completedOrders++;
-            break;
-          case 'CANCELLED':
-            cancelledOrders++;
-            break;
-        }
+      // Fetch total users with error handling
+      try {
+        final usersSnapshot = await _firestore.collection('users').get();
+        totalUsers = usersSnapshot.docs.length;
+        debugPrint('Fetched $totalUsers users');
+      } catch (e) {
+        debugPrint('Error fetching users: $e');
+        // Continue with default value
       }
 
-      // Get recent orders (last 10)
-      final recentOrdersSnapshot =
-          await _firestore
-              .collection('orders')
-              .orderBy('orderDate', descending: true)
-              .limit(10)
-              .get();
+      // Fetch orders data with error handling
+      try {
+        final ordersSnapshot = await _firestore.collection('orders').get();
+        final orders = ordersSnapshot.docs;
+        totalOrders = orders.length;
+        debugPrint('Fetched $totalOrders orders');
 
-      final recentOrders =
-          recentOrdersSnapshot.docs
-              .map((doc) => OrderAnalytics.fromMap(doc.data(), doc.id))
-              .toList();
+        // Calculate revenue and order status counts
+        for (var order in orders) {
+          final orderData = order.data();
+          final amount = orderData['totalAmount'];
+          if (amount != null) {
+            // Ensure amount is properly converted to double
+            if (amount is int) {
+              totalRevenue += amount.toDouble();
+            } else if (amount is double) {
+              totalRevenue += amount;
+            } else {
+              try {
+                totalRevenue += double.parse(amount.toString());
+              } catch (e) {
+                debugPrint('Error parsing amount: $e');
+              }
+            }
+          }
+
+          final status = orderData['status'] as String?;
+          if (status != null) {
+            switch (status) {
+              case 'PENDING':
+              case 'PROCESSING':
+              case 'SHIPPED':
+                pendingOrders++;
+                break;
+              case 'DELIVERED':
+                completedOrders++;
+                break;
+              case 'CANCELLED':
+                cancelledOrders++;
+                break;
+            }
+          }
+        }
+        debugPrint('Calculated revenue: $totalRevenue');
+      } catch (e) {
+        debugPrint('Error fetching orders: $e');
+        // Continue with default values
+      }
+
+      // Get recent orders (last 10) with error handling
+      try {
+        final recentOrdersSnapshot =
+            await _firestore
+                .collection('orders')
+                .orderBy('orderDate', descending: true)
+                .limit(10)
+                .get();
+
+        recentOrders =
+            recentOrdersSnapshot.docs
+                .map((doc) {
+                  try {
+                    return OrderAnalytics.fromMap(doc.data(), doc.id);
+                  } catch (e) {
+                    debugPrint('Error parsing order ${doc.id}: $e');
+                    return null;
+                  }
+                })
+                .where((order) => order != null)
+                .cast<OrderAnalytics>()
+                .toList();
+        debugPrint('Fetched ${recentOrders.length} recent orders');
+      } catch (e) {
+        debugPrint('Error fetching recent orders: $e');
+        // Continue with empty list
+      }
 
       // Generate revenue data for the last 7 days
-      final revenueData = await _generateRevenueData();
+      try {
+        revenueData = await _generateRevenueData();
+        debugPrint('Generated revenue data: ${revenueData.length} entries');
+      } catch (e) {
+        debugPrint('Error generating revenue data: $e');
+        // Continue with empty list
+      }
 
       // Generate user growth data for the last 7 days
-      final userGrowthData = await _generateUserGrowthData();
+      try {
+        userGrowthData = await _generateUserGrowthData();
+        debugPrint(
+          'Generated user growth data: ${userGrowthData.length} entries',
+        );
+      } catch (e) {
+        debugPrint('Error generating user growth data: $e');
+        // Continue with empty list
+      }
 
       // Update dashboard data
       _dashboardData = AdminDashboardModel(
@@ -108,7 +175,9 @@ class AdminProvider extends ChangeNotifier {
       );
 
       notifyListeners();
+      debugPrint('Dashboard data updated successfully');
     } catch (e) {
+      debugPrint('Failed to fetch dashboard data: $e');
       _setError('Failed to fetch dashboard data: ${e.toString()}');
     } finally {
       _setLoading(false);
