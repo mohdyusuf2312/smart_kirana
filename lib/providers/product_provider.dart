@@ -5,7 +5,7 @@ import 'package:smart_kirana/models/product_model.dart';
 
 class ProductProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   List<ProductModel> _products = [];
   List<CategoryModel> _categories = [];
   bool _isLoading = false;
@@ -20,15 +20,32 @@ class ProductProvider extends ChangeNotifier {
   // Load products from Firestore
   Future<void> loadProducts() async {
     _setLoading(true);
+    _error = null; // Clear previous errors
     try {
       final productsSnapshot = await _firestore.collection('products').get();
-      
-      _products = productsSnapshot.docs.map((doc) {
-        return ProductModel.fromMap(doc.data(), doc.id);
-      }).toList();
-      
+
+      if (productsSnapshot.docs.isEmpty) {
+        _products = [];
+        notifyListeners();
+        return;
+      }
+
+      _products =
+          productsSnapshot.docs
+              .map((doc) {
+                try {
+                  return ProductModel.fromMap(doc.data(), doc.id);
+                } catch (e) {
+                  debugPrint('Error parsing product ${doc.id}: $e');
+                  return null;
+                }
+              })
+              .whereType<ProductModel>()
+              .toList();
+
       notifyListeners();
     } catch (e) {
+      debugPrint('Failed to load products: $e');
       _setError('Failed to load products: ${e.toString()}');
     } finally {
       _setLoading(false);
@@ -38,15 +55,33 @@ class ProductProvider extends ChangeNotifier {
   // Load categories from Firestore
   Future<void> loadCategories() async {
     _setLoading(true);
+    _error = null; // Clear previous errors
     try {
-      final categoriesSnapshot = await _firestore.collection('categories').get();
-      
-      _categories = categoriesSnapshot.docs.map((doc) {
-        return CategoryModel.fromMap(doc.data(), doc.id);
-      }).toList();
-      
+      final categoriesSnapshot =
+          await _firestore.collection('categories').get();
+
+      if (categoriesSnapshot.docs.isEmpty) {
+        _categories = [];
+        notifyListeners();
+        return;
+      }
+
+      _categories =
+          categoriesSnapshot.docs
+              .map((doc) {
+                try {
+                  return CategoryModel.fromMap(doc.data(), doc.id);
+                } catch (e) {
+                  debugPrint('Error parsing category ${doc.id}: $e');
+                  return null;
+                }
+              })
+              .whereType<CategoryModel>()
+              .toList();
+
       notifyListeners();
     } catch (e) {
+      debugPrint('Failed to load categories: $e');
       _setError('Failed to load categories: ${e.toString()}');
     } finally {
       _setLoading(false);
@@ -55,7 +90,9 @@ class ProductProvider extends ChangeNotifier {
 
   // Get products by category
   List<ProductModel> getProductsByCategory(String categoryId) {
-    return _products.where((product) => product.categoryId == categoryId).toList();
+    return _products
+        .where((product) => product.categoryId == categoryId)
+        .toList();
   }
 
   // Get popular products
@@ -84,6 +121,20 @@ class ProductProvider extends ChangeNotifier {
     } catch (e) {
       return null;
     }
+  }
+
+  // Search products
+  List<ProductModel> searchProducts(String query) {
+    if (query.isEmpty) {
+      return _products;
+    }
+
+    final lowercaseQuery = query.toLowerCase();
+    return _products.where((product) {
+      return product.name.toLowerCase().contains(lowercaseQuery) ||
+          product.description.toLowerCase().contains(lowercaseQuery) ||
+          product.categoryName.toLowerCase().contains(lowercaseQuery);
+    }).toList();
   }
 
   // Helper methods
