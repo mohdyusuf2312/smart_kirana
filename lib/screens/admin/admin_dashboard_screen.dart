@@ -24,26 +24,68 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _isLoading = false;
   bool _showCharts = false; // Start with charts disabled for better performance
+  String? _localError;
 
   @override
   void initState() {
     super.initState();
-    _loadDashboardData();
+    debugPrint('AdminDashboardScreen initState called');
+
+    // Use a small delay to ensure the widget is fully built before loading data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      debugPrint('AdminDashboardScreen post-frame callback');
+      if (mounted) {
+        _loadDashboardData();
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    debugPrint('AdminDashboardScreen didChangeDependencies called');
+
+    // Check if admin provider is available and initialized
+    final adminProvider = Provider.of<AdminProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    debugPrint('Admin check: ${authProvider.user?.role == 'ADMIN'}');
+    debugPrint('Admin provider available: ${adminProvider.hashCode}');
   }
 
   Future<void> _loadDashboardData() async {
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
+      _localError = null;
     });
 
     try {
-      await Provider.of<AdminProvider>(
-        context,
-        listen: false,
-      ).fetchDashboardData();
+      final adminProvider = Provider.of<AdminProvider>(context, listen: false);
+
+      // Check if the user is admin before proceeding
+      if (!adminProvider.isAdmin) {
+        setState(() {
+          _localError = 'Unauthorized access. Admin privileges required.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      await adminProvider.fetchDashboardData();
+
+      // Check if there was an error in the provider
+      if (adminProvider.error != null) {
+        setState(() {
+          _localError = adminProvider.error;
+        });
+      }
     } catch (e) {
-      // Error will be handled by the provider
       debugPrint('Error loading dashboard data: $e');
+      setState(() {
+        _localError = 'Failed to load dashboard data: ${e.toString()}';
+      });
     } finally {
       if (mounted) {
         setState(() {
@@ -111,13 +153,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (adminProvider.error != null) {
+    // Show local error or provider error
+    final error = _localError ?? adminProvider.error;
+    if (error != null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Error: ${adminProvider.error}',
+              'Error: $error',
               style: const TextStyle(color: AppColors.error),
               textAlign: TextAlign.center,
             ),
@@ -131,39 +175,150 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadDashboardData,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppPadding.medium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildWelcomeCard(),
-            const SizedBox(height: AppPadding.large),
+    // Wrap everything in a try-catch to identify rendering issues
+    try {
+      debugPrint('Building admin dashboard content');
 
-            const Text('Dashboard Overview', style: AppTextStyles.heading2),
-            const SizedBox(height: AppPadding.medium),
-            _buildStatsGrid(adminProvider.dashboardData),
-
-            const SizedBox(height: AppPadding.large),
-            const Text('Admin Features', style: AppTextStyles.heading2),
-            const SizedBox(height: AppPadding.medium),
-            _buildFeatureGrid(),
-
-            const SizedBox(height: AppPadding.large),
-
-            // Charts section (conditionally displayed)
-            if (_showCharts) ...[
-              DashboardCharts(data: adminProvider.dashboardData),
+      return RefreshIndicator(
+        onRefresh: _loadDashboardData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppPadding.medium),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Welcome card
+              Builder(
+                builder: (context) {
+                  try {
+                    return _buildWelcomeCard();
+                  } catch (e) {
+                    debugPrint('Error building welcome card: $e');
+                    return const Card(
+                      elevation: 2,
+                      child: Padding(
+                        padding: EdgeInsets.all(AppPadding.medium),
+                        child: Text('Welcome to Admin Dashboard'),
+                      ),
+                    );
+                  }
+                },
+              ),
               const SizedBox(height: AppPadding.large),
-            ],
 
-            _buildRecentOrdersSection(adminProvider.dashboardData),
+              // Dashboard Overview
+              const Text('Dashboard Overview', style: AppTextStyles.heading2),
+              const SizedBox(height: AppPadding.medium),
+              Builder(
+                builder: (context) {
+                  try {
+                    return _buildStatsGrid(adminProvider.dashboardData);
+                  } catch (e) {
+                    debugPrint('Error building stats grid: $e');
+                    return const Card(
+                      elevation: 2,
+                      child: Padding(
+                        padding: EdgeInsets.all(AppPadding.medium),
+                        child: Text('Stats unavailable'),
+                      ),
+                    );
+                  }
+                },
+              ),
+
+              const SizedBox(height: AppPadding.large),
+
+              // Admin Features
+              const Text('Admin Features', style: AppTextStyles.heading2),
+              const SizedBox(height: AppPadding.medium),
+              Builder(
+                builder: (context) {
+                  try {
+                    return _buildFeatureGrid();
+                  } catch (e) {
+                    debugPrint('Error building feature grid: $e');
+                    return const Card(
+                      elevation: 2,
+                      child: Padding(
+                        padding: EdgeInsets.all(AppPadding.medium),
+                        child: Text('Features unavailable'),
+                      ),
+                    );
+                  }
+                },
+              ),
+
+              const SizedBox(height: AppPadding.large),
+
+              // Charts section (conditionally displayed)
+              if (_showCharts) ...[
+                Builder(
+                  builder: (context) {
+                    try {
+                      return DashboardCharts(data: adminProvider.dashboardData);
+                    } catch (e) {
+                      debugPrint('Error building charts: $e');
+                      return const Card(
+                        elevation: 2,
+                        child: Padding(
+                          padding: EdgeInsets.all(AppPadding.medium),
+                          child: Text('Charts unavailable'),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: AppPadding.large),
+              ],
+
+              // Recent Orders
+              Builder(
+                builder: (context) {
+                  try {
+                    return _buildRecentOrdersSection(
+                      adminProvider.dashboardData,
+                    );
+                  } catch (e) {
+                    debugPrint('Error building recent orders: $e');
+                    return const Card(
+                      elevation: 2,
+                      child: Padding(
+                        padding: EdgeInsets.all(AppPadding.medium),
+                        child: Text('Recent orders unavailable'),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error building admin dashboard: $e');
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Error rendering dashboard',
+              style: TextStyle(color: AppColors.error, fontSize: 18),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              e.toString(),
+              style: const TextStyle(color: AppColors.error),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadDashboardData,
+              child: const Text('Retry'),
+            ),
           ],
         ),
-      ),
-    );
+      );
+    }
   }
 
   Widget _buildWelcomeCard() {
@@ -385,6 +540,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     context,
                     OrderManagementScreen.routeName,
                   ),
+              style: TextButton.styleFrom(
+                minimumSize: Size.zero, // Reset the minimum size
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               child: const Text('View All'),
             ),
           ],
