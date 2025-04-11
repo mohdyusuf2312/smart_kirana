@@ -31,6 +31,22 @@ class _DashboardChartsState extends State<DashboardCharts>
 
   @override
   Widget build(BuildContext context) {
+    // Check if we have valid data before attempting to build charts
+    final bool hasValidData = _hasValidData();
+
+    if (!hasValidData) {
+      return Card(
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.all(AppPadding.medium),
+          child: _buildPlaceholderWidget(
+            'No Data Available',
+            'There is no data available to display charts. Please check back later.',
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -58,6 +74,58 @@ class _DashboardChartsState extends State<DashboardCharts>
         ),
       ],
     );
+  }
+
+  // Helper method to check if we have valid data for charts
+  bool _hasValidData() {
+    try {
+      debugPrint('Checking chart data validity');
+
+      // Safely check if we have any revenue data
+      final hasRevenueData = widget.data.revenueData.isNotEmpty;
+      debugPrint('Has revenue data: $hasRevenueData');
+
+      // Safely check if we have any user growth data
+      final hasUserGrowthData = widget.data.userGrowthData.isNotEmpty;
+      debugPrint('Has user growth data: $hasUserGrowthData');
+
+      // Safely check if we have any non-zero revenue
+      bool hasNonZeroRevenue = false;
+      if (hasRevenueData) {
+        for (var data in widget.data.revenueData) {
+          if (data.amount > 0) {
+            hasNonZeroRevenue = true;
+            break;
+          }
+        }
+      }
+      debugPrint('Has non-zero revenue: $hasNonZeroRevenue');
+
+      // Safely check if we have any non-zero user growth
+      bool hasNonZeroUserGrowth = false;
+      if (hasUserGrowthData) {
+        for (var data in widget.data.userGrowthData) {
+          if (data.count > 0) {
+            hasNonZeroUserGrowth = true;
+            break;
+          }
+        }
+      }
+      debugPrint('Has non-zero user growth: $hasNonZeroUserGrowth');
+
+      // We need at least one valid chart to display
+      final isValid =
+          (hasRevenueData && hasNonZeroRevenue) ||
+          (hasUserGrowthData &&
+              hasNonZeroUserGrowth &&
+              widget.data.userGrowthData.length >= 2);
+
+      debugPrint('Chart data is valid: $isValid');
+      return isValid;
+    } catch (e) {
+      debugPrint('Error checking chart data validity: $e');
+      return false;
+    }
   }
 
   Widget _buildRevenueChart() {
