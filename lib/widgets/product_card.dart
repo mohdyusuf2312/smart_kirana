@@ -15,13 +15,15 @@ class ProductCard extends StatelessWidget {
     final cartProvider = Provider.of<CartProvider>(context);
     final isInCart = cartProvider.isInCart(product.id);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppBorderRadius.medium),
-        ),
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+      ),
+      child: InkWell(
+        // Replace GestureDetector with InkWell for better touch feedback
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppBorderRadius.medium),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
