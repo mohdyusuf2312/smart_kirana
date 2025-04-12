@@ -107,13 +107,13 @@ class _SearchScreenState extends State<SearchScreen> {
               setState(() {
                 _searchResults = [];
               });
+            } else {
+              // Perform search as user types
+              _performSearch();
             }
           },
         ),
         backgroundColor: AppColors.primary,
-        actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: _performSearch),
-        ],
       ),
       body:
           _isSearching
