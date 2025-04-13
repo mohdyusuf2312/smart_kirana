@@ -221,34 +221,35 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           const SizedBox(height: AppPadding.medium),
 
           // Action Buttons
-          if (order.status == OrderStatus.pending ||
-              order.status == OrderStatus.processing ||
-              order.status == OrderStatus.shipped)
-            Column(
-              children: [
-                if (order.status != OrderStatus.cancelled)
-                  CustomButton(
-                    text: 'Track Order',
-                    onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        OrderTrackingScreen.routeName,
-                        arguments: order.id,
-                      );
-                    },
-                    icon: Icons.location_on,
-                  ),
-                const SizedBox(height: AppPadding.medium),
-                if (order.status == OrderStatus.pending)
-                  CustomButton(
-                    text: 'Cancel Order',
-                    onPressed:
-                        () => _showCancelDialog(context, order, orderProvider),
-                    type: ButtonType.outline,
-                    icon: Icons.cancel_outlined,
-                  ),
-              ],
-            ),
+          Column(
+            children: [
+              // Track Order button for all statuses except cancelled
+              if (order.status != OrderStatus.cancelled)
+                CustomButton(
+                  text: 'Track Order',
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      OrderTrackingScreen.routeName,
+                      arguments: order.id,
+                    );
+                  },
+                  icon: Icons.location_on,
+                ),
+              const SizedBox(height: AppPadding.medium),
+
+              // Cancel Order button for all statuses except delivered and cancelled
+              if (order.status != OrderStatus.delivered &&
+                  order.status != OrderStatus.cancelled)
+                CustomButton(
+                  text: 'Cancel Order',
+                  onPressed:
+                      () => _showCancelDialog(context, order, orderProvider),
+                  type: ButtonType.outline,
+                  icon: Icons.cancel_outlined,
+                ),
+            ],
+          ),
         ],
       ),
     );
