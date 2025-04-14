@@ -401,7 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         Container(
-          height: 110,
+          height: 125,
           decoration: BoxDecoration(
             color: Colors.grey.shade50,
             borderRadius: BorderRadius.circular(8),
@@ -500,10 +500,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  width: 70,
+                  width: 80,
                   child: Text(
                     category.name,
-                    style: const TextStyle(fontSize: 12),
+                    style: const TextStyle(fontSize: 11),
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -662,21 +662,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.7,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                        ),
-                    itemCount: products.length > 4 ? 4 : products.length,
+                SizedBox(
+                  height: 220,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: products.length > 6 ? 6 : products.length,
                     itemBuilder: (context, index) {
-                      return _buildProductCard(products[index]);
+                      return _buildProductCard(
+                        products[index],
+                        horizontal: true,
+                      );
                     },
                   ),
                 ),
@@ -816,8 +813,9 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // Grid card for category sections
+    // Grid card for category sections - now using the same style as horizontal cards
     return Container(
+      width: 160,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -887,27 +885,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '₹${(product.discountPrice ?? product.price).toStringAsFixed(0)}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            if (product.discountPrice != null)
-                              Text(
-                                '₹${product.price.toStringAsFixed(0)}',
-                                style: const TextStyle(
-                                  decoration: TextDecoration.lineThrough,
-                                  fontSize: 10,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                          ],
+                        Text(
+                          '₹${(product.discountPrice ?? product.price).toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: AppColors.primary,
+                          ),
                         ),
                         Material(
                           color: Colors.transparent,
@@ -925,18 +909,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               );
                             },
                             child: Ink(
-                              padding: const EdgeInsets.all(6),
+                              padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
                                 color: AppColors.primary,
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: const Text(
-                                'ADD',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              child: const Icon(
+                                Icons.add,
+                                color: Colors.white,
+                                size: 16,
                               ),
                             ),
                           ),
