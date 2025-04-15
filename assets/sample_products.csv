@@ -1,7 +1,11 @@
 Name,Description,Price,DiscountPrice,ImageUrl,CategoryName,Stock,Unit,IsPopular,IsFeatured
-Organic Carrots,Fresh organic carrots rich in vitamins and minerals,35,30,https://firebasestorage.googleapis.com/v0/b/smart-kirana-app.appspot.com/o/products%2Fcarrots.jpg?alt=media,Fruits & Vegetables,40,kg,true,false
-Brown Bread,Whole wheat brown bread with high fiber content,45,40,https://firebasestorage.googleapis.com/v0/b/smart-kirana-app.appspot.com/o/products%2Fbread.jpg?alt=media,Dairy & Breakfast,25,pack,false,true
-Masoor Dal,Premium quality masoor dal (red lentils),90,80,https://firebasestorage.googleapis.com/v0/b/smart-kirana-app.appspot.com/o/products%2Fmasoor_dal.jpg?alt=media,Staples,60,kg,false,false
-Potato Chips Spicy,Spicy potato chips with tangy flavor,40,35,https://firebasestorage.googleapis.com/v0/b/smart-kirana-app.appspot.com/o/products%2Fspicy_chips.jpg?alt=media,Snacks & Beverages,100,pack,true,true
-Shampoo,Nourishing shampoo for all hair types,120,99,https://firebasestorage.googleapis.com/v0/b/smart-kirana-app.appspot.com/o/products%2Fshampoo.jpg?alt=media,Personal Care,30,bottle,false,true
-Dish Soap,Effective dish soap that removes tough stains,80,75,https://firebasestorage.googleapis.com/v0/b/smart-kirana-app.appspot.com/o/products%2Fdish_soap.jpg?alt=media,Household,50,bottle,false,false
+Basmati Rice,Premium long grain basmati rice,120,110,https://cdn.pixabay.com/photo/2014/10/22/18/43/rice-498688_1280.jpg,Grains,50,kg,yes,yes
+Toor Dal,High quality yellow split pigeon peas,90,85,https://cdn.pixabay.com/photo/2015/02/23/15/48/dal-646468_1280.jpg,Pulses,40,kg,yes,no
+Wheat Flour,Stone ground whole wheat flour,45,40,https://cdn.pixabay.com/photo/2014/12/11/02/56/wheat-563130_1280.jpg,Flour,60,kg,yes,yes
+Sugar,Fine grain white sugar,50,48,https://cdn.pixabay.com/photo/2017/01/07/20/40/candy-1961536_1280.jpg,Essentials,100,kg,no,no
+Salt,Iodized table salt,20,18,https://cdn.pixabay.com/photo/2015/02/10/02/28/salt-630279_1280.jpg,Essentials,200,kg,no,no
+Turmeric Powder,Pure ground turmeric spice,60,55,https://cdn.pixabay.com/photo/2016/09/13/19/31/turmeric-1668024_1280.jpg,Spices,30,g,yes,no
+Red Chilli Powder,Hot and spicy red chilli powder,70,65,https://cdn.pixabay.com/photo/2016/02/19/10/55/chili-1209170_1280.jpg,Spices,25,g,yes,no
+Cooking Oil,Refined sunflower oil,110,100,https://cdn.pixabay.com/photo/2016/05/24/13/29/olive-oil-1412361_1280.jpg,Oils,45,L,yes,yes
+Tea Leaves,Premium Assam tea leaves,80,75,https://cdn.pixabay.com/photo/2015/07/02/20/37/cup-829527_1280.jpg,Beverages,35,g,yes,yes
+Coffee Powder,Instant coffee powder,120,110,https://cdn.pixabay.com/photo/2015/10/12/14/54/coffee-983955_1280.jpg,Beverages,20,g,no,yes
