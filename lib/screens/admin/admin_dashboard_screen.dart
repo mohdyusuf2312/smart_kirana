@@ -23,7 +23,6 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _isLoading = false;
-  bool _showCharts = false; // Start with charts disabled for better performance
   String? _localError;
 
   @override
@@ -126,17 +125,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         backgroundColor: AppColors.primary,
         actions: [
           IconButton(
-            icon: Icon(
-              _showCharts ? Icons.bar_chart : Icons.bar_chart_outlined,
-            ),
-            tooltip: _showCharts ? 'Hide Charts' : 'Show Charts',
-            onPressed: () {
-              setState(() {
-                _showCharts = !_showCharts;
-              });
-            },
-          ),
-          IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh Data',
             onPressed: _loadDashboardData,
@@ -206,70 +194,123 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               const SizedBox(height: AppPadding.large),
 
-              // Dashboard Overview
-              const Text('Dashboard Overview', style: AppTextStyles.heading2),
-              const SizedBox(height: AppPadding.medium),
+              // Charts section (always displayed)
               Builder(
                 builder: (context) {
                   try {
-                    return _buildStatsGrid(adminProvider.dashboardData);
+                    return DashboardCharts(data: adminProvider.dashboardData);
                   } catch (e) {
-                    debugPrint('Error building stats grid: $e');
+                    debugPrint('Error building charts: $e');
                     return const Card(
                       elevation: 2,
                       child: Padding(
                         padding: EdgeInsets.all(AppPadding.medium),
-                        child: Text('Stats unavailable'),
+                        child: Text('Charts unavailable'),
                       ),
                     );
                   }
                 },
+              ),
+              const SizedBox(height: AppPadding.large),
+
+              // Dashboard Overview
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(13), // 0.05 * 255 = ~13
+                  borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+                ),
+                padding: const EdgeInsets.all(AppPadding.medium),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.dashboard, color: AppColors.primary),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Dashboard Overview',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: AppColors.primary, thickness: 1),
+                    const SizedBox(height: AppPadding.small),
+                    Builder(
+                      builder: (context) {
+                        try {
+                          return _buildStatsGrid(adminProvider.dashboardData);
+                        } catch (e) {
+                          debugPrint('Error building stats grid: $e');
+                          return const Card(
+                            elevation: 2,
+                            child: Padding(
+                              padding: EdgeInsets.all(AppPadding.medium),
+                              child: Text('Stats unavailable'),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: AppPadding.large),
 
               // Admin Features
-              const Text('Admin Features', style: AppTextStyles.heading2),
-              const SizedBox(height: AppPadding.medium),
-              Builder(
-                builder: (context) {
-                  try {
-                    return _buildFeatureGrid();
-                  } catch (e) {
-                    debugPrint('Error building feature grid: $e');
-                    return const Card(
-                      elevation: 2,
-                      child: Padding(
-                        padding: EdgeInsets.all(AppPadding.medium),
-                        child: Text('Features unavailable'),
-                      ),
-                    );
-                  }
-                },
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.secondary.withAlpha(13), // 0.05 * 255 = ~13
+                  borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+                ),
+                padding: const EdgeInsets.all(AppPadding.medium),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.admin_panel_settings,
+                          color: AppColors.secondary,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Admin Features',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: AppColors.secondary, thickness: 1),
+                    const SizedBox(height: AppPadding.small),
+                    Builder(
+                      builder: (context) {
+                        try {
+                          return _buildFeatureGrid();
+                        } catch (e) {
+                          debugPrint('Error building feature grid: $e');
+                          return const Card(
+                            elevation: 2,
+                            child: Padding(
+                              padding: EdgeInsets.all(AppPadding.medium),
+                              child: Text('Features unavailable'),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: AppPadding.large),
-
-              // Charts section (conditionally displayed)
-              if (_showCharts) ...[
-                Builder(
-                  builder: (context) {
-                    try {
-                      return DashboardCharts(data: adminProvider.dashboardData);
-                    } catch (e) {
-                      debugPrint('Error building charts: $e');
-                      return const Card(
-                        elevation: 2,
-                        child: Padding(
-                          padding: EdgeInsets.all(AppPadding.medium),
-                          child: Text('Charts unavailable'),
-                        ),
-                      );
-                    }
-                  },
-                ),
-                const SizedBox(height: AppPadding.large),
-              ],
 
               // Recent Orders
               Builder(
