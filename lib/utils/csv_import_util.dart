@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csv/csv.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:smart_kirana/models/product_model.dart';
 
@@ -18,10 +18,25 @@ class CSVImportUtil {
   String? _webCsvData;
   String? _webCsvFileName;
 
+  // Store web image files
+  final Map<String, Uint8List> _webImageFiles = {};
+
   /// Set CSV data for web platform
   void setWebCsvData(String csvData, String fileName) {
     _webCsvData = csvData;
     _webCsvFileName = fileName;
+  }
+
+  /// Add web image file
+  void addWebImageFile(String fileName, Uint8List bytes) {
+    _webImageFiles[fileName.toLowerCase()] = bytes;
+    debugPrint('Added web image file: $fileName (${bytes.length} bytes)');
+  }
+
+  /// Clear web image files
+  void clearWebImageFiles() {
+    _webImageFiles.clear();
+    debugPrint('Cleared web image files');
   }
 
   /// Import products from a CSV file
@@ -129,9 +144,18 @@ class CSVImportUtil {
         debugPrint('First data row: ${dataRows[0]}');
       }
 
-      // Get all categories to match by name
-      final categoriesSnapshot =
-          await _firestore.collection('categories').get();
+      // Get all categories to match by name (with timeout)
+      final categoriesSnapshot = await _firestore
+          .collection('categories')
+          .get()
+          .timeout(
+            const Duration(seconds: 20),
+            onTimeout:
+                () =>
+                    throw TimeoutException(
+                      'Timeout getting categories from Firestore',
+                    ),
+          );
 
       if (categoriesSnapshot.docs.isEmpty) {
         throw Exception(
@@ -139,8 +163,19 @@ class CSVImportUtil {
         );
       }
 
-      // Get existing products to check for duplicates
-      final productsSnapshot = await _firestore.collection('products').get();
+      // Get existing products to check for duplicates (with timeout)
+      final productsSnapshot = await _firestore
+          .collection('products')
+          .get()
+          .timeout(
+            const Duration(seconds: 20),
+            onTimeout:
+                () =>
+                    throw TimeoutException(
+                      'Timeout getting products from Firestore',
+                    ),
+          );
+
       final existingProductNames =
           productsSnapshot.docs
               .map((doc) => (doc.data()['name'] as String).toLowerCase().trim())
@@ -502,9 +537,18 @@ class CSVImportUtil {
         throw Exception('No data rows found in CSV file');
       }
 
-      // Get all categories to match by name
-      final categoriesSnapshot =
-          await _firestore.collection('categories').get();
+      // Get all categories to match by name (with timeout)
+      final categoriesSnapshot = await _firestore
+          .collection('categories')
+          .get()
+          .timeout(
+            const Duration(seconds: 20),
+            onTimeout:
+                () =>
+                    throw TimeoutException(
+                      'Timeout getting categories from Firestore',
+                    ),
+          );
 
       if (categoriesSnapshot.docs.isEmpty) {
         throw Exception(
@@ -512,8 +556,19 @@ class CSVImportUtil {
         );
       }
 
-      // Get existing products to check for duplicates
-      final productsSnapshot = await _firestore.collection('products').get();
+      // Get existing products to check for duplicates (with timeout)
+      final productsSnapshot = await _firestore
+          .collection('products')
+          .get()
+          .timeout(
+            const Duration(seconds: 20),
+            onTimeout:
+                () =>
+                    throw TimeoutException(
+                      'Timeout getting products from Firestore',
+                    ),
+          );
+
       final existingProductNames =
           productsSnapshot.docs
               .map((doc) => (doc.data()['name'] as String).toLowerCase().trim())
@@ -541,11 +596,55 @@ class CSVImportUtil {
         }
       }
 
-      // Create a map of image file names to File objects (case insensitive)
-      final Map<String, File> imageFileMap = {};
-      for (var file in imageFiles) {
-        final fileName = path.basename(file.path).toLowerCase();
-        imageFileMap[fileName] = file;
+      // Create maps for image files (case insensitive)
+      final Map<String, File> imageFileMap = {}; // For non-web platforms
+      final Map<String, String> imageKeyMap =
+          {}; // For mapping filenames to keys
+
+      if (kIsWeb) {
+        // For web platform, use the web image files
+        debugPrint('Processing ${_webImageFiles.length} web image files');
+
+        for (var entry in _webImageFiles.entries) {
+          final fileName = entry.key.toLowerCase();
+
+          // Also add the filename without extension for more flexible matching
+          final fileNameWithoutExt =
+              fileName.contains('.')
+                  ? fileName.substring(0, fileName.lastIndexOf('.'))
+                  : fileName;
+
+          // Store the mapping from filename to key
+          imageKeyMap[fileName] = fileName;
+          if (fileNameWithoutExt != fileName) {
+            imageKeyMap[fileNameWithoutExt] = fileName;
+          }
+
+          debugPrint(
+            'Added web image file: $fileName (also as: $fileNameWithoutExt)',
+          );
+        }
+      } else {
+        // For other platforms, use the file objects
+        debugPrint('Processing ${imageFiles.length} image files');
+
+        for (var file in imageFiles) {
+          final fileName = path.basename(file.path).toLowerCase();
+          imageFileMap[fileName] = file;
+
+          // Also add the filename without extension for more flexible matching
+          final fileNameWithoutExt =
+              fileName.contains('.')
+                  ? fileName.substring(0, fileName.lastIndexOf('.'))
+                  : fileName;
+          if (fileNameWithoutExt != fileName) {
+            imageFileMap[fileNameWithoutExt] = file;
+          }
+
+          debugPrint(
+            'Added image file: $fileName (also as: $fileNameWithoutExt)',
+          );
+        }
       }
 
       // Process each row
@@ -693,9 +792,11 @@ class CSVImportUtil {
                 'imageUrl': '', // Default empty image URL
               };
 
+              // Add a timeout to prevent hanging
               final docRef = await _firestore
                   .collection('categories')
-                  .add(categoryData);
+                  .add(categoryData)
+                  .timeout(const Duration(seconds: 15));
               categoryId = docRef.id;
 
               // Update our maps
@@ -722,25 +823,145 @@ class CSVImportUtil {
             // Check if it's a URL
             if (imageFileName.startsWith('http')) {
               imageUrl = imageFileName;
+              debugPrint('Using URL as image: $imageUrl');
             } else {
-              // Try to find the image file (case insensitive)
-              final imageFile = imageFileMap[imageFileName.toLowerCase()];
-              if (imageFile != null) {
-                try {
-                  final storageRef = _storage.ref().child(
-                    'products/${DateTime.now().millisecondsSinceEpoch}_${path.basename(imageFile.path)}',
-                  );
-                  await storageRef.putFile(imageFile);
-                  imageUrl = await storageRef.getDownloadURL();
-                } catch (e) {
+              // Normalize the image filename for matching
+              final normalizedFileName = imageFileName.toLowerCase().trim();
+              final fileNameWithoutExt =
+                  normalizedFileName.contains('.')
+                      ? normalizedFileName.substring(
+                        0,
+                        normalizedFileName.lastIndexOf('.'),
+                      )
+                      : normalizedFileName;
+
+              debugPrint(
+                'Looking for image file: "$normalizedFileName" or "$fileNameWithoutExt"',
+              );
+
+              if (kIsWeb) {
+                // For web platform, use the web image files
+                String? imageKey;
+
+                // Try to find the image key (case insensitive)
+                imageKey = imageKeyMap[normalizedFileName];
+
+                // If not found, try without extension
+                if (imageKey == null &&
+                    normalizedFileName != fileNameWithoutExt) {
+                  imageKey = imageKeyMap[fileNameWithoutExt];
+                  if (imageKey != null) {
+                    debugPrint(
+                      'Found web image by name without extension: $fileNameWithoutExt',
+                    );
+                  }
+                }
+
+                if (imageKey != null && _webImageFiles.containsKey(imageKey)) {
+                  try {
+                    final imageBytes = _webImageFiles[imageKey]!;
+                    debugPrint(
+                      'Uploading web image file: $imageKey (${imageBytes.length} bytes)',
+                    );
+
+                    final fileName =
+                        '${DateTime.now().millisecondsSinceEpoch}_$imageKey';
+                    final storageRef = _storage.ref().child(
+                      'products/$fileName',
+                    );
+
+                    // Upload the image bytes with timeout
+                    try {
+                      // Add a timeout to prevent hanging
+                      await storageRef
+                          .putData(
+                            imageBytes,
+                            SettableMetadata(
+                              contentType: 'image/${imageKey.split('.').last}',
+                            ),
+                          )
+                          .timeout(const Duration(seconds: 30));
+
+                      imageUrl = await storageRef.getDownloadURL().timeout(
+                        const Duration(seconds: 10),
+                      );
+
+                      debugPrint('Successfully uploaded web image: $imageUrl');
+                    } catch (timeoutError) {
+                      debugPrint('Timeout uploading image: $timeoutError');
+                      warnings.add(
+                        'Row $rowIndex: Timeout uploading image "$imageFileName" for product "$name". The upload took too long.',
+                      );
+                      // Continue with empty image URL
+                      imageUrl = '';
+                    }
+                  } catch (e) {
+                    debugPrint('Failed to upload web image: $e');
+                    warnings.add(
+                      'Row $rowIndex: Failed to upload image "$imageFileName" for product "$name": $e',
+                    );
+                  }
+                } else {
+                  debugPrint('Web image file not found: $normalizedFileName');
                   warnings.add(
-                    'Row $rowIndex: Failed to upload image "$imageFileName" for product "$name": $e',
+                    'Row $rowIndex: Image file "$imageFileName" not found for product "$name". Available files: ${_webImageFiles.keys.take(5).join(", ")}...',
                   );
                 }
               } else {
-                warnings.add(
-                  'Row $rowIndex: Image file "$imageFileName" not found for product "$name".',
-                );
+                // For other platforms, use the file objects
+                File? imageFile = imageFileMap[normalizedFileName];
+
+                // If not found, try without extension
+                if (imageFile == null &&
+                    normalizedFileName != fileNameWithoutExt) {
+                  imageFile = imageFileMap[fileNameWithoutExt];
+                  if (imageFile != null) {
+                    debugPrint(
+                      'Found image file by name without extension: $fileNameWithoutExt',
+                    );
+                  }
+                }
+
+                if (imageFile != null) {
+                  try {
+                    debugPrint('Uploading image file: ${imageFile.path}');
+                    final fileName =
+                        '${DateTime.now().millisecondsSinceEpoch}_${path.basename(imageFile.path)}';
+                    final storageRef = _storage.ref().child(
+                      'products/$fileName',
+                    );
+
+                    // Upload the file with timeout
+                    try {
+                      await storageRef
+                          .putFile(imageFile)
+                          .timeout(const Duration(seconds: 30));
+
+                      imageUrl = await storageRef.getDownloadURL().timeout(
+                        const Duration(seconds: 10),
+                      );
+
+                      debugPrint('Successfully uploaded image: $imageUrl');
+                    } catch (timeoutError) {
+                      debugPrint('Timeout uploading image: $timeoutError');
+                      warnings.add(
+                        'Row $rowIndex: Timeout uploading image "$imageFileName" for product "$name". The upload took too long.',
+                      );
+                      // Continue with empty image URL
+                      imageUrl = '';
+                    }
+                  } catch (e) {
+                    debugPrint('Failed to upload image: $e');
+                    warnings.add(
+                      'Row $rowIndex: Failed to upload image "$imageFileName" for product "$name": $e',
+                    );
+                  }
+                } else {
+                  debugPrint('Image file not found: $normalizedFileName');
+                  warnings.add(
+                    'Row $rowIndex: Image file "$imageFileName" not found for product "$name". Available files: ${imageFileMap.keys.take(5).join(", ")}...',
+                  );
+                }
               }
             }
           }
@@ -764,9 +985,12 @@ class CSVImportUtil {
           // Add to Firestore
           debugPrint('Adding product to Firestore: "$name"');
           try {
+            // Add a timeout to prevent hanging
             final docRef = await _firestore
                 .collection('products')
-                .add(productData);
+                .add(productData)
+                .timeout(const Duration(seconds: 15));
+
             debugPrint(
               'Successfully added product to Firestore with ID: ${docRef.id}',
             );
@@ -779,8 +1003,16 @@ class CSVImportUtil {
               'Successfully imported product: "$name" (total imported: $importedCount)',
             );
           } catch (e) {
-            debugPrint('Error adding product to Firestore: $e');
-            errors.add('Row $rowIndex: Failed to add product to Firestore: $e');
+            String errorMessage = e.toString();
+            if (e is TimeoutException) {
+              errorMessage =
+                  'Timeout adding product to Firestore. The operation took too long.';
+            }
+
+            debugPrint('Error adding product to Firestore: $errorMessage');
+            errors.add(
+              'Row $rowIndex: Failed to add product to Firestore: $errorMessage',
+            );
             skippedCount++;
             continue;
           }
