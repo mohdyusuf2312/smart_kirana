@@ -1,0 +1,7 @@
+Name,Description,Price,DiscountPrice,ImageUrl,CategoryName,Stock,Unit,IsPopular,IsFeatured
+Organic Carrots,Fresh organic carrots rich in vitamins and minerals,35,30,https://firebasestorage.googleapis.com/v0/b/smart-kirana-app.appspot.com/o/products%2Fcarrots.jpg?alt=media,Fruits & Vegetables,40,kg,true,false
+Brown Bread,Whole wheat brown bread with high fiber content,45,40,https://firebasestorage.googleapis.com/v0/b/smart-kirana-app.appspot.com/o/products%2Fbread.jpg?alt=media,Dairy & Breakfast,25,pack,false,true
+Masoor Dal,Premium quality masoor dal (red lentils),90,80,https://firebasestorage.googleapis.com/v0/b/smart-kirana-app.appspot.com/o/products%2Fmasoor_dal.jpg?alt=media,Staples,60,kg,false,false
+Potato Chips Spicy,Spicy potato chips with tangy flavor,40,35,https://firebasestorage.googleapis.com/v0/b/smart-kirana-app.appspot.com/o/products%2Fspicy_chips.jpg?alt=media,Snacks & Beverages,100,pack,true,true
+Shampoo,Nourishing shampoo for all hair types,120,99,https://firebasestorage.googleapis.com/v0/b/smart-kirana-app.appspot.com/o/products%2Fshampoo.jpg?alt=media,Personal Care,30,bottle,false,true
+Dish Soap,Effective dish soap that removes tough stains,80,75,https://firebasestorage.googleapis.com/v0/b/smart-kirana-app.appspot.com/o/products%2Fdish_soap.jpg?alt=media,Household,50,bottle,false,false
