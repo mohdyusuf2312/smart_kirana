@@ -574,11 +574,6 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
             ),
             content: Text(message),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
-                style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-              ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
