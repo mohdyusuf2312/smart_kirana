@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/firebase_options.dart';
@@ -15,8 +14,8 @@ import 'package:smart_kirana/services/admin_initialization_service.dart';
 import 'package:smart_kirana/screens/admin/admin_dashboard_screen.dart';
 import 'package:smart_kirana/screens/admin/category_management_screen.dart';
 import 'package:smart_kirana/screens/admin/order_management_screen.dart';
+import 'package:smart_kirana/screens/admin/product_import_screen.dart';
 import 'package:smart_kirana/screens/admin/product_management_screen.dart';
-import 'package:smart_kirana/screens/admin/simple_admin_dashboard.dart';
 import 'package:smart_kirana/screens/admin/user_management_screen.dart';
 import 'package:smart_kirana/screens/auth/email_verification_screen.dart';
 import 'package:smart_kirana/screens/auth/forgot_password_screen.dart';
@@ -25,6 +24,10 @@ import 'package:smart_kirana/screens/auth/reset_password_confirm_screen.dart';
 import 'package:smart_kirana/screens/auth/signup_screen.dart';
 import 'package:smart_kirana/screens/home/home_screen.dart';
 import 'package:smart_kirana/screens/home/home_wrapper.dart';
+import 'package:smart_kirana/screens/home/about_us_screen.dart';
+import 'package:smart_kirana/screens/home/cart_screen.dart';
+import 'package:smart_kirana/screens/home/edit_profile_screen.dart';
+import 'package:smart_kirana/screens/home/help_support_screen.dart';
 import 'package:smart_kirana/screens/orders/order_detail_screen.dart';
 import 'package:smart_kirana/screens/orders/order_history_screen.dart';
 import 'package:smart_kirana/screens/orders/order_tracking_screen.dart';
@@ -113,13 +116,23 @@ class MyApp extends StatelessWidget {
                   PaymentProvider(authProvider: authProvider),
         ),
         ChangeNotifierProxyProvider<AuthProvider, AdminProvider>(
-          create:
-              (context) => AdminProvider(
-                authProvider: Provider.of<AuthProvider>(context, listen: false),
-              ),
-          update:
-              (context, authProvider, previous) =>
-                  AdminProvider(authProvider: authProvider),
+          create: (context) {
+            final provider = AdminProvider(
+              authProvider: Provider.of<AuthProvider>(context, listen: false),
+            );
+            // Initialize with empty data to prevent null errors
+            debugPrint('Creating AdminProvider instance');
+            return provider;
+          },
+          update: (context, authProvider, previous) {
+            debugPrint('Updating AdminProvider with new AuthProvider');
+            // Preserve previous state if available
+            if (previous != null && authProvider.user?.role == 'ADMIN') {
+              debugPrint('Reusing previous AdminProvider state');
+              return previous;
+            }
+            return AdminProvider(authProvider: authProvider);
+          },
         ),
       ],
       child: MaterialApp(
@@ -209,7 +222,8 @@ class MyApp extends StatelessWidget {
           textButtonTheme: TextButtonThemeData(
             style: TextButton.styleFrom(
               foregroundColor: AppColors.primary,
-              minimumSize: const Size(double.infinity, 50),
+              // Don't set minimumSize to allow flexible TextButton sizes
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppBorderRadius.medium),
               ),
@@ -224,10 +238,17 @@ class MyApp extends StatelessWidget {
               (context) => const ForgotPasswordScreen(),
           HomeScreen.routeName: (context) => const HomeScreen(),
           OrderHistoryScreen.routeName: (context) => const OrderHistoryScreen(),
+          '/cart': (context) => const CartScreen(),
+          EditProfileScreen.routeName: (context) => const EditProfileScreen(),
+          HelpSupportScreen.routeName: (context) => const HelpSupportScreen(),
+          AboutUsScreen.routeName: (context) => const AboutUsScreen(),
           // Admin Routes
-          '/admin-dashboard': (context) => const SimpleAdminDashboard(),
+          AdminDashboardScreen.routeName:
+              (context) => const AdminDashboardScreen(),
           ProductManagementScreen.routeName:
               (context) => const ProductManagementScreen(),
+          ProductImportScreen.routeName:
+              (context) => const ProductImportScreen(),
           CategoryManagementScreen.routeName:
               (context) => const CategoryManagementScreen(),
           OrderManagementScreen.routeName:
