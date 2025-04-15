@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart' as path;
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/utils/csv_import_util.dart';
@@ -24,7 +27,7 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
   int _skippedCount = 0;
   List<String> _errors = [];
   List<String> _warnings = [];
-  bool _skipHeader = true;
+  bool _skipHeader = false;
   bool _showDetails = false;
 
   // Initialize CSVImportUtil
@@ -106,9 +109,42 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
                     content: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Your CSV file should include the following columns:',
-                          style: TextStyle(fontSize: 14),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Your CSV file should include the following columns:',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                            if (kIsWeb)
+                              Container(
+                                margin: const EdgeInsets.only(top: 8),
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.withAlpha(30),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: Colors.blue.shade300,
+                                  ),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.info,
+                                      color: Colors.blue,
+                                      size: 16,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Web platform detected. CSV import is supported, but image uploads may be limited.',
+                                        style: TextStyle(fontSize: 12),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
                         ),
                         const SizedBox(height: 8),
                         _buildRequiredFieldsList(),
@@ -141,37 +177,6 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
                           activeColor: AppColors.primary,
                           contentPadding: EdgeInsets.zero,
                         ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Image Files Selection
-                  _buildSectionCard(
-                    title: 'Step 2: Select Product Images',
-                    icon: Icons.image,
-                    content: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Select image files referenced in your CSV file. If your CSV contains URLs, you can skip this step.',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildFileSelector(
-                          label:
-                              _imageFiles.isNotEmpty
-                                  ? '${_imageFiles.length} images selected'
-                                  : 'No images selected',
-                          icon: Icons.photo_library,
-                          buttonText: 'Select Images',
-                          onPressed: _pickImageFiles,
-                        ),
-                        if (_imageFiles.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          _buildImagePreviewGrid(),
-                        ],
                       ],
                     ),
                   ),
@@ -695,14 +700,46 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['csv'],
+        withData: true, // Important: Get the file data for web platform
       );
 
       if (result != null) {
-        setState(() {
-          _csvFile = File(result.files.single.path!);
-          _statusMessage = '';
-          _importSuccess = false;
-        });
+        if (kIsWeb) {
+          // For web platform, we need to handle the CSV data differently
+          // We'll store the bytes and filename to use later
+          final bytes = result.files.single.bytes;
+          final fileName = result.files.single.name;
+
+          if (bytes == null) {
+            setState(() {
+              _statusMessage = 'Error: Could not read file data';
+              _importSuccess = false;
+            });
+            return;
+          }
+
+          // Convert bytes to string for CSV processing
+          final csvString = String.fromCharCodes(bytes);
+
+          // Update the CSV import util to handle web files
+          if (_csvImportUtil != null) {
+            _csvImportUtil!.setWebCsvData(csvString, fileName);
+          }
+
+          setState(() {
+            // We'll use a temporary file path for display purposes
+            _csvFile = File(fileName);
+            _statusMessage = '';
+            _importSuccess = false;
+          });
+        } else {
+          // For other platforms, use the path
+          setState(() {
+            _csvFile = File(result.files.single.path!);
+            _statusMessage = '';
+            _importSuccess = false;
+          });
+        }
       }
     } catch (e) {
       setState(() {
@@ -717,14 +754,26 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: true,
+        withData: true, // Important: Get the file data for web platform
       );
 
       if (result != null) {
-        setState(() {
-          _imageFiles = result.paths.map((path) => File(path!)).toList();
-          _statusMessage = '';
-          _importSuccess = false;
-        });
+        if (kIsWeb) {
+          // For web platform, we need to handle the image files differently
+          setState(() {
+            _statusMessage = 'Image upload not supported on web platform yet';
+            _importSuccess = false;
+          });
+          // Note: For a complete implementation, you would need to handle web image uploads
+          // This would involve creating a custom solution for web platforms
+        } else {
+          // For other platforms, use the path
+          setState(() {
+            _imageFiles = result.paths.map((path) => File(path!)).toList();
+            _statusMessage = '';
+            _importSuccess = false;
+          });
+        }
       }
     } catch (e) {
       setState(() {
@@ -756,14 +805,19 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
         throw Exception('Import utility is not initialized');
       }
 
+      // Debug the import parameters
+      debugPrint('Starting import with skipHeader: $_skipHeader');
+
       Map<String, dynamic> result;
       if (_imageFiles.isNotEmpty) {
+        debugPrint('Importing products with images');
         result = await _csvImportUtil!.importProductsWithImages(
           _csvFile!,
           _imageFiles,
           skipHeader: _skipHeader,
         );
       } else {
+        debugPrint('Importing products without images');
         result = await _csvImportUtil!.importProductsFromCSV(
           _csvFile!,
           skipHeader: _skipHeader,
