@@ -123,7 +123,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
             onTap:
                 () => _showContactDialog(
                   'Email Support',
-                  'Please send your queries to support@smartkirana.com',
+                  'Please send your queries to mohdyusufr@gmail.com',
                   Icons.email,
                 ),
             color: const Color(0xFF4285F4), // Google Blue
@@ -139,7 +139,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
             onTap:
                 () => _showContactDialog(
                   'Phone Support',
-                  'Please call us at +91 9876543210\nAvailable Mon-Sat, 9 AM - 6 PM',
+                  'Please call us at +91 9084662330\nAvailable Mon-Sat, 9 AM - 6 PM',
                   Icons.phone,
                 ),
             color: const Color(0xFF34A853), // Google Green
@@ -154,7 +154,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
             onTap:
                 () => _showContactDialog(
                   'WhatsApp Support',
-                  'Please message us on WhatsApp at +91 9876543210',
+                  'Please message us on WhatsApp at +91 9084662330',
                   Icons.chat,
                 ),
             color: const Color(0xFF25D366), // WhatsApp Green
@@ -196,7 +196,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
           _buildFaqItem(
             0,
             'How do I track my order?',
-            'You can track your order by going to the Order History section in your profile and selecting the specific order you want to track.',
+            'You can track your order by going to the Order History section in your profile and selecting the specific order you want to track. You can also check the status of your order on the order details page.',
             Icons.local_shipping_outlined,
           ),
 
@@ -210,7 +210,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
           _buildFaqItem(
             2,
             'How can I cancel my order?',
-            'You can cancel your order within 30 minutes of placing it by going to the Order Details page and selecting the Cancel Order option.',
+            'You can cancel your order anytime before it is on its way to you. You can do this by going to the Order Details page and selecting the Cancel Order option.',
             Icons.cancel_outlined,
           ),
 
@@ -536,7 +536,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
               onPressed: () {
                 _showContactDialog(
                   'Email Support',
-                  'Please send your queries to support@smartkirana.com',
+                  'Please send your queries to mohdyusufr@gmail.com',
                   Icons.email,
                 );
               },
