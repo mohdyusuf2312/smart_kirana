@@ -35,10 +35,16 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     try {
       final categoriesSnapshot =
           await _firestore.collection('categories').get();
+
+      // Extract category names and sort them alphabetically
       final categories =
           categoriesSnapshot.docs
               .map((doc) => doc.data()['name'] as String)
               .toList();
+
+      // Sort the categories alphabetically
+      categories.sort((a, b) => a.compareTo(b));
+
       if (mounted) {
         setState(() {
           _categories = ['All', ...categories];
@@ -222,8 +228,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
           filteredDocs =
               filteredDocs.where((doc) {
                 final data = doc.data() as Map<String, dynamic>;
-                final categoryId = data['categoryId'] as String? ?? '';
-                return categoryId == _selectedCategory;
+                final categoryName = data['categoryName'] as String? ?? '';
+                return categoryName == _selectedCategory;
               }).toList();
         }
 
