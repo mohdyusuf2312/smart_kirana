@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:convert';
+import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -177,6 +178,45 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
                           activeColor: AppColors.primary,
                           contentPadding: EdgeInsets.zero,
                         ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Image Files Selection
+                  _buildSectionCard(
+                    title: 'Step 2: Add Product Images',
+                    icon: Icons.image,
+                    content: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Add image files for your products. The image filenames should match the "Image URL/filename" column in your CSV.',
+                          style: TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildFileSelector(
+                          label:
+                              _imageFiles.isNotEmpty
+                                  ? '${_imageFiles.length} image${_imageFiles.length > 1 ? 's' : ''} selected'
+                                  : 'No images selected',
+                          icon: Icons.photo_library,
+                          buttonText: 'Select Images',
+                          onPressed: _pickImageFiles,
+                        ),
+                        if (_imageFiles.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Selected Images:',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildImagePreviewGrid(),
+                        ],
                       ],
                     ),
                   ),
@@ -457,16 +497,58 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
       ),
       itemCount: _imageFiles.length,
       itemBuilder: (context, index) {
+        final fileName = path.basename(_imageFiles[index].path);
+
         return Stack(
           children: [
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                image: DecorationImage(
-                  image: FileImage(_imageFiles[index]),
-                  fit: BoxFit.cover,
-                ),
+                color: Colors.grey.shade200,
               ),
+              child:
+                  kIsWeb
+                      ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.image, color: Colors.grey),
+                            const SizedBox(height: 4),
+                            Text(
+                              fileName,
+                              style: const TextStyle(fontSize: 8),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      )
+                      : Image.file(
+                        _imageFiles[index],
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.broken_image,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  fileName,
+                                  style: const TextStyle(fontSize: 8),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
             ),
             Positioned(
               top: 4,
@@ -474,6 +556,18 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
               child: GestureDetector(
                 onTap: () {
                   setState(() {
+                    if (kIsWeb) {
+                      // For web platform, we need to re-select all images
+                      // since we can't selectively remove one from CSVImportUtil
+                      debugPrint(
+                        'Removed image: ${path.basename(_imageFiles[index].path)}',
+                      );
+
+                      // Note: This is a limitation of the web platform
+                      // In a production app, you would implement a more sophisticated
+                      // solution to track and manage web image files
+                    }
+
                     _imageFiles.removeAt(index);
                   });
                 },
@@ -757,19 +851,49 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
         withData: true, // Important: Get the file data for web platform
       );
 
-      if (result != null) {
+      if (result != null && result.files.isNotEmpty) {
         if (kIsWeb) {
           // For web platform, we need to handle the image files differently
+          // We'll store the bytes and filename to use later
+
+          // Make sure CSVImportUtil is initialized
+          if (!_isCSVImportUtilInitialized()) {
+            _initializeImportUtil();
+          }
+
+          // Clear any existing web image files
+          _csvImportUtil?.clearWebImageFiles();
+
+          // Add each file to the CSVImportUtil
+          for (var file in result.files) {
+            if (file.name.isNotEmpty && file.bytes != null) {
+              _csvImportUtil?.addWebImageFile(file.name, file.bytes!);
+              debugPrint(
+                'Added web image file: ${file.name} (${file.bytes!.length} bytes)',
+              );
+            }
+          }
+
           setState(() {
-            _statusMessage = 'Image upload not supported on web platform yet';
+            // For display purposes, create File objects with just the names
+            _imageFiles =
+                result.files
+                    .where((file) => file.name.isNotEmpty)
+                    .map((file) => File(file.name))
+                    .toList();
+            _statusMessage = '';
             _importSuccess = false;
           });
-          // Note: For a complete implementation, you would need to handle web image uploads
-          // This would involve creating a custom solution for web platforms
+
+          debugPrint('Added ${result.files.length} web image files');
         } else {
           // For other platforms, use the path
           setState(() {
-            _imageFiles = result.paths.map((path) => File(path!)).toList();
+            _imageFiles =
+                result.paths
+                    .where((path) => path != null)
+                    .map((path) => File(path!))
+                    .toList();
             _statusMessage = '';
             _importSuccess = false;
           });
@@ -780,6 +904,7 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
         _statusMessage = 'Error selecting image files: $e';
         _importSuccess = false;
       });
+      debugPrint('Error picking image files: $e');
     }
   }
 
@@ -809,19 +934,55 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
       debugPrint('Starting import with skipHeader: $_skipHeader');
 
       Map<String, dynamic> result;
-      if (_imageFiles.isNotEmpty) {
-        debugPrint('Importing products with images');
-        result = await _csvImportUtil!.importProductsWithImages(
-          _csvFile!,
-          _imageFiles,
-          skipHeader: _skipHeader,
-        );
-      } else {
-        debugPrint('Importing products without images');
-        result = await _csvImportUtil!.importProductsFromCSV(
-          _csvFile!,
-          skipHeader: _skipHeader,
-        );
+      try {
+        // Add a timeout for the entire import process
+        if (_imageFiles.isNotEmpty) {
+          debugPrint('Importing products with images');
+          result = await _csvImportUtil!
+              .importProductsWithImages(
+                _csvFile!,
+                _imageFiles,
+                skipHeader: _skipHeader,
+              )
+              .timeout(
+                const Duration(minutes: 5),
+                onTimeout:
+                    () =>
+                        throw TimeoutException(
+                          'The import process took too long and timed out. Please try again with fewer products or images.',
+                        ),
+              );
+        } else {
+          debugPrint('Importing products without images');
+          result = await _csvImportUtil!
+              .importProductsFromCSV(_csvFile!, skipHeader: _skipHeader)
+              .timeout(
+                const Duration(minutes: 5),
+                onTimeout:
+                    () =>
+                        throw TimeoutException(
+                          'The import process took too long and timed out. Please try again with fewer products.',
+                        ),
+              );
+        }
+      } catch (e) {
+        if (e is TimeoutException) {
+          debugPrint('Import timed out: $e');
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _importSuccess = false;
+              _statusMessage =
+                  'Import timed out: The process took too long to complete.';
+              _errors = [
+                'The import process took too long and timed out. Please try again with fewer products or images.',
+              ];
+              _showDetails = true;
+            });
+          }
+          return; // Exit the method early
+        }
+        rethrow;
       }
 
       if (mounted) {
