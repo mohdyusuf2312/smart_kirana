@@ -161,7 +161,7 @@ class _SearchScreenState extends State<SearchScreen> {
       padding: const EdgeInsets.all(AppPadding.medium),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.7,
+        childAspectRatio: 0.85, // Adjusted to match popular product cards
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
       ),
