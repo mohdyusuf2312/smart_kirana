@@ -78,44 +78,47 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 _sortProducts();
               });
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'name',
-                child: Text('Sort by Name'),
-              ),
-              const PopupMenuItem(
-                value: 'price_low',
-                child: Text('Price: Low to High'),
-              ),
-              const PopupMenuItem(
-                value: 'price_high',
-                child: Text('Price: High to Low'),
-              ),
-              const PopupMenuItem(
-                value: 'popularity',
-                child: Text('Sort by Popularity'),
-              ),
-            ],
+            itemBuilder:
+                (context) => [
+                  const PopupMenuItem(
+                    value: 'name',
+                    child: Text('Sort by Name'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'price_low',
+                    child: Text('Price: Low to High'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'price_high',
+                    child: Text('Price: High to Low'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'popularity',
+                    child: Text('Sort by Popularity'),
+                  ),
+                ],
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _products.isEmpty
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _products.isEmpty
               ? const Center(child: Text('No products available'))
               : GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.7,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemCount: _products.length,
-                  itemBuilder: (context, index) {
-                    return _buildProductCard(_products[index]);
-                  },
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio:
+                      0.85, // Adjusted to match popular product cards
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
                 ),
+                itemCount: _products.length,
+                itemBuilder: (context, index) {
+                  return _buildProductCard(_products[index]);
+                },
+              ),
     );
   }
 
@@ -151,22 +154,48 @@ class _ProductListScreenState extends State<ProductListScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Product Image
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-                child: Image.network(
-                  product.imageUrl,
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 120,
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(8),
+                    ),
+                    child: Image.network(
+                      product.imageUrl,
+                      height: 100,
                       width: double.infinity,
-                      color: Colors.grey.shade200,
-                      child: const Icon(Icons.image_not_supported),
-                    );
-                  },
-                ),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint('Error loading image: $error');
+                        return Container(
+                          height: 100,
+                          width: double.infinity,
+                          color: Colors.grey.shade200,
+                          child: const Icon(Icons.image_not_supported),
+                        );
+                      },
+                    ),
+                  ),
+                  if (product.stock <= 0)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withAlpha(128),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(8),
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'Out of Stock',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -175,7 +204,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   children: [
                     Text(
                       product.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -217,7 +249,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               cartProvider.addToCart(product, 1);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${product.name} added to cart'),
+                                  content: Text(
+                                    '${product.name} added to cart',
+                                  ),
                                   duration: const Duration(seconds: 1),
                                 ),
                               );
