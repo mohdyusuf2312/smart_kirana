@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/user_model.dart';
 import 'package:smart_kirana/providers/address_provider.dart';
 import 'package:smart_kirana/providers/cart_provider.dart';
 import 'package:smart_kirana/providers/order_provider.dart';
 import 'package:smart_kirana/screens/home/address_screen.dart';
-import 'package:smart_kirana/screens/orders/order_detail_screen.dart';
 import 'package:smart_kirana/screens/payment/payment_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 
@@ -18,8 +16,6 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  int _selectedPaymentMethod = 0;
-  final List<String> _paymentMethods = ['Cash on Delivery', 'Online Payment'];
   UserAddress? _selectedAddress;
 
   @override
@@ -116,22 +112,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                   // Order items list
                   _buildOrderItemsList(cartProvider),
-
-                  const Divider(height: 32),
-
-                  // Payment Method Section
-                  _buildSectionHeader(
-                    'Payment Method',
-                    Icons.payment,
-                    null,
-                    null,
-                  ),
-
-                  // Payment methods
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _buildPaymentMethodSelector(),
-                  ),
 
                   const Divider(height: 32),
 
@@ -370,6 +350,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 width: 60,
                 height: 60,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  debugPrint('Error loading image: $error');
+                  return Container(
+                    width: 60,
+                    height: 60,
+                    color: Colors.grey.shade200,
+                    child: const Icon(
+                      Icons.image_not_supported,
+                      color: Colors.grey,
+                      size: 24,
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -428,62 +421,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ],
         );
       },
-    );
-  }
-
-  Widget _buildPaymentMethodSelector() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Column(
-        children: List.generate(_paymentMethods.length, (index) {
-          final isSelected = _selectedPaymentMethod == index;
-          final method = _paymentMethods[index];
-
-          return InkWell(
-            onTap: () {
-              setState(() {
-                _selectedPaymentMethod = index;
-              });
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Icon(
-                    index == 0 ? Icons.money : Icons.credit_card,
-                    color: isSelected ? AppColors.primary : Colors.grey,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      method,
-                      style: TextStyle(
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                  ),
-                  Radio(
-                    value: index,
-                    groupValue: _selectedPaymentMethod,
-                    activeColor: AppColors.primary,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedPaymentMethod = value as int;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
-      ),
     );
   }
 
@@ -759,7 +696,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         discount: 0.0, // No discount for now
         totalAmount: cartProvider.total,
         deliveryAddress: _selectedAddress!,
-        paymentMethod: _paymentMethods[_selectedPaymentMethod],
+        paymentMethod: "To be selected on payment screen",
         deliveryNotes: null, // No delivery notes for now
       );
 
@@ -777,27 +714,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           );
         }
 
-        // For Cash on Delivery, navigate directly to order details
-        if (_selectedPaymentMethod == 0) {
-          // Clear cart
-          await cartProvider.clearCart();
-
-          // Navigate to order details screen
-          if (mounted) {
-            navigator.pushNamedAndRemoveUntil(
-              OrderDetailScreen.routeName,
-              (route) => route.isFirst,
-              arguments: orderId,
-            );
-          }
-        } else {
-          // For other payment methods, navigate to payment screen
-          if (mounted) {
-            navigator.pushNamed(
-              PaymentScreen.routeName,
-              arguments: {'orderId': orderId, 'amount': cartProvider.total},
-            );
-          }
+        // Always navigate to payment screen
+        if (mounted) {
+          navigator.pushNamed(
+            PaymentScreen.routeName,
+            arguments: {'orderId': orderId, 'amount': cartProvider.total},
+          );
         }
       } else {
         // Show error message
