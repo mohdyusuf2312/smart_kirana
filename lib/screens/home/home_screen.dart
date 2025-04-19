@@ -304,6 +304,15 @@ class _HomeScreenState extends State<HomeScreen> {
     final productProvider = Provider.of<ProductProvider>(context);
     final categories = productProvider.categories;
 
+    // ✅ Filter categories that have at least one product
+    final categoriesWithProducts =
+        categories
+            .where(
+              (category) =>
+                  productProvider.getProductsByCategory(category.id).isNotEmpty,
+            )
+            .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -316,13 +325,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Shop by Category',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              // View all categories button
-              if (categories.length > 5)
+              if (categoriesWithProducts.length > 5)
                 SizedBox(
                   width: 80,
                   child: TextButton(
                     onPressed: () {
-                      // Show all categories in a dialog
                       showDialog(
                         context: context,
                         builder:
@@ -332,9 +339,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: double.maxFinite,
                                 child: ListView.builder(
                                   shrinkWrap: true,
-                                  itemCount: categories.length,
+                                  itemCount: categoriesWithProducts.length,
                                   itemBuilder: (context, index) {
-                                    final category = categories[index];
+                                    final category =
+                                        categoriesWithProducts[index];
                                     final products = productProvider
                                         .getProductsByCategory(category.id);
                                     return ListTile(
@@ -355,31 +363,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                       onTap: () {
                                         Navigator.pop(context);
-                                        if (products.isNotEmpty) {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder:
-                                                  (context) =>
-                                                      ProductListScreen(
-                                                        title: category.name,
-                                                        products: products,
-                                                        categoryId: category.id,
-                                                      ),
-                                            ),
-                                          );
-                                        } else {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'No products available in this category',
-                                              ),
-                                              duration: Duration(seconds: 1),
-                                            ),
-                                          );
-                                        }
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (context) => ProductListScreen(
+                                                  title: category.name,
+                                                  products: products,
+                                                  categoryId: category.id,
+                                                ),
+                                          ),
+                                        );
                                       },
                                     );
                                   },
@@ -407,7 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(8),
           ),
           child:
-              categories.isEmpty
+              categoriesWithProducts.isEmpty
                   ? const Center(child: Text('No categories available'))
                   : ListView.builder(
                     scrollDirection: Axis.horizontal,
@@ -416,9 +410,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       horizontal: 16,
                       vertical: 8,
                     ),
-                    itemCount: categories.length,
+                    itemCount: categoriesWithProducts.length,
                     itemBuilder: (context, index) {
-                      final category = categories[index];
+                      final category = categoriesWithProducts[index];
                       return _buildCategoryItem(category);
                     },
                   ),
