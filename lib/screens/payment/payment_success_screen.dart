@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/payment_model.dart' as payment_model;
+import 'package:smart_kirana/providers/cart_provider.dart';
 import 'package:smart_kirana/screens/orders/order_detail_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
@@ -22,6 +24,11 @@ class PaymentSuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Clear the cart when payment is successful
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<CartProvider>(context, listen: false).clearCart();
+    });
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -45,7 +52,7 @@ class PaymentSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppPadding.large),
-              
+
               // Success Message
               Text(
                 'Payment Successful!',
@@ -62,7 +69,7 @@ class PaymentSuccessScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppPadding.large),
-              
+
               // Payment Details
               Card(
                 elevation: 2,
@@ -94,9 +101,12 @@ class PaymentSuccessScreen extends StatelessWidget {
                       const Divider(height: 20),
                       _buildDetailRow(
                         'Date & Time',
-                        DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now()),
+                        DateFormat(
+                          'dd MMM yyyy, hh:mm a',
+                        ).format(DateTime.now()),
                       ),
-                      if (method != payment_model.PaymentMethod.cashOnDelivery) ...[
+                      if (method !=
+                          payment_model.PaymentMethod.cashOnDelivery) ...[
                         const Divider(height: 20),
                         _buildDetailRow(
                           'Transaction ID',
@@ -108,7 +118,7 @@ class PaymentSuccessScreen extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              
+
               // Action Buttons
               CustomButton(
                 text: 'View Order Details',
@@ -141,9 +151,9 @@ class PaymentSuccessScreen extends StatelessWidget {
         ),
         Text(
           value,
-          style: valueStyle ?? AppTextStyles.bodyMedium.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style:
+              valueStyle ??
+              AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );
