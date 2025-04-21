@@ -999,8 +999,18 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
               _statusMessage =
                   'Successfully imported $_importedCount products.';
             } else {
-              _statusMessage =
-                  'Imported $_importedCount products with ${_warnings.length} warnings and ${_errors.length} errors.';
+              // Check if there are duplicate product warnings
+              bool hasDuplicates = _warnings.any(
+                (warning) => warning.contains('already exists in database'),
+              );
+
+              if (hasDuplicates && _skippedCount > 0) {
+                _statusMessage =
+                    'Imported $_importedCount products. Skipped $_skippedCount products (including duplicates). See details below.';
+              } else {
+                _statusMessage =
+                    'Imported $_importedCount products with ${_warnings.length} warnings and ${_errors.length} errors.';
+              }
               _showDetails = true;
             }
           } else {
