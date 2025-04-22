@@ -239,13 +239,13 @@ class CSVImportUtil {
           if (existingProductNames.contains(normalizedName) ||
               addedProductNames.contains(normalizedName)) {
             warnings.add(
-              'Row $rowIndex: Product "$name" already exists. Skipping row.',
+              'Row $rowIndex: Product "$name" already exists in database. Skipping to next product.',
             );
             debugPrint(
               'Skipping duplicate product: "$name" (normalized: "$normalizedName")',
             );
             skippedCount++;
-            continue;
+            continue; // Skip to the next product
           }
 
           final description = row[1].toString().trim();
@@ -680,13 +680,13 @@ class CSVImportUtil {
           if (existingProductNames.contains(normalizedName) ||
               addedProductNames.contains(normalizedName)) {
             warnings.add(
-              'Row $rowIndex: Product "$name" already exists. Skipping row.',
+              'Row $rowIndex: Product "$name" already exists in database. Skipping to next product.',
             );
             debugPrint(
               'Skipping duplicate product: "$name" (normalized: "$normalizedName")',
             );
             skippedCount++;
-            continue;
+            continue; // Skip to the next product
           }
 
           final description = row[1].toString().trim();
