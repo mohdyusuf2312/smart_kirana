@@ -92,10 +92,13 @@ class AdminProvider extends ChangeNotifier {
 
           final status = orderData['status'] as String?;
           if (status != null) {
-            switch (status) {
+            switch (status.toUpperCase()) {
               case 'PENDING':
+                pendingOrders++;
+                break;
               case 'PROCESSING':
               case 'SHIPPED':
+                // These are also considered pending but tracked separately
                 pendingOrders++;
                 break;
               case 'DELIVERED':
