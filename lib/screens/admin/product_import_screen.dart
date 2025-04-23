@@ -990,6 +990,7 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
           _isLoading = false;
           _importSuccess = result['success'] as bool;
           _importedCount = result['importedCount'] as int;
+          final updatedCount = result['updatedCount'] as int? ?? 0;
           _skippedCount = result['skippedCount'] as int;
           _errors = List<String>.from(result['errors'] as List? ?? []);
           _warnings = List<String>.from(result['warnings'] as List? ?? []);
@@ -1001,10 +1002,17 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
             } else {
               // Check if there are duplicate product warnings
               bool hasDuplicates = _warnings.any(
-                (warning) => warning.contains('already exists in database'),
+                (warning) => warning.contains('already exists'),
               );
 
-              if (hasDuplicates && _skippedCount > 0) {
+              bool hasUpdates = _warnings.any(
+                (warning) => warning.contains('was updated'),
+              );
+
+              if (hasDuplicates && hasUpdates) {
+                _statusMessage =
+                    'Imported $_importedCount products. Updated $updatedCount existing products. Skipped ${_skippedCount - updatedCount} unchanged products. See details below.';
+              } else if (hasDuplicates && _skippedCount > 0) {
                 _statusMessage =
                     'Imported $_importedCount products. Skipped $_skippedCount products (including duplicates). See details below.';
               } else {
