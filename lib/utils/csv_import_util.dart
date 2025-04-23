@@ -1,13 +1,10 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csv/csv.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
-import 'package:smart_kirana/models/product_model.dart';
 
 /// Utility class for importing products from CSV files
 class CSVImportUtil {
@@ -48,6 +45,7 @@ class CSVImportUtil {
     final List<String> errors = [];
     final List<String> warnings = [];
     int importedCount = 0;
+    int updatedCount = 0;
     int skippedCount = 0;
 
     try {
@@ -176,18 +174,25 @@ class CSVImportUtil {
                     ),
           );
 
-      final existingProductNames =
-          productsSnapshot.docs
-              .map((doc) => (doc.data()['name'] as String).toLowerCase().trim())
-              .toSet();
+      // Store existing products with their full data for comparison
+      final Map<String, Map<String, dynamic>> existingProducts = {};
+      final Map<String, String> existingProductIds = {};
+
+      for (var doc in productsSnapshot.docs) {
+        final data = doc.data();
+        final name = (data['name'] as String).toLowerCase().trim();
+        existingProducts[name] = data;
+        existingProductIds[name] = doc.id;
+      }
 
       // Create a mutable set to track products added in this import session
       final Set<String> addedProductNames = {};
+      int updatedCount = 0;
 
-      debugPrint('Found ${existingProductNames.length} existing products');
-      if (existingProductNames.isNotEmpty) {
+      debugPrint('Found ${existingProducts.length} existing products');
+      if (existingProducts.isNotEmpty) {
         debugPrint(
-          'Existing product names sample: ${existingProductNames.take(5).join(", ")}',
+          'Existing product names sample: ${existingProducts.keys.take(5).join(", ")}',
         );
       }
 
@@ -232,20 +237,6 @@ class CSVImportUtil {
             warnings.add('Row $rowIndex: Product name is empty. Skipping row.');
             skippedCount++;
             continue;
-          }
-
-          // Check for duplicate product names (either existing in DB or added in this import)
-          final normalizedName = name.toLowerCase().trim();
-          if (existingProductNames.contains(normalizedName) ||
-              addedProductNames.contains(normalizedName)) {
-            warnings.add(
-              'Row $rowIndex: Product "$name" already exists in database. Skipping to next product.',
-            );
-            debugPrint(
-              'Skipping duplicate product: "$name" (normalized: "$normalizedName")',
-            );
-            skippedCount++;
-            continue; // Skip to the next product
           }
 
           final description = row[1].toString().trim();
@@ -374,6 +365,134 @@ class CSVImportUtil {
             debugPrint('Found category ID: $categoryId for "$categoryName"');
           }
 
+          // Check for duplicate product names (either existing in DB or added in this import)
+          final normalizedName = name.toLowerCase().trim();
+
+          // Check if product already added in this import session
+          if (addedProductNames.contains(normalizedName)) {
+            warnings.add(
+              'Row $rowIndex: Product "$name" was already added in this import session. Skipping to next product.',
+            );
+            debugPrint(
+              'Skipping duplicate product from same import: "$name" (normalized: "$normalizedName")',
+            );
+            skippedCount++;
+            continue; // Skip to the next product
+          }
+
+          // Check if product exists in database
+          if (existingProducts.containsKey(normalizedName)) {
+            // Get existing product data
+            final existingProduct = existingProducts[normalizedName]!;
+            final productId = existingProductIds[normalizedName]!;
+
+            // Create new product data
+            final productData = {
+              'name': name,
+              'description': description,
+              'price': price,
+              'discountPrice': discountPrice,
+              'imageUrl': imageUrl,
+              'categoryId': categoryId,
+              'categoryName': categoryIdToName[categoryId] ?? categoryName,
+              'stock': stock,
+              'unit': unit,
+              'isPopular': isPopular,
+              'isFeatured': isFeatured,
+            };
+
+            // Check if any field has changed
+            bool hasChanged = false;
+            final List<String> changedFields = [];
+
+            // Compare fields
+            if (existingProduct['description'] != description) {
+              hasChanged = true;
+              changedFields.add('description');
+            }
+
+            if ((existingProduct['price'] as num).toDouble() != price) {
+              hasChanged = true;
+              changedFields.add('price');
+            }
+
+            // Compare discount price (handle null case)
+            final existingDiscountPrice =
+                existingProduct['discountPrice'] != null
+                    ? (existingProduct['discountPrice'] as num).toDouble()
+                    : null;
+            if (existingDiscountPrice != discountPrice) {
+              hasChanged = true;
+              changedFields.add('discountPrice');
+            }
+
+            if (existingProduct['imageUrl'] != imageUrl) {
+              hasChanged = true;
+              changedFields.add('imageUrl');
+            }
+
+            if (existingProduct['categoryId'] != categoryId) {
+              hasChanged = true;
+              changedFields.add('categoryId');
+            }
+
+            if ((existingProduct['stock'] as num).toInt() != stock) {
+              hasChanged = true;
+              changedFields.add('stock');
+            }
+
+            if (existingProduct['unit'] != unit) {
+              hasChanged = true;
+              changedFields.add('unit');
+            }
+
+            if (existingProduct['isPopular'] != isPopular) {
+              hasChanged = true;
+              changedFields.add('isPopular');
+            }
+
+            if (existingProduct['isFeatured'] != isFeatured) {
+              hasChanged = true;
+              changedFields.add('isFeatured');
+            }
+
+            if (hasChanged) {
+              // Update the product
+              try {
+                await _firestore
+                    .collection('products')
+                    .doc(productId)
+                    .update(productData);
+
+                debugPrint(
+                  'Updated existing product: "$name" (ID: $productId). Changed fields: ${changedFields.join(", ")}',
+                );
+
+                updatedCount++;
+                warnings.add(
+                  'Row $rowIndex: Product "$name" already exists and was updated. Changed fields: ${changedFields.join(", ")}',
+                );
+              } catch (e) {
+                debugPrint('Error updating product: $e');
+                errors.add(
+                  'Row $rowIndex: Failed to update product in Firestore: $e',
+                );
+                skippedCount++;
+              }
+            } else {
+              // No changes detected
+              debugPrint(
+                'Skipping unchanged product: "$name" (normalized: "$normalizedName")',
+              );
+              warnings.add(
+                'Row $rowIndex: Product "$name" already exists with identical data. Skipping.',
+              );
+              skippedCount++;
+            }
+
+            continue; // Skip to the next product
+          }
+
           // Create product data
           final productData = {
             'name': name,
@@ -430,6 +549,7 @@ class CSVImportUtil {
       return {
         'success': true,
         'importedCount': importedCount,
+        'updatedCount': updatedCount,
         'skippedCount': skippedCount,
         'errors': errors,
         'warnings': warnings,
@@ -439,6 +559,7 @@ class CSVImportUtil {
       return {
         'success': false,
         'importedCount': importedCount,
+        'updatedCount': updatedCount,
         'skippedCount': skippedCount,
         'errors': [...errors, e.toString()],
         'warnings': warnings,
@@ -457,6 +578,7 @@ class CSVImportUtil {
     final List<String> errors = [];
     final List<String> warnings = [];
     int importedCount = 0;
+    int updatedCount = 0;
     int skippedCount = 0;
 
     try {
@@ -569,18 +691,24 @@ class CSVImportUtil {
                     ),
           );
 
-      final existingProductNames =
-          productsSnapshot.docs
-              .map((doc) => (doc.data()['name'] as String).toLowerCase().trim())
-              .toSet();
+      // Store existing products with their full data for comparison
+      final Map<String, Map<String, dynamic>> existingProducts = {};
+      final Map<String, String> existingProductIds = {};
+
+      for (var doc in productsSnapshot.docs) {
+        final data = doc.data();
+        final name = (data['name'] as String).toLowerCase().trim();
+        existingProducts[name] = data;
+        existingProductIds[name] = doc.id;
+      }
 
       // Create a mutable set to track products added in this import session
       final Set<String> addedProductNames = {};
 
-      debugPrint('Found ${existingProductNames.length} existing products');
-      if (existingProductNames.isNotEmpty) {
+      debugPrint('Found ${existingProducts.length} existing products');
+      if (existingProducts.isNotEmpty) {
         debugPrint(
-          'Existing product names sample: ${existingProductNames.take(5).join(", ")}',
+          'Existing product names sample: ${existingProducts.keys.take(5).join(", ")}',
         );
       }
 
@@ -675,18 +803,25 @@ class CSVImportUtil {
             continue;
           }
 
-          // Check for duplicate product names (either existing in DB or added in this import)
+          // Normalize name for comparison
           final normalizedName = name.toLowerCase().trim();
-          if (existingProductNames.contains(normalizedName) ||
-              addedProductNames.contains(normalizedName)) {
+
+          // Check if product already added in this import session
+          if (addedProductNames.contains(normalizedName)) {
             warnings.add(
-              'Row $rowIndex: Product "$name" already exists in database. Skipping to next product.',
+              'Row $rowIndex: Product "$name" was already added in this import session. Skipping to next product.',
             );
             debugPrint(
-              'Skipping duplicate product: "$name" (normalized: "$normalizedName")',
+              'Skipping duplicate product from same import: "$name" (normalized: "$normalizedName")',
             );
             skippedCount++;
             continue; // Skip to the next product
+          }
+
+          // Check if product exists in database
+          if (existingProducts.containsKey(normalizedName)) {
+            // Process after parsing all fields
+            // Will check for changes and update if needed
           }
 
           final description = row[1].toString().trim();
@@ -982,7 +1117,105 @@ class CSVImportUtil {
             'createdAt': FieldValue.serverTimestamp(),
           };
 
-          // Add to Firestore
+          // Check if we need to update an existing product
+          if (existingProducts.containsKey(normalizedName)) {
+            // Get existing product data
+            final existingProduct = existingProducts[normalizedName]!;
+            final productId = existingProductIds[normalizedName]!;
+
+            // Check if any field has changed
+            bool hasChanged = false;
+            final List<String> changedFields = [];
+
+            // Compare fields
+            if (existingProduct['description'] != description) {
+              hasChanged = true;
+              changedFields.add('description');
+            }
+
+            if ((existingProduct['price'] as num).toDouble() != price) {
+              hasChanged = true;
+              changedFields.add('price');
+            }
+
+            // Compare discount price (handle null case)
+            final existingDiscountPrice =
+                existingProduct['discountPrice'] != null
+                    ? (existingProduct['discountPrice'] as num).toDouble()
+                    : null;
+            if (existingDiscountPrice != discountPrice) {
+              hasChanged = true;
+              changedFields.add('discountPrice');
+            }
+
+            if (existingProduct['imageUrl'] != imageUrl) {
+              hasChanged = true;
+              changedFields.add('imageUrl');
+            }
+
+            if (existingProduct['categoryId'] != categoryId) {
+              hasChanged = true;
+              changedFields.add('categoryId');
+            }
+
+            if ((existingProduct['stock'] as num).toInt() != stock) {
+              hasChanged = true;
+              changedFields.add('stock');
+            }
+
+            if (existingProduct['unit'] != unit) {
+              hasChanged = true;
+              changedFields.add('unit');
+            }
+
+            if (existingProduct['isPopular'] != isPopular) {
+              hasChanged = true;
+              changedFields.add('isPopular');
+            }
+
+            if (existingProduct['isFeatured'] != isFeatured) {
+              hasChanged = true;
+              changedFields.add('isFeatured');
+            }
+
+            if (hasChanged) {
+              // Update the product
+              try {
+                await _firestore
+                    .collection('products')
+                    .doc(productId)
+                    .update(productData);
+
+                debugPrint(
+                  'Updated existing product: "$name" (ID: $productId). Changed fields: ${changedFields.join(", ")}',
+                );
+
+                updatedCount++;
+                warnings.add(
+                  'Row $rowIndex: Product "$name" already exists and was updated. Changed fields: ${changedFields.join(", ")}',
+                );
+              } catch (e) {
+                debugPrint('Error updating product: $e');
+                errors.add(
+                  'Row $rowIndex: Failed to update product in Firestore: $e',
+                );
+                skippedCount++;
+              }
+            } else {
+              // No changes detected
+              debugPrint(
+                'Skipping unchanged product: "$name" (normalized: "$normalizedName")',
+              );
+              warnings.add(
+                'Row $rowIndex: Product "$name" already exists with identical data. Skipping.',
+              );
+              skippedCount++;
+            }
+
+            continue; // Skip to the next product
+          }
+
+          // Add to Firestore (only for new products)
           debugPrint('Adding product to Firestore: "$name"');
           try {
             // Add a timeout to prevent hanging
@@ -1031,6 +1264,7 @@ class CSVImportUtil {
       return {
         'success': true,
         'importedCount': importedCount,
+        'updatedCount': updatedCount,
         'skippedCount': skippedCount,
         'errors': errors,
         'warnings': warnings,
@@ -1040,6 +1274,7 @@ class CSVImportUtil {
       return {
         'success': false,
         'importedCount': importedCount,
+        'updatedCount': updatedCount,
         'skippedCount': skippedCount,
         'errors': [...errors, e.toString()],
         'warnings': warnings,
