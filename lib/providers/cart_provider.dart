@@ -82,8 +82,20 @@ class CartProvider extends ChangeNotifier {
   }
 
   // Add product to cart
-  Future<void> addToCart(ProductModel product, int quantity) async {
-    if (_authProvider.currentUser == null) return;
+  Future<bool> addToCart(ProductModel product, int quantity) async {
+    if (_authProvider.currentUser == null) return false;
+
+    // Check if product is in stock
+    if (product.stock <= 0) {
+      _setError('Product is out of stock');
+      return false;
+    }
+
+    // Check if requested quantity is available
+    if (quantity > product.stock) {
+      _setError('Only ${product.stock} items available in stock');
+      return false;
+    }
 
     _setLoading(true);
     try {
@@ -93,11 +105,20 @@ class CartProvider extends ChangeNotifier {
       );
 
       if (existingIndex >= 0) {
+        // Calculate new quantity
+        final newQuantity = _cartItems[existingIndex].quantity + quantity;
+
+        // Check if new quantity exceeds available stock
+        if (newQuantity > product.stock) {
+          _setError(
+            'Cannot add more items. Only ${product.stock} available in stock',
+          );
+          _setLoading(false);
+          return false;
+        }
+
         // Update quantity if already in cart
-        await updateCartItemQuantity(
-          product.id,
-          _cartItems[existingIndex].quantity + quantity,
-        );
+        await updateCartItemQuantity(product.id, newQuantity);
       } else {
         // Add new item to cart
         final cartItem = CartItemModel(product: product, quantity: quantity);
@@ -112,16 +133,36 @@ class CartProvider extends ChangeNotifier {
         _cartItems.add(cartItem);
         notifyListeners();
       }
+      return true;
     } catch (e) {
       _setError('Failed to add to cart: ${e.toString()}');
+      return false;
     } finally {
       _setLoading(false);
     }
   }
 
   // Update cart item quantity
-  Future<void> updateCartItemQuantity(String productId, int quantity) async {
-    if (_authProvider.currentUser == null) return;
+  Future<bool> updateCartItemQuantity(String productId, int quantity) async {
+    if (_authProvider.currentUser == null) return false;
+
+    // Find the product in cart
+    final index = _cartItems.indexWhere((item) => item.product.id == productId);
+
+    if (index >= 0) {
+      final product = _cartItems[index].product;
+
+      // Check if requested quantity is available
+      if (quantity > product.stock) {
+        _setError(
+          'Cannot update quantity. Only ${product.stock} available in stock',
+        );
+        return false;
+      }
+    } else {
+      _setError('Product not found in cart');
+      return false;
+    }
 
     _setLoading(true);
     try {
@@ -132,15 +173,14 @@ class CartProvider extends ChangeNotifier {
           .doc(productId)
           .update({'quantity': quantity});
 
-      final index = _cartItems.indexWhere(
-        (item) => item.product.id == productId,
-      );
       if (index >= 0) {
         _cartItems[index] = _cartItems[index].copyWith(quantity: quantity);
         notifyListeners();
       }
+      return true;
     } catch (e) {
       _setError('Failed to update cart: ${e.toString()}');
+      return false;
     } finally {
       _setLoading(false);
     }
