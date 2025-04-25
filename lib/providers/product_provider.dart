@@ -11,6 +11,11 @@ class ProductProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  ProductProvider() {
+    // Setup real-time listeners for product updates
+    setupProductListeners();
+  }
+
   // Getters
   List<ProductModel> get products => _products;
   List<CategoryModel> get categories => _categories;
@@ -50,6 +55,98 @@ class ProductProvider extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+  }
+
+  // Refresh a specific product's data
+  Future<void> refreshProduct(String productId) async {
+    try {
+      final productDoc =
+          await _firestore.collection('products').doc(productId).get();
+
+      if (!productDoc.exists) {
+        debugPrint('Product $productId no longer exists');
+        // Remove from local list if it exists
+        _products.removeWhere((product) => product.id == productId);
+        notifyListeners();
+        return;
+      }
+
+      // Find and update the product in the local list
+      final index = _products.indexWhere((product) => product.id == productId);
+      if (index >= 0) {
+        try {
+          final updatedProduct = ProductModel.fromMap(
+            productDoc.data()!,
+            productId,
+          );
+          _products[index] = updatedProduct;
+          notifyListeners();
+        } catch (e) {
+          debugPrint('Error parsing updated product $productId: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to refresh product $productId: $e');
+    }
+  }
+
+  // Listen for real-time updates to products
+  void setupProductListeners() {
+    _firestore
+        .collection('products')
+        .snapshots()
+        .listen(
+          (snapshot) {
+            for (var change in snapshot.docChanges) {
+              final docId = change.doc.id;
+
+              switch (change.type) {
+                case DocumentChangeType.modified:
+                  try {
+                    final updatedProduct = ProductModel.fromMap(
+                      change.doc.data()!,
+                      docId,
+                    );
+                    final index = _products.indexWhere(
+                      (product) => product.id == docId,
+                    );
+
+                    if (index >= 0) {
+                      _products[index] = updatedProduct;
+                      notifyListeners();
+                    }
+                  } catch (e) {
+                    debugPrint('Error parsing modified product $docId: $e');
+                  }
+                  break;
+
+                case DocumentChangeType.added:
+                  // Only add if it doesn't already exist
+                  if (!_products.any((product) => product.id == docId)) {
+                    try {
+                      final newProduct = ProductModel.fromMap(
+                        change.doc.data()!,
+                        docId,
+                      );
+                      _products.add(newProduct);
+                      notifyListeners();
+                    } catch (e) {
+                      debugPrint('Error parsing new product $docId: $e');
+                    }
+                  }
+                  break;
+
+                case DocumentChangeType.removed:
+                  _products.removeWhere((product) => product.id == docId);
+                  notifyListeners();
+                  break;
+              }
+            }
+          },
+          onError: (error) {
+            debugPrint('Error in product listener: $error');
+          },
+        );
   }
 
   // Load categories from Firestore
