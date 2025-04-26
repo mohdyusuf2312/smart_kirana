@@ -121,8 +121,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
+        title: const Text(
+          'Admin Dashboard',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: AppColors.primary,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -132,6 +136,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ],
       ),
       drawer: const AdminDrawer(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Show quick action menu
+          showModalBottomSheet(
+            context: context,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppBorderRadius.large),
+              ),
+            ),
+            builder: (context) => _buildQuickActionMenu(),
+          );
+        },
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add),
+      ),
       body: _buildBody(adminProvider),
     );
   }
@@ -211,106 +231,137 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   }
                 },
               ),
-              const SizedBox(height: AppPadding.large),
+              const SizedBox(height: AppPadding.medium),
 
               // Dashboard Overview
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(13), // 0.05 * 255 = ~13
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppBorderRadius.medium),
                 ),
-                padding: const EdgeInsets.all(AppPadding.medium),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.dashboard, color: AppColors.primary),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Dashboard Overview',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(color: AppColors.primary, thickness: 1),
-                    const SizedBox(height: AppPadding.small),
-                    Builder(
-                      builder: (context) {
-                        try {
-                          return _buildStatsGrid(adminProvider.dashboardData);
-                        } catch (e) {
-                          debugPrint('Error building stats grid: $e');
-                          return const Card(
-                            elevation: 2,
-                            child: Padding(
-                              padding: EdgeInsets.all(AppPadding.medium),
-                              child: Text('Stats unavailable'),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppPadding.small),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withAlpha(26),
+                              borderRadius: BorderRadius.circular(
+                                AppBorderRadius.small,
+                              ),
                             ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
+                            child: const Icon(
+                              Icons.dashboard,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Dashboard Overview',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Divider(
+                        color: AppColors.primary.withAlpha(51),
+                        thickness: 1,
+                      ),
+                      const SizedBox(height: AppPadding.small),
+                      Builder(
+                        builder: (context) {
+                          try {
+                            return _buildStatsGrid(adminProvider.dashboardData);
+                          } catch (e) {
+                            debugPrint('Error building stats grid: $e');
+                            return const Card(
+                              elevation: 2,
+                              child: Padding(
+                                padding: EdgeInsets.all(AppPadding.medium),
+                                child: Text('Stats unavailable'),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
-              const SizedBox(height: AppPadding.large),
+              const SizedBox(height: AppPadding.medium),
 
               // Admin Features
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.secondary.withAlpha(13), // 0.05 * 255 = ~13
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppBorderRadius.medium),
                 ),
-                padding: const EdgeInsets.all(AppPadding.medium),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.admin_panel_settings,
-                          color: AppColors.secondary,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Admin Features',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.secondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(color: AppColors.secondary, thickness: 1),
-                    const SizedBox(height: AppPadding.small),
-                    Builder(
-                      builder: (context) {
-                        try {
-                          return _buildFeatureGrid();
-                        } catch (e) {
-                          debugPrint('Error building feature grid: $e');
-                          return const Card(
-                            elevation: 2,
-                            child: Padding(
-                              padding: EdgeInsets.all(AppPadding.medium),
-                              child: Text('Features unavailable'),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppPadding.small),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.secondary.withAlpha(26),
+                              borderRadius: BorderRadius.circular(
+                                AppBorderRadius.small,
+                              ),
                             ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
+                            child: const Icon(
+                              Icons.admin_panel_settings,
+                              color: AppColors.secondary,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Admin Features',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Divider(
+                        color: AppColors.secondary.withAlpha(51),
+                        thickness: 1,
+                      ),
+                      const SizedBox(height: AppPadding.small),
+                      Builder(
+                        builder: (context) {
+                          try {
+                            return _buildFeatureGrid();
+                          } catch (e) {
+                            debugPrint('Error building feature grid: $e');
+                            return const Card(
+                              elevation: 2,
+                              child: Padding(
+                                padding: EdgeInsets.all(AppPadding.medium),
+                                child: Text('Features unavailable'),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
-              const SizedBox(height: AppPadding.large),
+              const SizedBox(height: AppPadding.medium),
 
               // Recent Orders
               Builder(
@@ -364,29 +415,96 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildWelcomeCard() {
     final user = Provider.of<AuthProvider>(context).user;
+    final now = DateTime.now();
+    String greeting = "Good Morning";
+
+    if (now.hour >= 12 && now.hour < 17) {
+      greeting = "Good Afternoon";
+    } else if (now.hour >= 17) {
+      greeting = "Good Evening";
+    }
 
     return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(AppPadding.medium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Welcome, ${user?.name ?? 'Admin'}',
-              style: AppTextStyles.heading1,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Email: ${user?.email ?? 'Not available'}',
-              style: AppTextStyles.bodyMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Role: ${user?.role ?? 'Not available'}',
-              style: AppTextStyles.bodyMedium,
-            ),
-          ],
+      elevation: 2, // Reduced elevation
+      margin: const EdgeInsets.symmetric(vertical: 8), // Smaller margin
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(
+          AppBorderRadius.small,
+        ), // Smaller radius
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.primary, AppColors.primary.withAlpha(179)],
+          ),
+          borderRadius: BorderRadius.circular(AppBorderRadius.small),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppPadding.small), // Reduced padding
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min, // More compact
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          greeting,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            // Smaller text
+                            color: Colors.white.withAlpha(230),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withAlpha(51),
+                            borderRadius: BorderRadius.circular(
+                              AppBorderRadius.small,
+                            ),
+                          ),
+                          child: Text(
+                            user?.role ?? 'ADMIN',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10, // Smaller font
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user?.name ?? 'Admin',
+                      style: AppTextStyles.heading3.copyWith(
+                        // Smaller heading
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const CircleAvatar(
+                radius: 20, // Smaller avatar
+                backgroundColor: Colors.white,
+                child: Icon(
+                  Icons.person,
+                  size: 24,
+                  color: AppColors.primary,
+                ), // Smaller icon
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -396,10 +514,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final currencyFormat = NumberFormat.currency(symbol: '₹');
 
     return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
+      crossAxisCount: 4, // Changed from 2 to 4 for more compact layout
+      crossAxisSpacing: 8, // Reduced spacing
+      mainAxisSpacing: 8, // Reduced spacing
       shrinkWrap: true,
+      childAspectRatio: 1.2, // Adjust aspect ratio for better fit
       physics: const NeverScrollableScrollPhysics(),
       children: [
         _buildStatCard(
@@ -431,7 +550,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           () => Navigator.pushNamed(
             context,
             OrderManagementScreen.routeName,
-            arguments: {'filter': 'PENDING'},
+            arguments: {'filter': 'pending'},
           ),
         ),
       ],
@@ -446,41 +565,64 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     VoidCallback onTap,
   ) {
     return Card(
-      elevation: 2,
+      elevation: 2, // Reduced elevation
+      margin: const EdgeInsets.all(4), // Smaller margin
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(
+          AppBorderRadius.small,
+        ), // Smaller radius
+      ),
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(AppBorderRadius.small),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(8.0), // Reduced padding
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center, // Center alignment
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Icon(icon, color: color, size: 16), // Smaller icon
+                  const SizedBox(width: 4),
                   Text(
                     title,
-                    style: AppTextStyles.bodyMedium.copyWith(
+                    style: AppTextStyles.bodySmall.copyWith(
+                      // Smaller text
                       color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  Icon(icon, color: color, size: 24),
                 ],
               ),
-              const Spacer(),
+              const SizedBox(height: 8), // Reduced spacing
               Text(
                 value,
-                style: AppTextStyles.heading2.copyWith(
+                style: AppTextStyles.bodyLarge.copyWith(
+                  // Smaller heading
                   color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
                 ),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
-              Container(
-                height: 4,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(AppBorderRadius.small),
-                ),
+              const SizedBox(height: 4), // Reduced spacing
+              // Animated progress indicator
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 800), // Faster animation
+                builder: (context, value, child) {
+                  return Container(
+                    height: 2, // Thinner line
+                    width: 40 * value, // Shorter line
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(
+                        AppBorderRadius.small,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -491,29 +633,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildFeatureGrid() {
     return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
+      crossAxisCount: 4, // Changed from 2 to 4 for more compact layout
+      crossAxisSpacing: 8, // Reduced spacing
+      mainAxisSpacing: 8, // Reduced spacing
       shrinkWrap: true,
+      childAspectRatio: 0.9, // Adjust aspect ratio for better fit
       physics: const NeverScrollableScrollPhysics(),
       children: [
         _buildFeatureCard(
-          'Product Management',
+          'Products',
           Icons.inventory,
           () => Navigator.pushNamed(context, ProductManagementScreen.routeName),
         ),
         _buildFeatureCard(
-          'User Management',
+          'Users',
           Icons.people,
           () => Navigator.pushNamed(context, UserManagementScreen.routeName),
         ),
         _buildFeatureCard(
-          'Order Management',
+          'Orders',
           Icons.shopping_cart,
           () => Navigator.pushNamed(context, OrderManagementScreen.routeName),
         ),
         _buildFeatureCard(
-          'Category Management',
+          'Categories',
           Icons.category,
           () =>
               Navigator.pushNamed(context, CategoryManagementScreen.routeName),
@@ -524,19 +667,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildFeatureCard(String title, IconData icon, VoidCallback onTap) {
     return Card(
-      elevation: 2,
+      elevation: 2, // Reduced elevation
+      margin: const EdgeInsets.all(4), // Smaller margin
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(
+          AppBorderRadius.small,
+        ), // Smaller radius
+      ),
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(AppBorderRadius.small),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(8.0), // Reduced padding
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 48, color: AppColors.primary),
-              const SizedBox(height: 8),
+              Icon(
+                icon,
+                size: 24,
+                color: AppColors.primary,
+              ), // Smaller icon without container
+              const SizedBox(height: 8), // Reduced spacing
               Text(
                 title,
-                style: AppTextStyles.heading3,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  // Smaller text
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -544,6 +701,106 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
       ),
     );
+  }
+
+  // New method for quick action menu
+  Widget _buildQuickActionMenu() {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppPadding.medium),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Quick Actions', style: AppTextStyles.heading2),
+            const SizedBox(height: AppPadding.medium),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildQuickActionButton(
+                  'Add Product',
+                  Icons.add_shopping_cart,
+                  () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(
+                      context,
+                      ProductManagementScreen.routeName,
+                      arguments: {'action': 'add'},
+                    );
+                  },
+                ),
+                _buildQuickActionButton(
+                  'Add Category',
+                  Icons.category_outlined,
+                  () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(
+                      context,
+                      CategoryManagementScreen.routeName,
+                      arguments: {'action': 'add'},
+                    );
+                  },
+                ),
+                _buildQuickActionButton('View Orders', Icons.receipt_long, () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, OrderManagementScreen.routeName);
+                }),
+              ],
+            ),
+            const SizedBox(height: AppPadding.large),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton(
+    String label,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha(26),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: AppTextStyles.bodySmall.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper method to get color based on order status
+  Color _getOrderStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'PENDING':
+        return Colors.orange;
+      case 'PROCESSING':
+        return Colors.blue;
+      case 'SHIPPED':
+        return Colors.purple;
+      case 'DELIVERED':
+        return Colors.green;
+      case 'CANCELLED':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildRecentOrdersSection(AdminDashboardModel data) {
@@ -602,31 +859,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           itemBuilder: (context, index) {
             final order = data.recentOrders[index];
             return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                title: Text(
-                  'Order #${order.orderId.length > 8 ? order.orderId.substring(0, 8) : order.orderId}',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Customer: ${order.userName}'),
-                    Text(
-                      'Date: ${DateFormat('MMM d, yyyy').format(order.orderDate)}',
-                    ),
-                    Text('Status: ${order.status}'),
-                  ],
-                ),
-                trailing: Text(
-                  '₹${order.amount.toStringAsFixed(2)}',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppBorderRadius.medium),
                 onTap: () {
                   // Navigate to order details
                   Navigator.pushNamed(
@@ -635,6 +874,83 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     arguments: {'orderId': order.orderId},
                   );
                 },
+                child: Padding(
+                  padding: const EdgeInsets.all(AppPadding.medium),
+                  child: Row(
+                    children: [
+                      // Order status indicator
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _getOrderStatusColor(order.status),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Order details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Order #${order.orderId.length > 8 ? order.orderId.substring(0, 8) : order.orderId}',
+                              style: AppTextStyles.bodyLarge.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Customer: ${order.userName}',
+                              style: AppTextStyles.bodySmall,
+                            ),
+                            Text(
+                              'Date: ${DateFormat('MMM d, yyyy').format(order.orderDate)}',
+                              style: AppTextStyles.bodySmall,
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  'Status: ',
+                                  style: AppTextStyles.bodySmall,
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _getOrderStatusColor(
+                                      order.status,
+                                    ).withAlpha(26),
+                                    borderRadius: BorderRadius.circular(
+                                      AppBorderRadius.small,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    order.status,
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: _getOrderStatusColor(order.status),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Order amount
+                      Text(
+                        '₹${order.amount.toStringAsFixed(2)}',
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             );
           },
