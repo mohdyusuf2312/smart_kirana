@@ -39,7 +39,14 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     // Check if we have arguments for filtering
     if (widget.arguments != null) {
       if (widget.arguments!.containsKey('filter')) {
-        _selectedStatus = widget.arguments!['filter'];
+        // Make sure the filter value matches one of our status options
+        final filterValue = widget.arguments!['filter'];
+        // Find the matching status option (case-insensitive)
+        final matchingStatus = _statusOptions.firstWhere(
+          (status) => status.toLowerCase() == filterValue.toLowerCase(),
+          orElse: () => 'All',
+        );
+        _selectedStatus = matchingStatus;
       }
       if (widget.arguments!.containsKey('orderId')) {
         _selectedOrderId = widget.arguments!['orderId'];
@@ -127,7 +134,9 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                       }
                     },
                     backgroundColor: Colors.white,
-                    selectedColor: AppColors.primary.withOpacity(0.2),
+                    selectedColor: AppColors.primary.withAlpha(
+                      51,
+                    ), // 0.2 * 255 ≈ 51
                     labelStyle: TextStyle(
                       color:
                           isSelected
@@ -189,7 +198,8 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                 final data = doc.data() as Map<String, dynamic>;
                 final status = data['status'] as String? ?? '';
 
-                return status == _selectedStatus;
+                // Case-insensitive comparison to handle different case formats
+                return status.toLowerCase() == _selectedStatus.toLowerCase();
               }).toList();
         }
 
