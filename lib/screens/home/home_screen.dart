@@ -104,8 +104,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     try {
+      // Load categories and products
       await productProvider.loadCategories();
       await productProvider.loadProducts();
+
+      // Setup real-time listeners for product updates
+      // Note: This is now handled in the ProductProvider constructor
+      // productProvider.setupProductListeners();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -714,24 +719,86 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Product Image
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(8),
-                  ),
-                  child: Image.network(
-                    product.imageUrl,
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(8),
+                      ),
+                      child: Image.network(
+                        product.imageUrl,
                         height: 120,
                         width: double.infinity,
-                        color: Colors.grey.shade200,
-                        child: const Icon(Icons.image_not_supported),
-                      );
-                    },
-                  ),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 120,
+                            width: double.infinity,
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.image_not_supported),
+                          );
+                        },
+                      ),
+                    ),
+                    // Out of stock overlay
+                    if (product.stock <= 0)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withAlpha(128),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(8),
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppPadding.medium,
+                              vertical: AppPadding.small,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              borderRadius: BorderRadius.circular(
+                                AppBorderRadius.small,
+                              ),
+                            ),
+                            child: Text(
+                              'OUT OF STOCK',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    // Low stock indicator
+                    if (product.stock > 0 && product.stock < 5)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.error,
+                            borderRadius: BorderRadius.circular(
+                              AppBorderRadius.small,
+                            ),
+                          ),
+                          child: Text(
+                            'Low Stock: ${product.stock}',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -770,25 +837,61 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.transparent,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(4),
-                              onTap: () {
-                                cartProvider.addToCart(product, 1);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      '${product.name} added to cart',
-                                    ),
-                                    duration: const Duration(seconds: 1),
-                                  ),
-                                );
-                              },
+                              onTap:
+                                  product.stock > 0
+                                      ? () {
+                                        // Use a synchronous approach to avoid BuildContext issues
+                                        cartProvider.addToCart(product, 1).then((
+                                          success,
+                                        ) {
+                                          if (mounted) {
+                                            if (success) {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    '${product.name} added to cart',
+                                                  ),
+                                                  duration: const Duration(
+                                                    seconds: 1,
+                                                  ),
+                                                ),
+                                              );
+                                            } else if (cartProvider.error !=
+                                                null) {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    cartProvider.error!,
+                                                  ),
+                                                  backgroundColor:
+                                                      AppColors.error,
+                                                  duration: const Duration(
+                                                    seconds: 2,
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                          }
+                                        });
+                                      }
+                                      : null, // Disable if out of stock
                               child: Ink(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary,
+                                  color:
+                                      product.stock > 0
+                                          ? AppColors.primary
+                                          : Colors.grey,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Icon(
-                                  Icons.add,
+                                child: Icon(
+                                  product.stock > 0
+                                      ? Icons.add
+                                      : Icons.remove_shopping_cart,
                                   color: Colors.white,
                                   size: 16,
                                 ),
