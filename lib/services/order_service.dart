@@ -20,6 +20,27 @@ class OrderService {
     String? deliveryNotes,
   }) async {
     try {
+      // Validate stock availability before proceeding
+      for (var item in cartItems) {
+        // Get the latest product data to ensure stock is current
+        final productDoc =
+            await _firestore.collection('products').doc(item.product.id).get();
+
+        if (!productDoc.exists) {
+          throw Exception(
+            'Product ${item.product.name} is no longer available',
+          );
+        }
+
+        final currentStock = productDoc.data()?['stock'] ?? 0;
+
+        if (currentStock < item.quantity) {
+          throw Exception(
+            'Not enough stock for ${item.product.name}. Available: $currentStock, Requested: ${item.quantity}',
+          );
+        }
+      }
+
       // Convert cart items to order items
       final orderItems =
           cartItems.map((item) => OrderItem.fromCartItem(item)).toList();
@@ -44,8 +65,29 @@ class OrderService {
         estimatedDeliveryTime: DateTime.now().add(const Duration(hours: 2)),
       );
 
-      // Save order to Firestore
-      await orderRef.set(order.toMap());
+      // Use a batch to ensure all operations succeed or fail together
+      final batch = _firestore.batch();
+
+      // Add the order
+      batch.set(orderRef, order.toMap());
+
+      // Update product stock for each item
+      for (var item in cartItems) {
+        final productRef = _firestore
+            .collection('products')
+            .doc(item.product.id);
+
+        // Decrement the stock by the ordered quantity
+        batch.update(productRef, {
+          'stock': FieldValue.increment(-item.quantity),
+        });
+      }
+
+      // Commit the batch
+      await batch.commit();
+
+      // Note: We're not refreshing product data here because the real-time listeners
+      // in ProductProvider will automatically update when Firestore changes
 
       return orderRef.id;
     } catch (e) {
