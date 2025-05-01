@@ -18,9 +18,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _quantity = 1;
 
   void _incrementQuantity() {
-    setState(() {
-      _quantity++;
-    });
+    // Don't allow incrementing beyond available stock
+    if (_quantity < widget.product.stock) {
+      setState(() {
+        _quantity++;
+      });
+    } else {
+      // Show a snackbar to inform the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Only ${widget.product.stock} items available in stock',
+          ),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _decrementQuantity() {
@@ -223,12 +237,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         _buildQuantityButton(
                           icon: Icons.add,
                           onPressed: _incrementQuantity,
+                          // Disable the button if we've reached max stock
+                          enabled: _quantity < widget.product.stock,
                         ),
                         const Spacer(),
-                        Text(
-                          'Available: ${widget.product.stock}',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppPadding.small,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                widget.product.stock < 5
+                                    ? AppColors.error.withAlpha(26)
+                                    : AppColors.success.withAlpha(26),
+                            borderRadius: BorderRadius.circular(
+                              AppBorderRadius.small,
+                            ),
+                          ),
+                          child: Text(
+                            'Available: ${widget.product.stock}',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color:
+                                  widget.product.stock < 5
+                                      ? AppColors.error
+                                      : AppColors.success,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -260,26 +295,43 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     Expanded(
                       child: CustomButton(
                         text: isInCart ? 'Update Cart' : 'Add to Cart',
-                        onPressed: () {
+                        onPressed: () async {
+                          bool success;
                           if (isInCart) {
-                            cartProvider.updateCartItemQuantity(
+                            success = await cartProvider.updateCartItemQuantity(
                               widget.product.id,
                               _quantity,
                             );
                           } else {
-                            cartProvider.addToCart(widget.product, _quantity);
+                            success = await cartProvider.addToCart(
+                              widget.product,
+                              _quantity,
+                            );
                           }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                isInCart
-                                    ? 'Cart updated successfully'
-                                    : 'Added to cart successfully',
-                              ),
-                              backgroundColor: AppColors.success,
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
+
+                          if (context.mounted) {
+                            if (success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isInCart
+                                        ? 'Cart updated successfully'
+                                        : 'Added to cart successfully',
+                                  ),
+                                  backgroundColor: AppColors.success,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            } else if (cartProvider.error != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(cartProvider.error!),
+                                  backgroundColor: AppColors.error,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          }
                         },
                         icon: Icons.shopping_cart,
                       ),
@@ -302,18 +354,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildQuantityButton({
     required IconData icon,
     required VoidCallback onPressed,
+    bool enabled = true,
   }) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.textSecondary.withAlpha(76)),
+        border: Border.all(
+          color:
+              enabled
+                  ? AppColors.textSecondary.withAlpha(76)
+                  : AppColors.textSecondary.withAlpha(38),
+        ),
         borderRadius: BorderRadius.circular(AppBorderRadius.small),
       ),
       child: InkWell(
-        onTap: onPressed,
+        onTap: enabled ? onPressed : null,
         borderRadius: BorderRadius.circular(AppBorderRadius.small),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Icon(icon, size: 20, color: AppColors.textPrimary),
+          child: Icon(
+            icon,
+            size: 20,
+            color:
+                enabled
+                    ? AppColors.textPrimary
+                    : AppColors.textSecondary.withAlpha(76),
+          ),
         ),
       ),
     );
