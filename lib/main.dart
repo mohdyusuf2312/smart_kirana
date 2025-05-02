@@ -13,6 +13,7 @@ import 'package:smart_kirana/providers/product_provider.dart';
 import 'package:smart_kirana/services/admin_initialization_service.dart';
 import 'package:smart_kirana/screens/admin/admin_dashboard_screen.dart';
 import 'package:smart_kirana/screens/admin/category_management_screen.dart';
+import 'package:smart_kirana/screens/admin/low_stock_screen.dart';
 import 'package:smart_kirana/screens/admin/order_management_screen.dart';
 import 'package:smart_kirana/screens/admin/product_import_screen.dart';
 import 'package:smart_kirana/screens/admin/product_management_screen.dart';
@@ -253,6 +254,7 @@ class MyApp extends StatelessWidget {
               (context) => const CategoryManagementScreen(),
           OrderManagementScreen.routeName:
               (context) => const OrderManagementScreen(),
+          LowStockScreen.routeName: (context) => const LowStockScreen(),
           UserManagementScreen.routeName:
               (context) => const UserManagementScreen(),
         },
