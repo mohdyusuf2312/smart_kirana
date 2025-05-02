@@ -6,6 +6,7 @@ import 'package:smart_kirana/providers/cart_provider.dart';
 import 'package:smart_kirana/screens/orders/order_detail_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
+import 'package:smart_kirana/screens/home/home_screen.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
   static const String routeName = '/payment-success';
@@ -128,7 +129,11 @@ class PaymentSuccessScreen extends StatelessWidget {
               CustomButton(
                 text: 'Continue Shopping',
                 onPressed: () {
-                  Navigator.popUntil(context, (route) => route.isFirst);
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    HomeScreen.routeName,
+                    (route) => false,
+                  );
                 },
                 type: ButtonType.outline,
               ),
