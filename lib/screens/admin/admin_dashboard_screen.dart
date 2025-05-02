@@ -5,6 +5,7 @@ import 'package:smart_kirana/models/admin_dashboard_model.dart';
 import 'package:smart_kirana/providers/admin_provider.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/screens/admin/category_management_screen.dart';
+import 'package:smart_kirana/screens/admin/low_stock_screen.dart';
 import 'package:smart_kirana/screens/admin/order_management_screen.dart';
 import 'package:smart_kirana/screens/admin/product_management_screen.dart';
 import 'package:smart_kirana/screens/admin/user_management_screen.dart';
@@ -633,7 +634,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildFeatureGrid() {
     return GridView.count(
-      crossAxisCount: 4, // Changed from 2 to 4 for more compact layout
+      crossAxisCount:
+          5, // Changed from 4 to 5 to accommodate the additional button
       crossAxisSpacing: 8, // Reduced spacing
       mainAxisSpacing: 8, // Reduced spacing
       shrinkWrap: true,
@@ -646,20 +648,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           () => Navigator.pushNamed(context, ProductManagementScreen.routeName),
         ),
         _buildFeatureCard(
-          'Users',
-          Icons.people,
-          () => Navigator.pushNamed(context, UserManagementScreen.routeName),
-        ),
-        _buildFeatureCard(
-          'Orders',
-          Icons.shopping_cart,
-          () => Navigator.pushNamed(context, OrderManagementScreen.routeName),
-        ),
-        _buildFeatureCard(
           'Categories',
           Icons.category,
           () =>
               Navigator.pushNamed(context, CategoryManagementScreen.routeName),
+        ),
+        _buildFeatureCard(
+          'Orders',
+          Icons.shopping_bag,
+          () => Navigator.pushNamed(context, OrderManagementScreen.routeName),
+        ),
+        _buildFeatureCard(
+          'Low Stock',
+          Icons.warning_amber,
+          () => Navigator.pushNamed(context, LowStockScreen.routeName),
+        ),
+        _buildFeatureCard(
+          'Users',
+          Icons.people,
+          () => Navigator.pushNamed(context, UserManagementScreen.routeName),
         ),
       ],
     );
@@ -740,10 +747,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     );
                   },
                 ),
-                _buildQuickActionButton('View Orders', Icons.receipt_long, () {
+                _buildQuickActionButton('View Orders', Icons.shopping_bag, () {
                   Navigator.pop(context);
                   Navigator.pushNamed(context, OrderManagementScreen.routeName);
                 }),
+                _buildQuickActionButton(
+                  'View Low Stock',
+                  Icons.warning_amber,
+                  () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, LowStockScreen.routeName);
+                  },
+                ),
               ],
             ),
             const SizedBox(height: AppPadding.large),
