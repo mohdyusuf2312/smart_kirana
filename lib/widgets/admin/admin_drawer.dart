@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/screens/admin/admin_dashboard_screen.dart';
 import 'package:smart_kirana/screens/admin/category_management_screen.dart';
+import 'package:smart_kirana/screens/admin/low_stock_screen.dart';
 import 'package:smart_kirana/screens/admin/order_management_screen.dart';
 import 'package:smart_kirana/screens/admin/product_management_screen.dart';
 import 'package:smart_kirana/screens/admin/user_management_screen.dart';
@@ -79,6 +80,14 @@ class AdminDrawer extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               Navigator.pushNamed(context, CategoryManagementScreen.routeName);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.warning_amber),
+            title: const Text('Low Stock'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, LowStockScreen.routeName);
             },
           ),
           ListTile(
