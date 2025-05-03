@@ -8,6 +8,7 @@ import 'package:smart_kirana/screens/admin/category_management_screen.dart';
 import 'package:smart_kirana/screens/admin/low_stock_screen.dart';
 import 'package:smart_kirana/screens/admin/order_management_screen.dart';
 import 'package:smart_kirana/screens/admin/product_management_screen.dart';
+import 'package:smart_kirana/screens/admin/recommendation_generation_screen.dart';
 import 'package:smart_kirana/screens/admin/user_management_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/admin/admin_drawer.dart';
@@ -635,7 +636,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget _buildFeatureGrid() {
     return GridView.count(
       crossAxisCount:
-          5, // Changed from 4 to 5 to accommodate the additional button
+          6, // Changed from 5 to 6 to accommodate the additional button
       crossAxisSpacing: 8, // Reduced spacing
       mainAxisSpacing: 8, // Reduced spacing
       shrinkWrap: true,
@@ -667,6 +668,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           'Users',
           Icons.people,
           () => Navigator.pushNamed(context, UserManagementScreen.routeName),
+        ),
+        _buildFeatureCard(
+          'Recommendations',
+          Icons.recommend,
+          () => Navigator.pushNamed(
+            context,
+            RecommendationGenerationScreen.routeName,
+          ),
         ),
       ],
     );
