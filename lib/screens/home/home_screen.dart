@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/product_model.dart';
+import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/providers/cart_provider.dart';
 import 'package:smart_kirana/providers/product_provider.dart';
+import 'package:smart_kirana/providers/recommendation_provider.dart';
 import 'package:smart_kirana/screens/home/cart_screen.dart';
 import 'package:smart_kirana/screens/home/product_detail_screen.dart';
 import 'package:smart_kirana/screens/home/product_list_screen.dart';
@@ -10,6 +12,7 @@ import 'package:smart_kirana/screens/home/profile_screen.dart';
 import 'package:smart_kirana/screens/home/search_screen.dart';
 import 'package:smart_kirana/services/location_service.dart';
 import 'package:smart_kirana/utils/constants.dart';
+import 'package:smart_kirana/widgets/recommended_products_section.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String routeName = '/home';
@@ -258,51 +261,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildRecommendationsSection() {
-    final productProvider = Provider.of<ProductProvider>(context);
-    final recommendedProducts =
-        productProvider.getPopularProducts().take(5).toList();
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.lightbulb, color: AppColors.secondary),
-              SizedBox(width: 8),
-              Text(
-                'Recommended for you',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Based on your previous orders',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 200,
-            child:
-                recommendedProducts.isEmpty
-                    ? const Center(child: Text('No recommendations yet'))
-                    : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: recommendedProducts.length,
-                      itemBuilder: (context, index) {
-                        return _buildProductCard(
-                          recommendedProducts[index],
-                          horizontal: true,
-                        );
-                      },
-                    ),
-          ),
-        ],
-      ),
-    );
+    // Use the dedicated RecommendedProductsSection widget
+    return const RecommendedProductsSection();
   }
 
   Widget _buildCategoriesSection() {
