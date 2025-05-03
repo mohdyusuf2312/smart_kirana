@@ -6,6 +6,7 @@ import 'package:smart_kirana/screens/admin/category_management_screen.dart';
 import 'package:smart_kirana/screens/admin/low_stock_screen.dart';
 import 'package:smart_kirana/screens/admin/order_management_screen.dart';
 import 'package:smart_kirana/screens/admin/product_management_screen.dart';
+import 'package:smart_kirana/screens/admin/recommendation_generation_screen.dart';
 import 'package:smart_kirana/screens/admin/user_management_screen.dart';
 import 'package:smart_kirana/screens/home/home_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
@@ -104,6 +105,17 @@ class AdminDrawer extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               Navigator.pushNamed(context, UserManagementScreen.routeName);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.recommend),
+            title: const Text('Recommendations'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(
+                context,
+                RecommendationGenerationScreen.routeName,
+              );
             },
           ),
           const Divider(),
