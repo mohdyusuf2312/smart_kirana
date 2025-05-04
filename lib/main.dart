@@ -18,7 +18,7 @@ import 'package:smart_kirana/screens/admin/low_stock_screen.dart';
 import 'package:smart_kirana/screens/admin/order_management_screen.dart';
 import 'package:smart_kirana/screens/admin/product_import_screen.dart';
 import 'package:smart_kirana/screens/admin/product_management_screen.dart';
-import 'package:smart_kirana/screens/admin/recommendation_generation_screen.dart';
+import 'package:smart_kirana/screens/admin/recommendation_management_screen.dart';
 import 'package:smart_kirana/screens/admin/user_management_screen.dart';
 import 'package:smart_kirana/screens/auth/email_verification_screen.dart';
 import 'package:smart_kirana/screens/auth/forgot_password_screen.dart';
@@ -71,25 +71,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
-        ChangeNotifierProxyProvider2<
-          AuthProvider,
-          ProductProvider,
-          RecommendationProvider
-        >(
-          create: (context) => RecommendationProvider(),
-          update: (context, authProvider, productProvider, previous) {
-            if (authProvider.isAuthenticated && authProvider.user != null) {
-              // Load recommendations when user is authenticated
-              final provider = previous ?? RecommendationProvider();
-              provider.loadRecommendations(
-                authProvider.user!.id,
-                productProvider.products,
-              );
-              return provider;
-            }
-            return previous ?? RecommendationProvider();
-          },
-        ),
+        ChangeNotifierProvider(create: (_) => RecommendationProvider()),
         ChangeNotifierProxyProvider<AuthProvider, AddressProvider>(
           create:
               (context) => AddressProvider(
@@ -278,8 +260,8 @@ class MyApp extends StatelessWidget {
           LowStockScreen.routeName: (context) => const LowStockScreen(),
           UserManagementScreen.routeName:
               (context) => const UserManagementScreen(),
-          RecommendationGenerationScreen.routeName:
-              (context) => const RecommendationGenerationScreen(),
+          RecommendationManagementScreen.routeName:
+              (context) => const RecommendationManagementScreen(),
         },
         onGenerateRoute: (settings) {
           if (settings.name == EmailVerificationScreen.routeName) {
