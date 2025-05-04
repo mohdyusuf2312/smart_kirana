@@ -2,171 +2,425 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smart_kirana/models/order_model.dart';
 import 'package:smart_kirana/models/product_model.dart';
+import 'package:smart_kirana/models/recommendation_model.dart';
 
 class RecommendationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
-  // Generate recommendations based on user's order history
-  Future<void> generateRecommendations(String userId) async {
+
+  // Get recommendations for a specific user
+  Future<RecommendationModel?> getUserRecommendations(String userId) async {
     try {
-      // Step 1: Get user's order history
-      final ordersSnapshot = await _firestore
-          .collection('orders')
-          .where('userId', isEqualTo: userId)
-          .orderBy('orderDate', descending: true)
-          .get();
+      final docSnapshot =
+          await _firestore.collection('recommendations').doc(userId).get();
 
-      if (ordersSnapshot.docs.isEmpty) {
-        debugPrint('No order history found for user $userId');
-        return;
+      if (docSnapshot.exists) {
+        return RecommendationModel.fromMap(
+          docSnapshot.data() as Map<String, dynamic>,
+          docSnapshot.id,
+        );
       }
 
-      // Step 2: Extract all ordered products
-      final Map<String, int> productFrequency = {};
-      final Map<String, DateTime> lastOrderedDate = {};
-      final Map<String, List<String>> categoryProducts = {};
-      final Set<String> categories = {};
-
-      for (var orderDoc in ordersSnapshot.docs) {
-        final orderData = orderDoc.data();
-        final orderItems = orderData['items'] as List<dynamic>;
-        final orderDate = (orderData['orderDate'] as Timestamp).toDate();
-
-        for (var item in orderItems) {
-          final productId = item['productId'] as String;
-          final categoryId = item['categoryId'] as String? ?? '';
-          
-          // Update frequency count
-          productFrequency[productId] = (productFrequency[productId] ?? 0) + 1;
-          
-          // Update last ordered date if newer
-          if (!lastOrderedDate.containsKey(productId) || 
-              orderDate.isAfter(lastOrderedDate[productId]!)) {
-            lastOrderedDate[productId] = orderDate;
-          }
-          
-          // Group products by category
-          if (categoryId.isNotEmpty) {
-            categories.add(categoryId);
-            if (!categoryProducts.containsKey(categoryId)) {
-              categoryProducts[categoryId] = [];
-            }
-            if (!categoryProducts[categoryId]!.contains(productId)) {
-              categoryProducts[categoryId]!.add(productId);
-            }
-          }
-        }
-      }
-
-      // Step 3: Get all products to find related items
-      final productsSnapshot = await _firestore.collection('products').get();
-      final Map<String, ProductModel> allProducts = {};
-      
-      for (var doc in productsSnapshot.docs) {
-        try {
-          final product = ProductModel.fromMap(doc.data(), doc.id);
-          allProducts[doc.id] = product;
-        } catch (e) {
-          debugPrint('Error parsing product ${doc.id}: $e');
-        }
-      }
-
-      // Step 4: Calculate scores for each product
-      final Map<String, double> productScores = {};
-      
-      // Score based on purchase frequency
-      for (var entry in productFrequency.entries) {
-        productScores[entry.key] = entry.value.toDouble() * 2.0; // Base score from frequency
-      }
-      
-      // Score based on recency (higher score for recently ordered items)
-      final now = DateTime.now();
-      for (var entry in lastOrderedDate.entries) {
-        final daysSinceOrder = now.difference(entry.value).inDays;
-        // Recency factor: more recent = higher score
-        final recencyScore = daysSinceOrder < 30 ? (30 - daysSinceOrder) / 10 : 0;
-        productScores[entry.key] = (productScores[entry.key] ?? 0) + recencyScore;
-      }
-      
-      // Add related products based on category
-      for (var categoryId in categories) {
-        final productsInCategory = categoryProducts[categoryId] ?? [];
-        
-        // Find products in the same category that user hasn't purchased
-        final allProductsInCategory = allProducts.values
-            .where((p) => p.categoryId == categoryId)
-            .map((p) => p.id)
-            .toList();
-            
-        for (var productId in allProductsInCategory) {
-          if (!productsInCategory.contains(productId)) {
-            // Add a smaller score for products in categories user has purchased from
-            productScores[productId] = (productScores[productId] ?? 0) + 0.5;
-          }
-        }
-      }
-      
-      // Step 5: Sort products by score and take top recommendations
-      final sortedRecommendations = productScores.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-      
-      // Get top 20 recommendations or fewer if not enough
-      final int recommendationCount = sortedRecommendations.length > 20 
-          ? 20 
-          : sortedRecommendations.length;
-          
-      final List<String> topRecommendations = sortedRecommendations
-          .take(recommendationCount)
-          .map((e) => e.key)
-          .toList();
-      
-      // Step 6: Store recommendations in Firestore
-      await _firestore.collection('recommendations').doc(userId).set({
-        'userId': userId,
-        'recommendedProducts': topRecommendations,
-        'generatedAt': Timestamp.now(),
-      });
-      
-      debugPrint('Generated ${topRecommendations.length} recommendations for user $userId');
+      // If user doesn't have recommendations, get global recommendations
+      return await getGlobalRecommendations();
     } catch (e) {
-      debugPrint('Error generating recommendations: $e');
-      rethrow;
+      debugPrint('Error getting user recommendations: $e');
+      return null;
     }
   }
 
-  // Get recommendations for a user
-  Future<List<String>> getRecommendations(String userId) async {
+  // Get global recommendations that apply to all users
+  Future<RecommendationModel?> getGlobalRecommendations() async {
     try {
-      final recommendationDoc = await _firestore
-          .collection('recommendations')
-          .doc(userId)
-          .get();
-      
-      if (!recommendationDoc.exists) {
-        // Generate recommendations if they don't exist
-        await generateRecommendations(userId);
-        
-        // Try to get the newly generated recommendations
-        final newRecommendationDoc = await _firestore
-            .collection('recommendations')
-            .doc(userId)
-            .get();
-            
-        if (!newRecommendationDoc.exists) {
-          return [];
-        }
-        
-        return List<String>.from(
-          newRecommendationDoc.data()?['recommendedProducts'] ?? []
+      final querySnapshot =
+          await _firestore
+              .collection('recommendations')
+              .where('isGlobal', isEqualTo: true)
+              .limit(1)
+              .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final doc = querySnapshot.docs.first;
+        return RecommendationModel.fromMap(
+          doc.data() as Map<String, dynamic>,
+          doc.id,
         );
       }
-      
-      return List<String>.from(
-        recommendationDoc.data()?['recommendedProducts'] ?? []
-      );
+
+      return null;
     } catch (e) {
-      debugPrint('Error getting recommendations: $e');
-      return [];
+      debugPrint('Error getting global recommendations: $e');
+      return null;
+    }
+  }
+
+  // Generate recommendations based on order history
+  Future<void> generateRecommendationsForUser(
+    String userId,
+    String userName,
+  ) async {
+    try {
+      // Get user's order history
+      final ordersSnapshot =
+          await _firestore
+              .collection('orders')
+              .where('userId', isEqualTo: userId)
+              .orderBy('orderDate', descending: true)
+              .get();
+
+      if (ordersSnapshot.docs.isEmpty) {
+        debugPrint('No orders found for user $userId');
+        return;
+      }
+
+      // Process orders to find frequently purchased products with recency factor
+      final Map<String, RecommendedProduct> productFrequency = {};
+      final Map<String, DateTime> lastPurchaseDate =
+          {}; // Track last purchase date for recency
+
+      // Calculate recency weight - more recent orders get higher weight
+      final now = DateTime.now();
+
+      for (var doc in ordersSnapshot.docs) {
+        final order = OrderModel.fromMap(doc.data(), doc.id);
+
+        // Calculate days since this order
+        final daysSinceOrder = now.difference(order.orderDate).inDays;
+        // Recency factor: more recent orders have higher weight (max 1.0)
+        // Orders older than 30 days get progressively less weight
+        final recencyFactor =
+            daysSinceOrder <= 30 ? 1.0 : 1.0 / (daysSinceOrder / 30);
+
+        for (var item in order.items) {
+          // Track the most recent purchase date for each product
+          if (!lastPurchaseDate.containsKey(item.productId) ||
+              order.orderDate.isAfter(lastPurchaseDate[item.productId]!)) {
+            lastPurchaseDate[item.productId] = order.orderDate;
+          }
+
+          if (productFrequency.containsKey(item.productId)) {
+            // Increment frequency for existing product with recency factor
+            final existingProduct = productFrequency[item.productId]!;
+            productFrequency[item.productId] = RecommendedProduct(
+              productId: existingProduct.productId,
+              productName: existingProduct.productName,
+              imageUrl: existingProduct.imageUrl,
+              price: existingProduct.price,
+              discountPrice: existingProduct.discountPrice,
+              // Add recency-weighted frequency
+              frequency:
+                  existingProduct.frequency + (1 * recencyFactor).round(),
+            );
+          } else {
+            // Add new product
+            productFrequency[item.productId] = RecommendedProduct(
+              productId: item.productId,
+              productName: item.productName,
+              imageUrl: item.productImage,
+              price: item.price,
+              discountPrice:
+                  item.price, // Use the price from order as discountPrice
+              frequency: (1 * recencyFactor).round(), // Apply recency factor
+            );
+          }
+        }
+      }
+
+      // Sort products by a combination of frequency and recency
+      final recommendedProducts =
+          productFrequency.values.toList()..sort((a, b) {
+            // Primary sort by frequency
+            final freqCompare = b.frequency.compareTo(a.frequency);
+            if (freqCompare != 0) return freqCompare;
+
+            // Secondary sort by recency (if frequencies are equal)
+            final aDate = lastPurchaseDate[a.productId] ?? DateTime(2000);
+            final bDate = lastPurchaseDate[b.productId] ?? DateTime(2000);
+            return bDate.compareTo(aDate); // More recent first
+          });
+
+      // Limit to top 10 recommendations
+      final topRecommendations = recommendedProducts.take(10).toList();
+
+      // Save recommendations to Firestore
+      await _firestore.collection('recommendations').doc(userId).set({
+        'userName': userName,
+        'products':
+            topRecommendations.map((product) => product.toMap()).toList(),
+        'lastUpdated': Timestamp.now(),
+        'isGlobal': false,
+      });
+
+      debugPrint('Generated recommendations for user $userId');
+    } catch (e) {
+      debugPrint('Error generating recommendations: $e');
+    }
+  }
+
+  // Add a product to user's recommendations
+  Future<void> addProductToRecommendations(
+    String userId,
+    String userName,
+    ProductModel product,
+  ) async {
+    try {
+      final docRef = _firestore.collection('recommendations').doc(userId);
+      final docSnapshot = await docRef.get();
+
+      final recommendedProduct = RecommendedProduct(
+        productId: product.id,
+        productName: product.name,
+        imageUrl: product.imageUrl,
+        price: product.price,
+        discountPrice: product.discountPrice,
+      );
+
+      if (docSnapshot.exists) {
+        // Update existing recommendations
+        final recommendations = RecommendationModel.fromMap(
+          docSnapshot.data() as Map<String, dynamic>,
+          docSnapshot.id,
+        );
+
+        // Check if product already exists
+        final existingIndex = recommendations.products.indexWhere(
+          (p) => p.productId == product.id,
+        );
+
+        if (existingIndex >= 0) {
+          // Product already exists, no need to add again
+          return;
+        }
+
+        // Add new product to recommendations
+        final updatedProducts = [
+          ...recommendations.products,
+          recommendedProduct,
+        ];
+
+        await docRef.update({
+          'products': updatedProducts.map((p) => p.toMap()).toList(),
+          'lastUpdated': Timestamp.now(),
+        });
+      } else {
+        // Create new recommendations document
+        await docRef.set({
+          'userName': userName,
+          'products': [recommendedProduct.toMap()],
+          'lastUpdated': Timestamp.now(),
+          'isGlobal': false,
+        });
+      }
+    } catch (e) {
+      debugPrint('Error adding product to recommendations: $e');
+    }
+  }
+
+  // Remove a product from user's recommendations
+  Future<void> removeProductFromRecommendations(
+    String userId,
+    String productId,
+  ) async {
+    try {
+      final docRef = _firestore.collection('recommendations').doc(userId);
+      final docSnapshot = await docRef.get();
+
+      if (!docSnapshot.exists) {
+        return;
+      }
+
+      final recommendations = RecommendationModel.fromMap(
+        docSnapshot.data() as Map<String, dynamic>,
+        docSnapshot.id,
+      );
+
+      final updatedProducts =
+          recommendations.products
+              .where((product) => product.productId != productId)
+              .toList();
+
+      await docRef.update({
+        'products': updatedProducts.map((p) => p.toMap()).toList(),
+        'lastUpdated': Timestamp.now(),
+      });
+    } catch (e) {
+      debugPrint('Error removing product from recommendations: $e');
+    }
+  }
+
+  // Generate recommendations after an order is placed
+  Future<void> generateRecommendationsAfterOrder(
+    String userId,
+    String userName,
+    OrderModel order,
+  ) async {
+    try {
+      // First, check if the user already has recommendations
+      final docSnapshot =
+          await _firestore.collection('recommendations').doc(userId).get();
+
+      if (docSnapshot.exists) {
+        // User already has recommendations, update them with new order data
+        final recommendations = RecommendationModel.fromMap(
+          docSnapshot.data() as Map<String, dynamic>,
+          docSnapshot.id,
+        );
+
+        // Process new order items
+        final Map<String, RecommendedProduct> updatedProducts = {};
+
+        // First, add existing recommendations to the map
+        for (var product in recommendations.products) {
+          updatedProducts[product.productId] = product;
+        }
+
+        // Then process new order items
+        for (var item in order.items) {
+          if (updatedProducts.containsKey(item.productId)) {
+            // Update existing product frequency
+            final existingProduct = updatedProducts[item.productId]!;
+            updatedProducts[item.productId] = RecommendedProduct(
+              productId: existingProduct.productId,
+              productName: existingProduct.productName,
+              imageUrl: existingProduct.imageUrl,
+              price: existingProduct.price,
+              discountPrice: existingProduct.discountPrice,
+              frequency: existingProduct.frequency + 1,
+            );
+          } else {
+            // Add new product
+            updatedProducts[item.productId] = RecommendedProduct(
+              productId: item.productId,
+              productName: item.productName,
+              imageUrl: item.productImage,
+              price: item.price,
+              discountPrice: item.price,
+              frequency: 1,
+            );
+          }
+        }
+
+        // Sort and limit products
+        final sortedProducts =
+            updatedProducts.values.toList()
+              ..sort((a, b) => b.frequency.compareTo(a.frequency));
+
+        final topProducts = sortedProducts.take(10).toList();
+
+        // Update recommendations in Firestore
+        await _firestore.collection('recommendations').doc(userId).update({
+          'products': topProducts.map((p) => p.toMap()).toList(),
+          'lastUpdated': Timestamp.now(),
+        });
+
+        debugPrint('Updated recommendations after order for user $userId');
+      } else {
+        // User doesn't have recommendations yet, generate them from scratch
+        await generateRecommendationsForUser(userId, userName);
+      }
+    } catch (e) {
+      debugPrint('Error generating recommendations after order: $e');
+    }
+  }
+
+  // Check if recommendations need to be refreshed (older than 7 days)
+  Future<void> checkAndRefreshRecommendations(
+    String userId,
+    String userName,
+  ) async {
+    try {
+      final docSnapshot =
+          await _firestore.collection('recommendations').doc(userId).get();
+
+      if (!docSnapshot.exists) {
+        // No recommendations exist, generate them
+        await generateRecommendationsForUser(userId, userName);
+        return;
+      }
+
+      final recommendations = RecommendationModel.fromMap(
+        docSnapshot.data() as Map<String, dynamic>,
+        docSnapshot.id,
+      );
+
+      // Check if recommendations are older than 7 days
+      final now = DateTime.now();
+      final daysSinceUpdate =
+          now.difference(recommendations.lastUpdated).inDays;
+
+      if (daysSinceUpdate > 7) {
+        debugPrint(
+          'Recommendations for user $userId are $daysSinceUpdate days old. Refreshing...',
+        );
+        await generateRecommendationsForUser(userId, userName);
+      }
+    } catch (e) {
+      debugPrint('Error checking recommendation age: $e');
+    }
+  }
+
+  // Add a product to global recommendations
+  Future<void> addProductToGlobalRecommendations(ProductModel product) async {
+    try {
+      // Get or create global recommendations document
+      final querySnapshot =
+          await _firestore
+              .collection('recommendations')
+              .where('isGlobal', isEqualTo: true)
+              .limit(1)
+              .get();
+
+      final recommendedProduct = RecommendedProduct(
+        productId: product.id,
+        productName: product.name,
+        imageUrl: product.imageUrl,
+        price: product.price,
+        discountPrice: product.discountPrice,
+      );
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // Update existing global recommendations
+        final docRef = querySnapshot.docs.first.reference;
+        final recommendations = RecommendationModel.fromMap(
+          querySnapshot.docs.first.data(),
+          querySnapshot.docs.first.id,
+        );
+
+        // Check if product already exists
+        final existingIndex = recommendations.products.indexWhere(
+          (p) => p.productId == product.id,
+        );
+
+        if (existingIndex >= 0) {
+          // Product already exists, no need to add again
+          return;
+        }
+
+        // Add new product to recommendations
+        final updatedProducts = [
+          ...recommendations.products,
+          recommendedProduct,
+        ];
+
+        // Limit global recommendations to 20 products max
+        // Sort by frequency first to keep the most popular ones
+        updatedProducts.sort((a, b) => b.frequency.compareTo(a.frequency));
+        final limitedProducts = updatedProducts.take(20).toList();
+
+        await docRef.update({
+          'products': limitedProducts.map((p) => p.toMap()).toList(),
+          'lastUpdated': Timestamp.now(),
+        });
+      } else {
+        // Create new global recommendations document
+        await _firestore.collection('recommendations').add({
+          'userName': 'Global Recommendations',
+          'products': [recommendedProduct.toMap()],
+          'lastUpdated': Timestamp.now(),
+          'isGlobal': true,
+        });
+      }
+    } catch (e) {
+      debugPrint('Error adding product to global recommendations: $e');
     }
   }
 }
