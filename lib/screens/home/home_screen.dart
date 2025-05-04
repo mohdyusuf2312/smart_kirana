@@ -12,7 +12,6 @@ import 'package:smart_kirana/screens/home/profile_screen.dart';
 import 'package:smart_kirana/screens/home/search_screen.dart';
 import 'package:smart_kirana/services/location_service.dart';
 import 'package:smart_kirana/utils/constants.dart';
-import 'package:smart_kirana/widgets/recommended_products_section.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String routeName = '/home';
@@ -66,6 +65,11 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         await _loadProductData();
       }
+
+      // Load user recommendations if user is logged in
+      if (mounted) {
+        await _loadUserRecommendations();
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -78,6 +82,31 @@ class _HomeScreenState extends State<HomeScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _loadUserRecommendations() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final recommendationProvider = Provider.of<RecommendationProvider>(
+      context,
+      listen: false,
+    );
+
+    try {
+      // Load global recommendations for all users
+      await recommendationProvider.loadGlobalRecommendations();
+
+      // Also load user-specific recommendations if user is logged in
+      if (authProvider.currentUser != null && authProvider.user != null) {
+        // Pass both user ID and user name for recommendation refresh check
+        await recommendationProvider.loadUserRecommendations(
+          authProvider.currentUser!.uid,
+          userName: authProvider.user!.name,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error loading recommendations: $e');
+      // Don't set error message here to avoid blocking the whole screen
     }
   }
 
@@ -260,9 +289,152 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildRecommendationsSection() {
-    // Use the dedicated RecommendedProductsSection widget
-    return const RecommendedProductsSection();
+  Widget _buildUserRecommendationsSection() {
+    final productProvider = Provider.of<ProductProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+    final recommendationProvider = Provider.of<RecommendationProvider>(context);
+
+    // Check if user is logged in
+    final isLoggedIn = authProvider.currentUser != null;
+
+    // Only show user recommendations if user is logged in
+    if (!isLoggedIn ||
+        recommendationProvider.userRecommendations == null ||
+        recommendationProvider.userRecommendations!.products.isEmpty) {
+      // Return empty container if no user recommendations
+      return const SizedBox.shrink();
+    }
+
+    // Convert recommendation products to product models
+    List<ProductModel> recommendedProducts = [];
+    final recommendations =
+        recommendationProvider.userRecommendations!.products;
+    for (var recommendation in recommendations) {
+      final product = productProvider.getProductById(recommendation.productId);
+      if (product != null) {
+        recommendedProducts.add(product);
+      }
+    }
+
+    // If no valid products found, return empty container
+    if (recommendedProducts.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.person, color: AppColors.secondary),
+              SizedBox(width: 8),
+              Text(
+                'Recommended for You',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Based on your previous orders',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: recommendedProducts.length,
+              itemBuilder: (context, index) {
+                return _buildProductCard(
+                  recommendedProducts[index],
+                  horizontal: true,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlobalRecommendationsSection() {
+    final productProvider = Provider.of<ProductProvider>(context);
+    final recommendationProvider = Provider.of<RecommendationProvider>(context);
+
+    // Get global recommendations
+    List<ProductModel> recommendedProducts = [];
+    String recommendationSource = 'popular products';
+
+    // Try global recommendations first
+    if (recommendationProvider.globalRecommendations != null &&
+        recommendationProvider.globalRecommendations!.products.isNotEmpty) {
+      final globalRecs = recommendationProvider.globalRecommendations!.products;
+      for (var recommendation in globalRecs) {
+        final product = productProvider.getProductById(
+          recommendation.productId,
+        );
+        if (product != null) {
+          recommendedProducts.add(product);
+        }
+      }
+
+      if (recommendedProducts.isNotEmpty) {
+        recommendationSource = 'popular items';
+      }
+    }
+
+    // If no global recommendations, fall back to popular products
+    if (recommendedProducts.isEmpty) {
+      recommendedProducts =
+          productProvider.getPopularProducts().take(5).toList();
+      recommendationSource = 'popular products';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.trending_up, color: AppColors.secondary),
+              SizedBox(width: 8),
+              Text(
+                'Popular Recommendations',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Based on $recommendationSource',
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child:
+                recommendedProducts.isEmpty
+                    ? const Center(child: Text('No recommendations available'))
+                    : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: recommendedProducts.length,
+                      itemBuilder: (context, index) {
+                        return _buildProductCard(
+                          recommendedProducts[index],
+                          horizontal: true,
+                        );
+                      },
+                    ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildCategoriesSection() {
@@ -489,8 +661,11 @@ class _HomeScreenState extends State<HomeScreen> {
             // Location banner
             SliverToBoxAdapter(child: _buildLocationBanner()),
 
-            // AI Recommendations
-            SliverToBoxAdapter(child: _buildRecommendationsSection()),
+            // User-specific Recommendations (only shown if user is logged in and has recommendations)
+            SliverToBoxAdapter(child: _buildUserRecommendationsSection()),
+
+            // Global Recommendations (shown to all users)
+            SliverToBoxAdapter(child: _buildGlobalRecommendationsSection()),
 
             // Categories
             SliverToBoxAdapter(child: _buildCategoriesSection()),
