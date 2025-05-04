@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:smart_kirana/models/cart_item_model.dart';
 import 'package:smart_kirana/models/order_model.dart';
 import 'package:smart_kirana/models/user_model.dart';
+import 'package:smart_kirana/services/recommendation_service.dart';
 
 class OrderService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final RecommendationService _recommendationService = RecommendationService();
 
   // Create a new order
   Future<String> createOrder({
@@ -88,6 +91,19 @@ class OrderService {
 
       // Note: We're not refreshing product data here because the real-time listeners
       // in ProductProvider will automatically update when Firestore changes
+
+      // Generate recommendations based on this new order
+      try {
+        debugPrint('Generating recommendations after order for user $userId');
+        await _recommendationService.generateRecommendationsAfterOrder(
+          userId,
+          userName,
+          order,
+        );
+      } catch (e) {
+        // Don't fail the order creation if recommendation generation fails
+        debugPrint('Error generating recommendations after order: $e');
+      }
 
       return orderRef.id;
     } catch (e) {
