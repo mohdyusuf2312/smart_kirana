@@ -8,7 +8,7 @@ import 'package:smart_kirana/screens/admin/category_management_screen.dart';
 import 'package:smart_kirana/screens/admin/low_stock_screen.dart';
 import 'package:smart_kirana/screens/admin/order_management_screen.dart';
 import 'package:smart_kirana/screens/admin/product_management_screen.dart';
-import 'package:smart_kirana/screens/admin/recommendation_generation_screen.dart';
+import 'package:smart_kirana/screens/admin/recommendation_management_screen.dart';
 import 'package:smart_kirana/screens/admin/user_management_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/admin/admin_drawer.dart';
@@ -674,7 +674,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Icons.recommend,
           () => Navigator.pushNamed(
             context,
-            RecommendationGenerationScreen.routeName,
+            RecommendationManagementScreen.routeName,
           ),
         ),
       ],
