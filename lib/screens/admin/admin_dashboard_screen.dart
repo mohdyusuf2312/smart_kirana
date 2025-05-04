@@ -635,8 +635,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildFeatureGrid() {
     return GridView.count(
-      crossAxisCount:
-          6, // Changed from 5 to 6 to accommodate the additional button
+      crossAxisCount: 5,
       crossAxisSpacing: 8, // Reduced spacing
       mainAxisSpacing: 8, // Reduced spacing
       shrinkWrap: true,
@@ -663,11 +662,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           'Low Stock',
           Icons.warning_amber,
           () => Navigator.pushNamed(context, LowStockScreen.routeName),
-        ),
-        _buildFeatureCard(
-          'Users',
-          Icons.people,
-          () => Navigator.pushNamed(context, UserManagementScreen.routeName),
         ),
         _buildFeatureCard(
           'Recommendations',
