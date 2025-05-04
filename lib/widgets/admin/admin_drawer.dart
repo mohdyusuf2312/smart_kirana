@@ -84,11 +84,11 @@ class AdminDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.warning_amber),
-            title: const Text('Low Stock'),
+            leading: const Icon(Icons.people),
+            title: const Text('Users'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, LowStockScreen.routeName);
+              Navigator.pushNamed(context, UserManagementScreen.routeName);
             },
           ),
           ListTile(
@@ -100,11 +100,11 @@ class AdminDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.people),
-            title: const Text('Users'),
+            leading: const Icon(Icons.warning_amber),
+            title: const Text('Low Stock'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, UserManagementScreen.routeName);
+              Navigator.pushNamed(context, LowStockScreen.routeName);
             },
           ),
           ListTile(
