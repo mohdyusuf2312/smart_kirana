@@ -41,6 +41,7 @@ class RecommendationService {
       if (querySnapshot.docs.isNotEmpty) {
         final doc = querySnapshot.docs.first;
         return RecommendationModel.fromMap(
+          // ignore: unnecessary_cast
           doc.data() as Map<String, dynamic>,
           doc.id,
         );
