@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/product_model.dart';
 import 'package:smart_kirana/providers/cart_provider.dart';
-import 'package:smart_kirana/providers/product_provider.dart';
 import 'package:smart_kirana/screens/home/product_detail_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 
