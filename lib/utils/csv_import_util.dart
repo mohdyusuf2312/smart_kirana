@@ -13,6 +13,7 @@ class CSVImportUtil {
 
   // Web platform specific data
   String? _webCsvData;
+  // ignore: unused_field
   String? _webCsvFileName;
 
   // Store web image files
