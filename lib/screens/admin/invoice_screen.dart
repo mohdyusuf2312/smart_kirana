@@ -6,7 +6,6 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:smart_kirana/models/order_model.dart';
-import 'package:smart_kirana/utils/constants.dart';
 
 class InvoiceScreen extends StatefulWidget {
   final OrderModel order;
