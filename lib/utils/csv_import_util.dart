@@ -28,13 +28,13 @@ class CSVImportUtil {
   /// Add web image file
   void addWebImageFile(String fileName, Uint8List bytes) {
     _webImageFiles[fileName.toLowerCase()] = bytes;
-    debugPrint('Added web image file: $fileName (${bytes.length} bytes)');
+    // debugPrint('Added web image file: $fileName (${bytes.length} bytes)');
   }
 
   /// Clear web image files
   void clearWebImageFiles() {
     _webImageFiles.clear();
-    debugPrint('Cleared web image files');
+    // debugPrint('Cleared web image files');
   }
 
   /// Import products from a CSV file
@@ -56,13 +56,13 @@ class CSVImportUtil {
         if (kIsWeb && _webCsvData != null) {
           // Use the web data if available
           input = _webCsvData!;
-          debugPrint('Using web CSV data: ${input.length} characters');
+          // debugPrint('Using web CSV data: ${input.length} characters');
         } else {
           // Read from file for non-web platforms
-          debugPrint('Reading CSV file from path: ${csvFile.path}');
-          debugPrint('File exists: ${await csvFile.exists()}');
+          // debugPrint('Reading CSV file from path: ${csvFile.path}');
+          // debugPrint('File exists: ${await csvFile.exists()}');
           input = await csvFile.readAsString();
-          debugPrint('Successfully read file data: ${input.length} characters');
+          // debugPrint('Successfully read file data: ${input.length} characters');
         }
 
         // Check if the input is empty or just whitespace
@@ -70,30 +70,30 @@ class CSVImportUtil {
           throw Exception('CSV file is empty or contains only whitespace');
         }
       } catch (e) {
-        debugPrint('Error reading CSV file: $e');
+        // debugPrint('Error reading CSV file: $e');
         throw Exception('Failed to read CSV file: $e');
       }
 
       // Debug: Print the first 100 characters of the CSV data
-      debugPrint(
-        'CSV data preview: ${input.substring(0, input.length > 100 ? 100 : input.length)}...',
-      );
+      // debugPrint(
+      //   'CSV data preview: ${input.substring(0, input.length > 100 ? 100 : input.length)}...',
+      // );
 
       // Check for line endings and adjust if needed
       String processedInput = input;
       if (!input.contains('\n') && input.contains('\r')) {
         // If there are no newlines but there are carriage returns, replace them
-        debugPrint('CSV file uses only CR line endings, converting to LF');
+        // debugPrint('CSV file uses only CR line endings, converting to LF');
         processedInput = input.replaceAll('\r', '\n');
       } else if (input.contains('\r\n')) {
         // If CRLF line endings, normalize to just LF
-        debugPrint('CSV file uses CRLF line endings, converting to LF');
+        // debugPrint('CSV file uses CRLF line endings, converting to LF');
         processedInput = input.replaceAll('\r\n', '\n');
       }
 
       // Count lines to verify
-      int lineCount = '\n'.allMatches(processedInput).length + 1;
-      debugPrint('CSV file contains approximately $lineCount lines');
+      // int lineCount = '\n'.allMatches(processedInput).length + 1;
+      // debugPrint('CSV file contains approximately $lineCount lines');
 
       // Use CsvToListConverter with explicit parameters to handle different CSV formats
       final List<List<dynamic>> csvData = const CsvToListConverter(
@@ -103,13 +103,13 @@ class CSVImportUtil {
       ).convert(processedInput);
 
       // Debug: Print raw CSV data for inspection
-      debugPrint('Raw CSV data (first few rows):');
-      for (int i = 0; i < (csvData.length > 3 ? 3 : csvData.length); i++) {
-        debugPrint('Row $i: ${csvData[i]}');
-      }
+      // debugPrint('Raw CSV data (first few rows):');
+      // for (int i = 0; i < (csvData.length > 3 ? 3 : csvData.length); i++) {
+        // debugPrint('Row $i: ${csvData[i]}');
+      // }
 
       // Debug: Print the number of rows in the CSV data
-      debugPrint('CSV data rows: ${csvData.length}');
+      // debugPrint('CSV data rows: ${csvData.length}');
 
       if (csvData.isEmpty) {
         throw Exception('CSV file is empty');
@@ -120,28 +120,28 @@ class CSVImportUtil {
       if (skipHeader && csvData.length > 1) {
         // Skip the first row (header)
         dataRows = csvData.sublist(1);
-        debugPrint('Skipping header row: ${csvData[0]}');
+        // debugPrint('Skipping header row: ${csvData[0]}');
       } else {
         dataRows = csvData;
-        debugPrint('Not skipping header row');
+        // debugPrint('Not skipping header row');
       }
 
       // Debug: Print the actual data rows being processed
-      debugPrint(
-        'Will process ${dataRows.length} data rows (skipHeader=$skipHeader)',
-      );
+      // debugPrint(
+      //   'Will process ${dataRows.length} data rows (skipHeader=$skipHeader)',
+      // );
 
       // Debug: Print the number of data rows after skipping header
-      debugPrint('Data rows after skipping header: ${dataRows.length}');
+      // debugPrint('Data rows after skipping header: ${dataRows.length}');
 
       if (dataRows.isEmpty) {
         throw Exception('No data rows found in CSV file');
       }
 
       // Debug: Print the first row of data
-      if (dataRows.isNotEmpty) {
-        debugPrint('First data row: ${dataRows[0]}');
-      }
+      // if (dataRows.isNotEmpty) {
+      //   // debugPrint('First data row: ${dataRows[0]}');
+      // }
 
       // Get all categories to match by name (with timeout)
       final categoriesSnapshot = await _firestore
@@ -190,12 +190,12 @@ class CSVImportUtil {
       final Set<String> addedProductNames = {};
       int updatedCount = 0;
 
-      debugPrint('Found ${existingProducts.length} existing products');
-      if (existingProducts.isNotEmpty) {
-        debugPrint(
-          'Existing product names sample: ${existingProducts.keys.take(5).join(", ")}',
-        );
-      }
+      // debugPrint('Found ${existingProducts.length} existing products');
+      // if (existingProducts.isNotEmpty) {
+      //   debugPrint(
+      //     'Existing product names sample: ${existingProducts.keys.take(5).join(", ")}',
+      //   );
+      // }
 
       final Map<String, String> categoryNameToId = {};
       final Map<String, String> categoryIdToName = {};
@@ -210,18 +210,18 @@ class CSVImportUtil {
       }
 
       // Debug: Print the categories found
-      debugPrint('Categories found: ${categoryNameToId.keys.join(', ')}');
+      // debugPrint('Categories found: ${categoryNameToId.keys.join(', ')}');
 
       // Process each row
-      debugPrint('Starting to process ${dataRows.length} rows');
+      // debugPrint('Starting to process ${dataRows.length} rows');
       for (var i = 0; i < dataRows.length; i++) {
         final row = dataRows[i];
         final rowIndex =
             skipHeader ? i + 2 : i + 1; // For error reporting (1-based index)
 
-        debugPrint(
-          'Processing row $rowIndex (index $i of ${dataRows.length}): ${row.join(', ').substring(0, row.join(', ').length > 50 ? 50 : row.join(', ').length)}...',
-        );
+        // debugPrint(
+        //   'Processing row $rowIndex (index $i of ${dataRows.length}): ${row.join(', ').substring(0, row.join(', ').length > 50 ? 50 : row.join(', ').length)}...',
+        // );
 
         try {
           if (row.length < 7) {
@@ -327,14 +327,14 @@ class CSVImportUtil {
           }
 
           // Find category ID from name (case insensitive)
-          debugPrint(
-            'Looking for category: "$categoryName" (lowercase: "${categoryName.toLowerCase()}")',
-          );
+          // debugPrint(
+          //   'Looking for category: "$categoryName" (lowercase: "${categoryName.toLowerCase()}")',
+          // );
           String? categoryId = categoryNameToId[categoryName.toLowerCase()];
 
           // If category not found, create it
           if (categoryId == null) {
-            debugPrint('Category "$categoryName" not found, creating it');
+            // debugPrint('Category "$categoryName" not found, creating it');
 
             try {
               // Create the category
@@ -352,9 +352,9 @@ class CSVImportUtil {
               categoryNameToId[categoryName.toLowerCase()] = categoryId;
               categoryIdToName[categoryId] = categoryName;
 
-              debugPrint(
-                'Created new category: "$categoryName" with ID: $categoryId',
-              );
+              // debugPrint(
+              //   'Created new category: "$categoryName" with ID: $categoryId',
+              // );
             } catch (e) {
               warnings.add(
                 'Row $rowIndex: Failed to create category "$categoryName" for product "$name": $e',
@@ -363,7 +363,7 @@ class CSVImportUtil {
               continue;
             }
           } else {
-            debugPrint('Found category ID: $categoryId for "$categoryName"');
+            // debugPrint('Found category ID: $categoryId for "$categoryName"');
           }
 
           // Check for duplicate product names (either existing in DB or added in this import)
@@ -374,9 +374,9 @@ class CSVImportUtil {
             warnings.add(
               'Row $rowIndex: Product "$name" was already added in this import session. Skipping to next product.',
             );
-            debugPrint(
-              'Skipping duplicate product from same import: "$name" (normalized: "$normalizedName")',
-            );
+            // debugPrint(
+            //   'Skipping duplicate product from same import: "$name" (normalized: "$normalizedName")',
+            // );
             skippedCount++;
             continue; // Skip to the next product
           }
@@ -465,16 +465,16 @@ class CSVImportUtil {
                     .doc(productId)
                     .update(productData);
 
-                debugPrint(
-                  'Updated existing product: "$name" (ID: $productId). Changed fields: ${changedFields.join(", ")}',
-                );
+                // debugPrint(
+                //   'Updated existing product: "$name" (ID: $productId). Changed fields: ${changedFields.join(", ")}',
+                // );
 
                 updatedCount++;
                 warnings.add(
                   'Row $rowIndex: Product "$name" already exists and was updated. Changed fields: ${changedFields.join(", ")}',
                 );
               } catch (e) {
-                debugPrint('Error updating product: $e');
+                // debugPrint('Error updating product: $e');
                 errors.add(
                   'Row $rowIndex: Failed to update product in Firestore: $e',
                 );
@@ -482,9 +482,9 @@ class CSVImportUtil {
               }
             } else {
               // No changes detected
-              debugPrint(
-                'Skipping unchanged product: "$name" (normalized: "$normalizedName")',
-              );
+              // debugPrint(
+              //   'Skipping unchanged product: "$name" (normalized: "$normalizedName")',
+              // );
               warnings.add(
                 'Row $rowIndex: Product "$name" already exists with identical data. Skipping.',
               );
@@ -495,40 +495,40 @@ class CSVImportUtil {
           }
 
           // Create product data
-          final productData = {
-            'name': name,
-            'description': description,
-            'price': price,
-            'discountPrice': discountPrice,
-            'imageUrl': imageUrl,
-            'categoryId': categoryId,
-            'categoryName': categoryIdToName[categoryId] ?? categoryName,
-            'stock': stock,
-            'unit': unit,
-            'isPopular': isPopular,
-            'isFeatured': isFeatured,
-            'createdAt': FieldValue.serverTimestamp(),
-          };
+          // final productData = {
+          //   'name': name,
+          //   'description': description,
+          //   'price': price,
+          //   'discountPrice': discountPrice,
+          //   'imageUrl': imageUrl,
+          //   'categoryId': categoryId,
+          //   'categoryName': categoryIdToName[categoryId] ?? categoryName,
+          //   'stock': stock,
+          //   'unit': unit,
+          //   'isPopular': isPopular,
+          //   'isFeatured': isFeatured,
+          //   'createdAt': FieldValue.serverTimestamp(),
+          // };
 
           // Add to Firestore
-          debugPrint('Adding product to Firestore: "$name"');
+          // debugPrint('Adding product to Firestore: "$name"');
           try {
-            final docRef = await _firestore
-                .collection('products')
-                .add(productData);
-            debugPrint(
-              'Successfully added product to Firestore with ID: ${docRef.id}',
-            );
+            // final docRef = await _firestore
+            //     .collection('products')
+            //     .add(productData);
+            // debugPrint(
+            //   'Successfully added product to Firestore with ID: ${docRef.id}',
+            // );
 
             // Add to our set of added products to prevent duplicates in the same import
             addedProductNames.add(normalizedName);
 
             importedCount++;
-            debugPrint(
-              'Successfully imported product: "$name" (total imported: $importedCount)',
-            );
+            // debugPrint(
+            //   'Successfully imported product: "$name" (total imported: $importedCount)',
+            // );
           } catch (e) {
-            debugPrint('Error adding product to Firestore: $e');
+            // debugPrint('Error adding product to Firestore: $e');
             errors.add('Row $rowIndex: Failed to add product to Firestore: $e');
             skippedCount++;
             continue;
@@ -538,13 +538,13 @@ class CSVImportUtil {
         } catch (e) {
           errors.add('Row $rowIndex: Failed to process row: $e');
           skippedCount++;
-          debugPrint('Error processing row $rowIndex: $e');
+          // debugPrint('Error processing row $rowIndex: $e');
         }
 
         // Debug: Print progress after each row
-        debugPrint(
-          'Completed row $rowIndex. Progress: $importedCount imported, $skippedCount skipped',
-        );
+        // debugPrint(
+        //   'Completed row $rowIndex. Progress: $importedCount imported, $skippedCount skipped',
+        // );
       }
 
       return {
@@ -556,7 +556,7 @@ class CSVImportUtil {
         'warnings': warnings,
       };
     } catch (e) {
-      debugPrint('Error importing products from CSV: $e');
+      // debugPrint('Error importing products from CSV: $e');
       return {
         'success': false,
         'importedCount': importedCount,
@@ -589,13 +589,13 @@ class CSVImportUtil {
         if (kIsWeb && _webCsvData != null) {
           // Use the web data if available
           input = _webCsvData!;
-          debugPrint('Using web CSV data: ${input.length} characters');
+          // debugPrint('Using web CSV data: ${input.length} characters');
         } else {
           // Read from file for non-web platforms
-          debugPrint('Reading CSV file from path: ${csvFile.path}');
-          debugPrint('File exists: ${await csvFile.exists()}');
+          // debugPrint('Reading CSV file from path: ${csvFile.path}');
+          // debugPrint('File exists: ${await csvFile.exists()}');
           input = await csvFile.readAsString();
-          debugPrint('Successfully read file data: ${input.length} characters');
+          // debugPrint('Successfully read file data: ${input.length} characters');
         }
 
         // Check if the input is empty or just whitespace
@@ -603,7 +603,7 @@ class CSVImportUtil {
           throw Exception('CSV file is empty or contains only whitespace');
         }
       } catch (e) {
-        debugPrint('Error reading CSV file: $e');
+        // debugPrint('Error reading CSV file: $e');
         throw Exception('Failed to read CSV file: $e');
       }
 
@@ -611,17 +611,17 @@ class CSVImportUtil {
       String processedInput = input;
       if (!input.contains('\n') && input.contains('\r')) {
         // If there are no newlines but there are carriage returns, replace them
-        debugPrint('CSV file uses only CR line endings, converting to LF');
+        // debugPrint('CSV file uses only CR line endings, converting to LF');
         processedInput = input.replaceAll('\r', '\n');
       } else if (input.contains('\r\n')) {
         // If CRLF line endings, normalize to just LF
-        debugPrint('CSV file uses CRLF line endings, converting to LF');
+        // debugPrint('CSV file uses CRLF line endings, converting to LF');
         processedInput = input.replaceAll('\r\n', '\n');
       }
 
       // Count lines to verify
-      int lineCount = '\n'.allMatches(processedInput).length + 1;
-      debugPrint('CSV file contains approximately $lineCount lines');
+      // int lineCount = '\n'.allMatches(processedInput).length + 1;
+      // debugPrint('CSV file contains approximately $lineCount lines');
 
       // Use CsvToListConverter with explicit parameters to handle different CSV formats
       final List<List<dynamic>> csvData = const CsvToListConverter(
@@ -631,10 +631,10 @@ class CSVImportUtil {
       ).convert(processedInput);
 
       // Debug: Print raw CSV data for inspection
-      debugPrint('Raw CSV data (first few rows):');
-      for (int i = 0; i < (csvData.length > 3 ? 3 : csvData.length); i++) {
-        debugPrint('Row $i: ${csvData[i]}');
-      }
+      // debugPrint('Raw CSV data (first few rows):');
+      // for (int i = 0; i < (csvData.length > 3 ? 3 : csvData.length); i++) {
+      //   debugPrint('Row $i: ${csvData[i]}');
+      // }
 
       if (csvData.isEmpty) {
         throw Exception('CSV file is empty');
@@ -645,16 +645,16 @@ class CSVImportUtil {
       if (skipHeader && csvData.length > 1) {
         // Skip the first row (header)
         dataRows = csvData.sublist(1);
-        debugPrint('Skipping header row: ${csvData[0]}');
+        // debugPrint('Skipping header row: ${csvData[0]}');
       } else {
         dataRows = csvData;
-        debugPrint('Not skipping header row');
+        // debugPrint('Not skipping header row');
       }
 
       // Debug: Print the actual data rows being processed
-      debugPrint(
-        'Will process ${dataRows.length} data rows (skipHeader=$skipHeader)',
-      );
+      // debugPrint(
+      //   'Will process ${dataRows.length} data rows (skipHeader=$skipHeader)',
+      // );
 
       if (dataRows.isEmpty) {
         throw Exception('No data rows found in CSV file');
@@ -706,12 +706,12 @@ class CSVImportUtil {
       // Create a mutable set to track products added in this import session
       final Set<String> addedProductNames = {};
 
-      debugPrint('Found ${existingProducts.length} existing products');
-      if (existingProducts.isNotEmpty) {
-        debugPrint(
-          'Existing product names sample: ${existingProducts.keys.take(5).join(", ")}',
-        );
-      }
+      // debugPrint('Found ${existingProducts.length} existing products');
+      // if (existingProducts.isNotEmpty) {
+      //   debugPrint(
+      //     'Existing product names sample: ${existingProducts.keys.take(5).join(", ")}',
+      //   );
+      // }
 
       final Map<String, String> categoryNameToId = {};
       final Map<String, String> categoryIdToName = {};
@@ -732,7 +732,7 @@ class CSVImportUtil {
 
       if (kIsWeb) {
         // For web platform, use the web image files
-        debugPrint('Processing ${_webImageFiles.length} web image files');
+        // debugPrint('Processing ${_webImageFiles.length} web image files');
 
         for (var entry in _webImageFiles.entries) {
           final fileName = entry.key.toLowerCase();
@@ -749,13 +749,13 @@ class CSVImportUtil {
             imageKeyMap[fileNameWithoutExt] = fileName;
           }
 
-          debugPrint(
-            'Added web image file: $fileName (also as: $fileNameWithoutExt)',
-          );
+          // debugPrint(
+          //   'Added web image file: $fileName (also as: $fileNameWithoutExt)',
+          // );
         }
       } else {
         // For other platforms, use the file objects
-        debugPrint('Processing ${imageFiles.length} image files');
+        // debugPrint('Processing ${imageFiles.length} image files');
 
         for (var file in imageFiles) {
           final fileName = path.basename(file.path).toLowerCase();
@@ -770,22 +770,22 @@ class CSVImportUtil {
             imageFileMap[fileNameWithoutExt] = file;
           }
 
-          debugPrint(
-            'Added image file: $fileName (also as: $fileNameWithoutExt)',
-          );
+          // debugPrint(
+          //   'Added image file: $fileName (also as: $fileNameWithoutExt)',
+          // );
         }
       }
 
       // Process each row
-      debugPrint('Starting to process ${dataRows.length} rows');
+      // debugPrint('Starting to process ${dataRows.length} rows');
       for (var i = 0; i < dataRows.length; i++) {
         final row = dataRows[i];
         final rowIndex =
             skipHeader ? i + 2 : i + 1; // For error reporting (1-based index)
 
-        debugPrint(
-          'Processing row $rowIndex (index $i of ${dataRows.length}): ${row.join(', ').substring(0, row.join(', ').length > 50 ? 50 : row.join(', ').length)}...',
-        );
+        // debugPrint(
+        //   'Processing row $rowIndex (index $i of ${dataRows.length}): ${row.join(', ').substring(0, row.join(', ').length > 50 ? 50 : row.join(', ').length)}...',
+        // );
 
         try {
           if (row.length < 7) {
@@ -812,9 +812,9 @@ class CSVImportUtil {
             warnings.add(
               'Row $rowIndex: Product "$name" was already added in this import session. Skipping to next product.',
             );
-            debugPrint(
-              'Skipping duplicate product from same import: "$name" (normalized: "$normalizedName")',
-            );
+            // debugPrint(
+            //   'Skipping duplicate product from same import: "$name" (normalized: "$normalizedName")',
+            // );
             skippedCount++;
             continue; // Skip to the next product
           }
@@ -912,14 +912,14 @@ class CSVImportUtil {
           }
 
           // Find category ID from name (case insensitive)
-          debugPrint(
-            'Looking for category: "$categoryName" (lowercase: "${categoryName.toLowerCase()}")',
-          );
+          // debugPrint(
+          //   'Looking for category: "$categoryName" (lowercase: "${categoryName.toLowerCase()}")',
+          // );
           String? categoryId = categoryNameToId[categoryName.toLowerCase()];
 
           // If category not found, create it
           if (categoryId == null) {
-            debugPrint('Category "$categoryName" not found, creating it');
+            // debugPrint('Category "$categoryName" not found, creating it');
 
             try {
               // Create the category
@@ -939,9 +939,9 @@ class CSVImportUtil {
               categoryNameToId[categoryName.toLowerCase()] = categoryId;
               categoryIdToName[categoryId] = categoryName;
 
-              debugPrint(
-                'Created new category: "$categoryName" with ID: $categoryId',
-              );
+              // debugPrint(
+              //   'Created new category: "$categoryName" with ID: $categoryId',
+              // );
             } catch (e) {
               warnings.add(
                 'Row $rowIndex: Failed to create category "$categoryName" for product "$name": $e',
@@ -950,7 +950,7 @@ class CSVImportUtil {
               continue;
             }
           } else {
-            debugPrint('Found category ID: $categoryId for "$categoryName"');
+            // debugPrint('Found category ID: $categoryId for "$categoryName"');
           }
 
           // Upload image if available
@@ -959,7 +959,7 @@ class CSVImportUtil {
             // Check if it's a URL
             if (imageFileName.startsWith('http')) {
               imageUrl = imageFileName;
-              debugPrint('Using URL as image: $imageUrl');
+              // debugPrint('Using URL as image: $imageUrl');
             } else {
               // Normalize the image filename for matching
               final normalizedFileName = imageFileName.toLowerCase().trim();
@@ -971,9 +971,9 @@ class CSVImportUtil {
                       )
                       : normalizedFileName;
 
-              debugPrint(
-                'Looking for image file: "$normalizedFileName" or "$fileNameWithoutExt"',
-              );
+              // debugPrint(
+              //   'Looking for image file: "$normalizedFileName" or "$fileNameWithoutExt"',
+              // );
 
               if (kIsWeb) {
                 // For web platform, use the web image files
@@ -987,18 +987,18 @@ class CSVImportUtil {
                     normalizedFileName != fileNameWithoutExt) {
                   imageKey = imageKeyMap[fileNameWithoutExt];
                   if (imageKey != null) {
-                    debugPrint(
-                      'Found web image by name without extension: $fileNameWithoutExt',
-                    );
+                    // debugPrint(
+                    //   'Found web image by name without extension: $fileNameWithoutExt',
+                    // );
                   }
                 }
 
                 if (imageKey != null && _webImageFiles.containsKey(imageKey)) {
                   try {
                     final imageBytes = _webImageFiles[imageKey]!;
-                    debugPrint(
-                      'Uploading web image file: $imageKey (${imageBytes.length} bytes)',
-                    );
+                    // debugPrint(
+                    //   'Uploading web image file: $imageKey (${imageBytes.length} bytes)',
+                    // );
 
                     final fileName =
                         '${DateTime.now().millisecondsSinceEpoch}_$imageKey';
@@ -1022,9 +1022,9 @@ class CSVImportUtil {
                         const Duration(seconds: 10),
                       );
 
-                      debugPrint('Successfully uploaded web image: $imageUrl');
+                      // debugPrint('Successfully uploaded web image: $imageUrl');
                     } catch (timeoutError) {
-                      debugPrint('Timeout uploading image: $timeoutError');
+                      // debugPrint('Timeout uploading image: $timeoutError');
                       warnings.add(
                         'Row $rowIndex: Timeout uploading image "$imageFileName" for product "$name". The upload took too long.',
                       );
@@ -1032,13 +1032,13 @@ class CSVImportUtil {
                       imageUrl = '';
                     }
                   } catch (e) {
-                    debugPrint('Failed to upload web image: $e');
+                    // debugPrint('Failed to upload web image: $e');
                     warnings.add(
                       'Row $rowIndex: Failed to upload image "$imageFileName" for product "$name": $e',
                     );
                   }
                 } else {
-                  debugPrint('Web image file not found: $normalizedFileName');
+                  // debugPrint('Web image file not found: $normalizedFileName');
                   warnings.add(
                     'Row $rowIndex: Image file "$imageFileName" not found for product "$name". Available files: ${_webImageFiles.keys.take(5).join(", ")}...',
                   );
@@ -1052,15 +1052,15 @@ class CSVImportUtil {
                     normalizedFileName != fileNameWithoutExt) {
                   imageFile = imageFileMap[fileNameWithoutExt];
                   if (imageFile != null) {
-                    debugPrint(
-                      'Found image file by name without extension: $fileNameWithoutExt',
-                    );
+                    // debugPrint(
+                    //   'Found image file by name without extension: $fileNameWithoutExt',
+                    // );
                   }
                 }
 
                 if (imageFile != null) {
                   try {
-                    debugPrint('Uploading image file: ${imageFile.path}');
+                    // debugPrint('Uploading image file: ${imageFile.path}');
                     final fileName =
                         '${DateTime.now().millisecondsSinceEpoch}_${path.basename(imageFile.path)}';
                     final storageRef = _storage.ref().child(
@@ -1077,9 +1077,9 @@ class CSVImportUtil {
                         const Duration(seconds: 10),
                       );
 
-                      debugPrint('Successfully uploaded image: $imageUrl');
+                      // debugPrint('Successfully uploaded image: $imageUrl');
                     } catch (timeoutError) {
-                      debugPrint('Timeout uploading image: $timeoutError');
+                      // debugPrint('Timeout uploading image: $timeoutError');
                       warnings.add(
                         'Row $rowIndex: Timeout uploading image "$imageFileName" for product "$name". The upload took too long.',
                       );
@@ -1087,13 +1087,13 @@ class CSVImportUtil {
                       imageUrl = '';
                     }
                   } catch (e) {
-                    debugPrint('Failed to upload image: $e');
+                    // debugPrint('Failed to upload image: $e');
                     warnings.add(
                       'Row $rowIndex: Failed to upload image "$imageFileName" for product "$name": $e',
                     );
                   }
                 } else {
-                  debugPrint('Image file not found: $normalizedFileName');
+                  // debugPrint('Image file not found: $normalizedFileName');
                   warnings.add(
                     'Row $rowIndex: Image file "$imageFileName" not found for product "$name". Available files: ${imageFileMap.keys.take(5).join(", ")}...',
                   );
@@ -1187,16 +1187,16 @@ class CSVImportUtil {
                     .doc(productId)
                     .update(productData);
 
-                debugPrint(
-                  'Updated existing product: "$name" (ID: $productId). Changed fields: ${changedFields.join(", ")}',
-                );
+                // debugPrint(
+                //   'Updated existing product: "$name" (ID: $productId). Changed fields: ${changedFields.join(", ")}',
+                // );
 
                 updatedCount++;
                 warnings.add(
                   'Row $rowIndex: Product "$name" already exists and was updated. Changed fields: ${changedFields.join(", ")}',
                 );
               } catch (e) {
-                debugPrint('Error updating product: $e');
+                // debugPrint('Error updating product: $e');
                 errors.add(
                   'Row $rowIndex: Failed to update product in Firestore: $e',
                 );
@@ -1204,9 +1204,9 @@ class CSVImportUtil {
               }
             } else {
               // No changes detected
-              debugPrint(
-                'Skipping unchanged product: "$name" (normalized: "$normalizedName")',
-              );
+              // debugPrint(
+              //   'Skipping unchanged product: "$name" (normalized: "$normalizedName")',
+              // );
               warnings.add(
                 'Row $rowIndex: Product "$name" already exists with identical data. Skipping.',
               );
@@ -1217,25 +1217,25 @@ class CSVImportUtil {
           }
 
           // Add to Firestore (only for new products)
-          debugPrint('Adding product to Firestore: "$name"');
+          // debugPrint('Adding product to Firestore: "$name"');
           try {
             // Add a timeout to prevent hanging
-            final docRef = await _firestore
-                .collection('products')
-                .add(productData)
-                .timeout(const Duration(seconds: 15));
+            // final docRef = await _firestore
+            //     .collection('products')
+            //     .add(productData)
+            //     .timeout(const Duration(seconds: 15));
 
-            debugPrint(
-              'Successfully added product to Firestore with ID: ${docRef.id}',
-            );
+            // debugPrint(
+            //   'Successfully added product to Firestore with ID: ${docRef.id}',
+            // );
 
             // Add to our set of added products to prevent duplicates in the same import
             addedProductNames.add(normalizedName);
 
             importedCount++;
-            debugPrint(
-              'Successfully imported product: "$name" (total imported: $importedCount)',
-            );
+            // debugPrint(
+            //   'Successfully imported product: "$name" (total imported: $importedCount)',
+            // );
           } catch (e) {
             String errorMessage = e.toString();
             if (e is TimeoutException) {
@@ -1243,7 +1243,7 @@ class CSVImportUtil {
                   'Timeout adding product to Firestore. The operation took too long.';
             }
 
-            debugPrint('Error adding product to Firestore: $errorMessage');
+            // debugPrint('Error adding product to Firestore: $errorMessage');
             errors.add(
               'Row $rowIndex: Failed to add product to Firestore: $errorMessage',
             );
@@ -1253,13 +1253,13 @@ class CSVImportUtil {
         } catch (e) {
           errors.add('Row $rowIndex: Failed to process row: $e');
           skippedCount++;
-          debugPrint('Error processing row $rowIndex: $e');
+          // debugPrint('Error processing row $rowIndex: $e');
         }
 
         // Debug: Print progress after each row
-        debugPrint(
-          'Completed row $rowIndex. Progress: $importedCount imported, $skippedCount skipped',
-        );
+        // debugPrint(
+        //   'Completed row $rowIndex. Progress: $importedCount imported, $skippedCount skipped',
+        // );
       }
 
       return {
@@ -1271,7 +1271,7 @@ class CSVImportUtil {
         'warnings': warnings,
       };
     } catch (e) {
-      debugPrint('Error importing products with images: $e');
+      // debugPrint('Error importing products with images: $e');
       return {
         'success': false,
         'importedCount': importedCount,
