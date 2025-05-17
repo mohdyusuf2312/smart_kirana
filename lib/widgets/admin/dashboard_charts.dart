@@ -79,15 +79,15 @@ class _DashboardChartsState extends State<DashboardCharts>
   // Helper method to check if we have valid data for charts
   bool _hasValidData() {
     try {
-      debugPrint('Checking chart data validity');
+      // debugPrint('Checking chart data validity');
 
       // Safely check if we have any revenue data
       final hasRevenueData = widget.data.revenueData.isNotEmpty;
-      debugPrint('Has revenue data: $hasRevenueData');
+      // debugPrint('Has revenue data: $hasRevenueData');
 
       // Safely check if we have any user growth data
       final hasUserGrowthData = widget.data.userGrowthData.isNotEmpty;
-      debugPrint('Has user growth data: $hasUserGrowthData');
+      // debugPrint('Has user growth data: $hasUserGrowthData');
 
       // Safely check if we have any non-zero revenue
       bool hasNonZeroRevenue = false;
@@ -99,7 +99,7 @@ class _DashboardChartsState extends State<DashboardCharts>
           }
         }
       }
-      debugPrint('Has non-zero revenue: $hasNonZeroRevenue');
+      // debugPrint('Has non-zero revenue: $hasNonZeroRevenue');
 
       // Safely check if we have any non-zero user growth
       bool hasNonZeroUserGrowth = false;
@@ -111,7 +111,7 @@ class _DashboardChartsState extends State<DashboardCharts>
           }
         }
       }
-      debugPrint('Has non-zero user growth: $hasNonZeroUserGrowth');
+      // debugPrint('Has non-zero user growth: $hasNonZeroUserGrowth');
 
       // We need at least one valid chart to display
       final isValid =
@@ -120,10 +120,10 @@ class _DashboardChartsState extends State<DashboardCharts>
               hasNonZeroUserGrowth &&
               widget.data.userGrowthData.length >= 2);
 
-      debugPrint('Chart data is valid: $isValid');
+      // debugPrint('Chart data is valid: $isValid');
       return isValid;
     } catch (e) {
-      debugPrint('Error checking chart data validity: $e');
+      // debugPrint('Error checking chart data validity: $e');
       return false;
     }
   }
@@ -162,7 +162,7 @@ class _DashboardChartsState extends State<DashboardCharts>
           .reduce((a, b) => a > b ? a : b);
       maxY = maxAmount > 0 ? maxAmount * 1.2 : 1.0;
     } catch (e) {
-      debugPrint('Error calculating maxY: $e');
+      // debugPrint('Error calculating maxY: $e');
       return _buildPlaceholderWidget('Error', 'Could not render revenue chart');
     }
 
@@ -287,7 +287,7 @@ class _DashboardChartsState extends State<DashboardCharts>
         );
       }).toList();
     } catch (e) {
-      debugPrint('Error creating bar groups: $e');
+      // debugPrint('Error creating bar groups: $e');
       // Return a single empty bar if there's an error
       return [
         BarChartGroupData(
@@ -325,7 +325,7 @@ class _DashboardChartsState extends State<DashboardCharts>
 
       return maxAmount / 5;
     } catch (e) {
-      debugPrint('Error calculating horizontal interval: $e');
+      // debugPrint('Error calculating horizontal interval: $e');
       return 1.0;
     }
   }
@@ -372,7 +372,7 @@ class _DashboardChartsState extends State<DashboardCharts>
             return FlSpot(index.toDouble(), data.count.toDouble());
           }).toList();
     } catch (e) {
-      debugPrint('Error creating spots for user growth chart: $e');
+      // debugPrint('Error creating spots for user growth chart: $e');
       return _buildPlaceholderWidget(
         'Error',
         'Could not render user growth chart',
@@ -514,7 +514,7 @@ class _DashboardChartsState extends State<DashboardCharts>
 
       return maxCount / 5;
     } catch (e) {
-      debugPrint('Error calculating user growth interval: $e');
+      // debugPrint('Error calculating user growth interval: $e');
       return 1.0;
     }
   }
