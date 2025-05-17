@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:smart_kirana/models/order_model.dart';
 import 'package:smart_kirana/models/product_model.dart';
 import 'package:smart_kirana/models/recommendation_model.dart';
@@ -23,7 +22,7 @@ class RecommendationService {
       // If user doesn't have recommendations, get global recommendations
       return await getGlobalRecommendations();
     } catch (e) {
-      debugPrint('Error getting user recommendations: $e');
+      // debugPrint('Error getting user recommendations: $e');
       return null;
     }
   }
@@ -49,7 +48,7 @@ class RecommendationService {
 
       return null;
     } catch (e) {
-      debugPrint('Error getting global recommendations: $e');
+      // debugPrint('Error getting global recommendations: $e');
       return null;
     }
   }
