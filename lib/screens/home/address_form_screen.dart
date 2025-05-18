@@ -5,8 +5,6 @@ import 'package:smart_kirana/providers/address_provider.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
 import 'package:smart_kirana/widgets/custom_input_field.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
 
 class AddressFormScreen extends StatefulWidget {
   final UserAddress? address;
@@ -27,10 +25,8 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   final _labelController = TextEditingController();
   final _phoneNumberController = TextEditingController();
   bool _isDefault = false;
-  bool _isLoadingLocation = false;
   double _latitude = 0.0;
   double _longitude = 0.0;
-  String _locationError = '';
 
   @override
   void initState() {
@@ -57,110 +53,6 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
     _labelController.dispose();
     _phoneNumberController.dispose();
     super.dispose();
-  }
-
-  // Get current location
-  Future<void> _getCurrentLocation() async {
-    if (!mounted) return;
-
-    setState(() {
-      _isLoadingLocation = true;
-      _locationError = '';
-    });
-
-    try {
-      // Check if location services are enabled
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        if (!mounted) return;
-        setState(() {
-          _locationError =
-              'Location services are disabled. Please enable location services.';
-          _isLoadingLocation = false;
-        });
-        return;
-      }
-
-      // Check location permission
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (!mounted) return;
-          setState(() {
-            _locationError = 'Location permission denied';
-            _isLoadingLocation = false;
-          });
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        if (!mounted) return;
-        setState(() {
-          _locationError =
-              'Location permissions are permanently denied. Please enable in settings.';
-          _isLoadingLocation = false;
-        });
-        return;
-      }
-
-      // Get current position with timeout
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 15),
-      ).catchError((error) {
-        throw Exception('Failed to get location: $error');
-      });
-
-      if (!mounted) return;
-      setState(() {
-        _latitude = position.latitude;
-        _longitude = position.longitude;
-      });
-
-      try {
-        // Get address from coordinates
-        final placemarks = await placemarkFromCoordinates(
-          position.latitude,
-          position.longitude,
-        );
-
-        if (!mounted) return;
-        if (placemarks.isNotEmpty) {
-          final place = placemarks.first;
-          setState(() {
-            final street = place.street ?? '';
-            final subLocality = place.subLocality ?? '';
-            _addressLineController.text =
-                street.isNotEmpty
-                    ? (subLocality.isNotEmpty
-                        ? '$street, $subLocality'
-                        : street)
-                    : (subLocality.isNotEmpty ? subLocality : '');
-            _cityController.text = place.locality ?? '';
-            _stateController.text = place.administrativeArea ?? '';
-            _pincodeController.text = place.postalCode ?? '';
-          });
-        }
-      } catch (e) {
-        if (!mounted) return;
-        setState(() {
-          _locationError = 'Got location but failed to get address details: $e';
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _locationError = 'Error getting location: $e';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingLocation = false;
-        });
-      }
-    }
   }
 
   Future<void> _saveAddress() async {
@@ -246,44 +138,6 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Location Button
-                      ElevatedButton.icon(
-                        onPressed:
-                            _isLoadingLocation ? null : _getCurrentLocation,
-                        icon: Icon(
-                          _isLoadingLocation
-                              ? Icons.hourglass_empty
-                              : Icons.my_location,
-                        ),
-                        label: Text(
-                          _isLoadingLocation
-                              ? 'Getting Location...'
-                              : 'Use Current Location',
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.secondary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 16,
-                          ),
-                        ),
-                      ),
-
-                      if (_locationError.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            _locationError,
-                            style: const TextStyle(
-                              color: AppColors.error,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-
-                      const SizedBox(height: AppPadding.medium),
-
                       // Address Label (Home, Work, etc.)
                       CustomInputField(
                         label: 'Address Label (Optional)',
