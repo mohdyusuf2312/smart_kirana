@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/product_model.dart';
+import 'package:smart_kirana/models/user_model.dart';
+import 'package:smart_kirana/providers/address_provider.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/providers/cart_provider.dart';
 import 'package:smart_kirana/providers/product_provider.dart';
@@ -119,11 +121,98 @@ class _HomeScreenState extends State<HomeScreen> {
               _locationService.currentAddress ?? 'Location not available';
           _deliveryTime = _locationService.getEstimatedDeliveryTime();
         });
+
+        // Save location to user's address database if available
+        await _saveLocationToAddressDatabase();
       }
     } catch (e) {
       // debugPrint('Error initializing location: $e');
       // Don't set error message here to avoid blocking the whole screen
       // Just keep the default location message
+    }
+  }
+
+  Future<void> _saveLocationToAddressDatabase() async {
+    try {
+      final position = _locationService.currentPosition;
+      final address = _locationService.currentAddress;
+
+      if (position != null &&
+          address != null &&
+          address != 'Location not available') {
+        final addressProvider = Provider.of<AddressProvider>(
+          context,
+          listen: false,
+        );
+
+        // Check if we already have a location-based address to avoid duplicates
+        final existingLocationAddress = addressProvider.addresses.firstWhere(
+          (addr) => addr.label == 'Current Location',
+          orElse:
+              () => UserAddress(
+                id: '',
+                addressLine: '',
+                city: '',
+                state: '',
+                pincode: '',
+                latitude: 0.0,
+                longitude: 0.0,
+              ),
+        );
+
+        // Only add if we don't have a current location address or if coordinates are different
+        if (existingLocationAddress.id.isEmpty ||
+            (existingLocationAddress.latitude != position.latitude ||
+                existingLocationAddress.longitude != position.longitude)) {
+          // Parse the address to extract components
+          final addressParts = address.split(', ');
+          String addressLine = '';
+          String city = '';
+          String state = '';
+          String pincode = '';
+
+          if (addressParts.isNotEmpty) {
+            addressLine = addressParts.first;
+            if (addressParts.length > 1) {
+              city = addressParts[1];
+            }
+            if (addressParts.length > 2) {
+              state = addressParts[2];
+            }
+            // Try to extract pincode from the address string
+            final pincodeRegex = RegExp(r'\b\d{6}\b');
+            final pincodeMatch = pincodeRegex.firstMatch(address);
+            if (pincodeMatch != null) {
+              pincode = pincodeMatch.group(0) ?? '';
+            }
+          }
+
+          final locationAddress = UserAddress(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            addressLine: addressLine.isNotEmpty ? addressLine : address,
+            city: city,
+            state: state,
+            pincode: pincode,
+            latitude: position.latitude,
+            longitude: position.longitude,
+            isDefault:
+                addressProvider
+                    .addresses
+                    .isEmpty, // Make default if it's the first address
+            label: 'Current Location',
+          );
+
+          // Remove existing location address if it exists
+          if (existingLocationAddress.id.isNotEmpty) {
+            await addressProvider.deleteAddress(existingLocationAddress.id);
+          }
+
+          await addressProvider.addAddress(locationAddress);
+        }
+      }
+    } catch (e) {
+      // Silently handle errors to avoid disrupting the user experience
+      // debugPrint('Error saving location to address database: $e');
     }
   }
 
