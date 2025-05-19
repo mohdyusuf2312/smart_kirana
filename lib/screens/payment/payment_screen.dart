@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smart_kirana/models/cart_item_model.dart';
 import 'package:smart_kirana/models/order_model.dart' as order_model;
 import 'package:smart_kirana/models/payment_model.dart' as payment_model;
+import 'package:smart_kirana/models/user_model.dart';
+import 'package:smart_kirana/providers/auth_provider.dart';
+import 'package:smart_kirana/providers/cart_provider.dart';
 import 'package:smart_kirana/providers/order_provider.dart';
 import 'package:smart_kirana/providers/payment_provider.dart';
 import 'package:smart_kirana/screens/payment/payment_failure_screen.dart';
@@ -11,10 +15,22 @@ import 'package:smart_kirana/widgets/custom_button.dart';
 
 class PaymentScreen extends StatefulWidget {
   static const String routeName = '/payment';
-  final String orderId;
+  final String? orderId; // Optional for new flow
   final double amount;
+  final List<CartItemModel>? cartItems; // For new flow
+  final double? subtotal; // For new flow
+  final double? deliveryFee; // For new flow
+  final UserAddress? deliveryAddress; // For new flow
 
-  const PaymentScreen({super.key, required this.orderId, required this.amount});
+  const PaymentScreen({
+    super.key,
+    this.orderId,
+    required this.amount,
+    this.cartItems,
+    this.subtotal,
+    this.deliveryFee,
+    this.deliveryAddress,
+  });
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -178,21 +194,70 @@ class _PaymentScreenState extends State<PaymentScreen> {
       listen: false,
     );
     final orderProvider = Provider.of<OrderProvider>(contextArg, listen: false);
+    final authProvider = Provider.of<AuthProvider>(contextArg, listen: false);
+    final cartProvider = Provider.of<CartProvider>(contextArg, listen: false);
 
     setState(() {
       _isProcessing = true;
     });
 
     try {
-      // Create payment record
-      final paymentId = await paymentProvider.createPayment(
-        orderId: widget.orderId,
-        amount: widget.amount,
-        method: selectedMethod,
-      );
+      String? orderId;
+      String? paymentId;
 
-      if (paymentId == null) {
-        throw Exception('Failed to create payment record');
+      // Check if this is the new flow (no existing order) or old flow (existing order)
+      if (widget.orderId == null) {
+        // NEW FLOW: Create order first, then process payment
+        if (widget.cartItems == null || widget.deliveryAddress == null) {
+          throw Exception('Missing cart items or delivery address');
+        }
+
+        // Get user data
+        final userData = authProvider.user;
+        if (userData == null) {
+          throw Exception('User data not available');
+        }
+
+        // Create the order first
+        orderId = await orderProvider.createOrder(
+          cartItems: widget.cartItems!,
+          subtotal: widget.subtotal ?? 0.0,
+          deliveryFee: widget.deliveryFee ?? 0.0,
+          discount: 0.0, // No discount for now
+          totalAmount: widget.amount,
+          deliveryAddress: widget.deliveryAddress!,
+          paymentMethod: selectedMethod.name,
+          deliveryNotes: null, // No delivery notes for now
+        );
+
+        if (orderId == null) {
+          throw Exception('Failed to create order');
+        }
+
+        // Create payment record
+        paymentId = await paymentProvider.createPayment(
+          orderId: orderId,
+          amount: widget.amount,
+          method: selectedMethod,
+        );
+
+        if (paymentId == null) {
+          throw Exception('Failed to create payment record');
+        }
+      } else {
+        // OLD FLOW: Order already exists, just process payment
+        orderId = widget.orderId!;
+
+        // Create payment record
+        paymentId = await paymentProvider.createPayment(
+          orderId: orderId,
+          amount: widget.amount,
+          method: selectedMethod,
+        );
+
+        if (paymentId == null) {
+          throw Exception('Failed to create payment record');
+        }
       }
 
       // For Cash on Delivery, mark as pending and proceed
@@ -205,16 +270,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
         // Update order payment info
         await orderProvider.updateOrderPaymentInfo(
-          orderId: widget.orderId,
+          orderId: orderId,
           paymentId: paymentId,
           paymentStatus: order_model.PaymentStatus.pending,
         );
+
+        // Clear cart only for new flow
+        if (widget.orderId == null) {
+          await cartProvider.clearCart();
+        }
 
         if (mounted) {
           navigator.pushReplacementNamed(
             PaymentSuccessScreen.routeName,
             arguments: {
-              'orderId': widget.orderId,
+              'orderId': orderId,
               'paymentId': paymentId,
               'amount': widget.amount,
               'method': selectedMethod,
@@ -242,17 +312,22 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
         // Update order payment info
         await orderProvider.updateOrderPaymentInfo(
-          orderId: widget.orderId,
+          orderId: orderId,
           paymentId: paymentId,
           paymentStatus: order_model.PaymentStatus.completed,
           transactionId: 'txn_${DateTime.now().millisecondsSinceEpoch}',
         );
 
+        // Clear cart only for new flow
+        if (widget.orderId == null) {
+          await cartProvider.clearCart();
+        }
+
         if (mounted) {
           navigator.pushReplacementNamed(
             PaymentSuccessScreen.routeName,
             arguments: {
-              'orderId': widget.orderId,
+              'orderId': orderId,
               'paymentId': paymentId,
               'amount': widget.amount,
               'method': selectedMethod,
@@ -269,7 +344,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
         // Update order payment info
         await orderProvider.updateOrderPaymentInfo(
-          orderId: widget.orderId,
+          orderId: orderId,
           paymentId: paymentId,
           paymentStatus: order_model.PaymentStatus.failed,
         );
@@ -278,7 +353,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           navigator.pushReplacementNamed(
             PaymentFailureScreen.routeName,
             arguments: {
-              'orderId': widget.orderId,
+              'orderId': orderId,
               'paymentId': paymentId,
               'amount': widget.amount,
               'method': selectedMethod,
