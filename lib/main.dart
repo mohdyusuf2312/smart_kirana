@@ -285,8 +285,12 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder:
                   (context) => PaymentScreen(
-                    orderId: args['orderId'],
+                    orderId: args['orderId'], // Can be null for new flow
                     amount: args['amount'],
+                    cartItems: args['cartItems'], // For new flow
+                    subtotal: args['subtotal'], // For new flow
+                    deliveryFee: args['deliveryFee'], // For new flow
+                    deliveryAddress: args['deliveryAddress'], // For new flow
                   ),
             );
           } else if (settings.name == PaymentSuccessScreen.routeName) {
