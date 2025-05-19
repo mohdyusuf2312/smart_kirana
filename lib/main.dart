@@ -28,9 +28,11 @@ import 'package:smart_kirana/screens/auth/signup_screen.dart';
 import 'package:smart_kirana/screens/home/home_screen.dart';
 import 'package:smart_kirana/screens/home/home_wrapper.dart';
 import 'package:smart_kirana/screens/home/about_us_screen.dart';
+import 'package:smart_kirana/screens/home/address_screen.dart';
 import 'package:smart_kirana/screens/home/cart_screen.dart';
 import 'package:smart_kirana/screens/home/edit_profile_screen.dart';
 import 'package:smart_kirana/screens/home/help_support_screen.dart';
+import 'package:smart_kirana/screens/home/location_picker_screen.dart';
 import 'package:smart_kirana/screens/orders/order_detail_screen.dart';
 import 'package:smart_kirana/screens/orders/order_history_screen.dart';
 import 'package:smart_kirana/screens/orders/order_tracking_screen.dart';
@@ -243,6 +245,7 @@ class MyApp extends StatelessWidget {
           HomeScreen.routeName: (context) => const HomeScreen(),
           OrderHistoryScreen.routeName: (context) => const OrderHistoryScreen(),
           '/cart': (context) => const CartScreen(),
+          '/address': (context) => const AddressScreen(),
           EditProfileScreen.routeName: (context) => const EditProfileScreen(),
           HelpSupportScreen.routeName: (context) => const HelpSupportScreen(),
           AboutUsScreen.routeName: (context) => const AboutUsScreen(),
@@ -302,6 +305,7 @@ class MyApp extends StatelessWidget {
                     paymentId: args['paymentId'],
                     amount: args['amount'],
                     method: args['method'],
+                    isNewFlow: args['isNewFlow'] ?? false,
                   ),
             );
           } else if (settings.name == PaymentFailureScreen.routeName) {
@@ -320,6 +324,14 @@ class MyApp extends StatelessWidget {
             final args = settings.arguments as Map<String, dynamic>;
             return MaterialPageRoute(
               builder: (context) => ResetPasswordConfirmScreen(arguments: args),
+            );
+          } else if (settings.name == LocationPickerScreen.routeName) {
+            final args = settings.arguments as Map<String, dynamic>?;
+            return MaterialPageRoute(
+              builder:
+                  (context) => LocationPickerScreen(
+                    initialLocation: args?['initialLocation'],
+                  ),
             );
           }
           return null;
