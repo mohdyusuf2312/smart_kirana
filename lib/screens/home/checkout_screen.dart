@@ -3,11 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/user_model.dart';
 import 'package:smart_kirana/providers/address_provider.dart';
 import 'package:smart_kirana/providers/cart_provider.dart';
-import 'package:smart_kirana/providers/order_provider.dart';
 import 'package:smart_kirana/screens/home/address_screen.dart';
 import 'package:smart_kirana/screens/payment/payment_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
-import 'package:smart_kirana/models/payment_model.dart' as payment_model;
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -666,86 +664,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     // Store context-related objects before the async gap
     final navigator = Navigator.of(context);
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (dialogContext) => const AlertDialog(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: AppPadding.medium),
-                Text('Processing your order...'),
-              ],
-            ),
-          ),
-    );
-
-    try {
-      // Get the order provider
-      final orderProvider = Provider.of<OrderProvider>(context, listen: false);
-
-      // Create the order
-      final orderId = await orderProvider.createOrder(
-        cartItems: cartProvider.cartItems,
-        subtotal: cartProvider.subtotal,
-        deliveryFee: cartProvider.deliveryFee,
-        discount: 0.0, // No discount for now
-        totalAmount: cartProvider.total,
-        deliveryAddress: _selectedAddress!,
-        paymentMethod: payment_model.PaymentMethod.cashOnDelivery.name,
-        deliveryNotes: null, // No delivery notes for now
+    // Navigate directly to payment screen with cart data
+    // Order will be created after successful payment
+    if (mounted) {
+      navigator.pushNamed(
+        PaymentScreen.routeName,
+        arguments: {
+          'amount': cartProvider.total,
+          'cartItems': cartProvider.cartItems,
+          'subtotal': cartProvider.subtotal,
+          'deliveryFee': cartProvider.deliveryFee,
+          'deliveryAddress': _selectedAddress!,
+        },
       );
-
-      // Close loading dialog
-      if (mounted) navigator.pop();
-
-      if (orderId != null) {
-        // Show success message
-        // if (mounted) {
-        //   scaffoldMessenger.showSnackBar(
-        //     const SnackBar(
-        //       content: Text('Order placed successfully!'),
-        //       backgroundColor: AppColors.success,
-        //     ),
-        //   );
-        // }
-
-        // Always navigate to payment screen
-        if (mounted) {
-          navigator.pushNamed(
-            PaymentScreen.routeName,
-            arguments: {'orderId': orderId, 'amount': cartProvider.total},
-          );
-        }
-      } else {
-        // Show error message
-        if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text('Failed to place order: ${orderProvider.error}'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      // Close loading dialog
-      if (mounted) navigator.pop();
-
-      // Show error message
-      if (mounted) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text('Failed to place order: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
     }
   }
 }
