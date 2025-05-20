@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/user_model.dart';
 import 'package:smart_kirana/providers/address_provider.dart';
+import 'package:smart_kirana/screens/home/location_picker_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
 import 'package:smart_kirana/widgets/custom_input_field.dart';
@@ -53,6 +55,188 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
     _labelController.dispose();
     _phoneNumberController.dispose();
     super.dispose();
+  }
+
+  // Open location picker
+  Future<void> _openLocationPicker() async {
+    try {
+      LatLng? initialLocation;
+
+      // Use existing coordinates if available
+      if (_latitude != 0.0 && _longitude != 0.0) {
+        initialLocation = LatLng(_latitude, _longitude);
+      }
+
+      final result =
+          await Navigator.pushNamed(
+                context,
+                LocationPickerScreen.routeName,
+                arguments: {'initialLocation': initialLocation},
+              )
+              as Map<String, dynamic>?;
+
+      if (result != null && mounted) {
+        final LatLng location = result['location'];
+        final String address = result['address'];
+
+        setState(() {
+          _latitude = location.latitude;
+          _longitude = location.longitude;
+        });
+
+        // Parse the address and fill the form fields
+        _parseAndFillAddress(address);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening location picker: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // Parse address string and fill form fields
+  void _parseAndFillAddress(String address) {
+    try {
+      final addressParts = address.split(', ');
+
+      if (addressParts.isNotEmpty) {
+        // First part is usually the street/building
+        _addressLineController.text = addressParts.first;
+
+        // Try to extract city, state, and pincode from remaining parts
+        for (int i = 1; i < addressParts.length; i++) {
+          final part = addressParts[i].trim();
+
+          // Check if it's a pincode (6 digits)
+          if (RegExp(r'^\d{6}$').hasMatch(part)) {
+            _pincodeController.text = part;
+          }
+          // Check if it looks like a state (common Indian states)
+          else if (part.toLowerCase().contains('delhi') ||
+              part.toLowerCase().contains('mumbai') ||
+              part.toLowerCase().contains('bangalore') ||
+              part.toLowerCase().contains('chennai') ||
+              part.toLowerCase().contains('kolkata') ||
+              part.toLowerCase().contains('hyderabad') ||
+              part.toLowerCase().contains('pune') ||
+              part.toLowerCase().contains('ahmedabad') ||
+              part.toLowerCase().contains('jaipur') ||
+              part.toLowerCase().contains('lucknow') ||
+              part.toLowerCase().contains('kanpur') ||
+              part.toLowerCase().contains('nagpur') ||
+              part.toLowerCase().contains('indore') ||
+              part.toLowerCase().contains('thane') ||
+              part.toLowerCase().contains('bhopal') ||
+              part.toLowerCase().contains('visakhapatnam') ||
+              part.toLowerCase().contains('pimpri') ||
+              part.toLowerCase().contains('patna') ||
+              part.toLowerCase().contains('vadodara') ||
+              part.toLowerCase().contains('ghaziabad') ||
+              part.toLowerCase().contains('ludhiana') ||
+              part.toLowerCase().contains('agra') ||
+              part.toLowerCase().contains('nashik') ||
+              part.toLowerCase().contains('faridabad') ||
+              part.toLowerCase().contains('meerut') ||
+              part.toLowerCase().contains('rajkot') ||
+              part.toLowerCase().contains('kalyan') ||
+              part.toLowerCase().contains('vasai') ||
+              part.toLowerCase().contains('varanasi') ||
+              part.toLowerCase().contains('srinagar') ||
+              part.toLowerCase().contains('aurangabad') ||
+              part.toLowerCase().contains('dhanbad') ||
+              part.toLowerCase().contains('amritsar') ||
+              part.toLowerCase().contains('navi mumbai') ||
+              part.toLowerCase().contains('allahabad') ||
+              part.toLowerCase().contains('ranchi') ||
+              part.toLowerCase().contains('howrah') ||
+              part.toLowerCase().contains('coimbatore') ||
+              part.toLowerCase().contains('jabalpur') ||
+              part.toLowerCase().contains('gwalior') ||
+              part.toLowerCase().contains('vijayawada') ||
+              part.toLowerCase().contains('jodhpur') ||
+              part.toLowerCase().contains('madurai') ||
+              part.toLowerCase().contains('raipur') ||
+              part.toLowerCase().contains('kota') ||
+              part.toLowerCase().contains('guwahati') ||
+              part.toLowerCase().contains('chandigarh') ||
+              part.toLowerCase().contains('solapur') ||
+              part.toLowerCase().contains('hubli') ||
+              part.toLowerCase().contains('tiruchirappalli') ||
+              part.toLowerCase().contains('bareilly') ||
+              part.toLowerCase().contains('mysore') ||
+              part.toLowerCase().contains('tiruppur') ||
+              part.toLowerCase().contains('gurgaon') ||
+              part.toLowerCase().contains('aligarh') ||
+              part.toLowerCase().contains('jalandhar') ||
+              part.toLowerCase().contains('bhubaneswar') ||
+              part.toLowerCase().contains('salem') ||
+              part.toLowerCase().contains('warangal') ||
+              part.toLowerCase().contains('mira') ||
+              part.toLowerCase().contains('bhiwandi') ||
+              part.toLowerCase().contains('saharanpur') ||
+              part.toLowerCase().contains('gorakhpur') ||
+              part.toLowerCase().contains('bikaner') ||
+              part.toLowerCase().contains('amravati') ||
+              part.toLowerCase().contains('noida') ||
+              part.toLowerCase().contains('jamshedpur') ||
+              part.toLowerCase().contains('bhilai') ||
+              part.toLowerCase().contains('cuttack') ||
+              part.toLowerCase().contains('firozabad') ||
+              part.toLowerCase().contains('kochi') ||
+              part.toLowerCase().contains('nellore') ||
+              part.toLowerCase().contains('bhavnagar') ||
+              part.toLowerCase().contains('dehradun') ||
+              part.toLowerCase().contains('durgapur') ||
+              part.toLowerCase().contains('asansol') ||
+              part.toLowerCase().contains('rourkela') ||
+              part.toLowerCase().contains('nanded') ||
+              part.toLowerCase().contains('kolhapur') ||
+              part.toLowerCase().contains('ajmer') ||
+              part.toLowerCase().contains('akola') ||
+              part.toLowerCase().contains('gulbarga') ||
+              part.toLowerCase().contains('jamnagar') ||
+              part.toLowerCase().contains('ujjain') ||
+              part.toLowerCase().contains('loni') ||
+              part.toLowerCase().contains('siliguri') ||
+              part.toLowerCase().contains('jhansi') ||
+              part.toLowerCase().contains('ulhasnagar') ||
+              part.toLowerCase().contains('jammu') ||
+              part.toLowerCase().contains('sangli') ||
+              part.toLowerCase().contains('mangalore') ||
+              part.toLowerCase().contains('erode') ||
+              part.toLowerCase().contains('belgaum') ||
+              part.toLowerCase().contains('ambattur') ||
+              part.toLowerCase().contains('tirunelveli') ||
+              part.toLowerCase().contains('malegaon') ||
+              part.toLowerCase().contains('gaya') ||
+              part.toLowerCase().contains('jalgaon') ||
+              part.toLowerCase().contains('udaipur') ||
+              part.toLowerCase().contains('maheshtala')) {
+            if (_cityController.text.isEmpty) {
+              _cityController.text = part;
+            } else if (_stateController.text.isEmpty) {
+              _stateController.text = part;
+            }
+          }
+          // Otherwise, treat as city if city is empty
+          else if (_cityController.text.isEmpty) {
+            _cityController.text = part;
+          }
+          // Or as state if state is empty
+          else if (_stateController.text.isEmpty) {
+            _stateController.text = part;
+          }
+        }
+      }
+    } catch (e) {
+      // If parsing fails, just put the full address in the address line
+      _addressLineController.text = address;
+    }
   }
 
   Future<void> _saveAddress() async {
@@ -138,6 +322,26 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Map Location Button
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(
+                          bottom: AppPadding.medium,
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: _openLocationPicker,
+                          icon: const Icon(Icons.map),
+                          label: const Text('Choose Location on Map'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.secondary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 16,
+                            ),
+                          ),
+                        ),
+                      ),
                       // Address Label (Home, Work, etc.)
                       CustomInputField(
                         label: 'Address Label (Optional)',
