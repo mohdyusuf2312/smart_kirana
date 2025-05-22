@@ -5,7 +5,6 @@ import 'package:smart_kirana/models/order_model.dart' as order_model;
 import 'package:smart_kirana/models/payment_model.dart' as payment_model;
 import 'package:smart_kirana/models/user_model.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
-import 'package:smart_kirana/providers/cart_provider.dart';
 import 'package:smart_kirana/providers/order_provider.dart';
 import 'package:smart_kirana/providers/payment_provider.dart';
 import 'package:smart_kirana/screens/payment/payment_failure_screen.dart';
@@ -183,6 +182,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _processPayment(BuildContext contextArg) async {
+    // Prevent multiple simultaneous payment processing
+    if (_isProcessing) return;
+
     // Store context-related objects before the async gap
     final navigator = Navigator.of(contextArg);
     final scaffoldMessenger = ScaffoldMessenger.of(contextArg);
@@ -195,7 +197,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
     final orderProvider = Provider.of<OrderProvider>(contextArg, listen: false);
     final authProvider = Provider.of<AuthProvider>(contextArg, listen: false);
-    final cartProvider = Provider.of<CartProvider>(contextArg, listen: false);
 
     setState(() {
       _isProcessing = true;
@@ -275,11 +276,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
           paymentStatus: order_model.PaymentStatus.pending,
         );
 
-        // Clear cart only for new flow
-        if (widget.orderId == null) {
-          await cartProvider.clearCart();
-        }
-
         if (mounted) {
           navigator.pushReplacementNamed(
             PaymentSuccessScreen.routeName,
@@ -288,6 +284,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
               'paymentId': paymentId,
               'amount': widget.amount,
               'method': selectedMethod,
+              'isNewFlow':
+                  widget.orderId ==
+                  null, // Pass flag to indicate if cart should be cleared
             },
           );
         }
@@ -318,11 +317,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
           transactionId: 'txn_${DateTime.now().millisecondsSinceEpoch}',
         );
 
-        // Clear cart only for new flow
-        if (widget.orderId == null) {
-          await cartProvider.clearCart();
-        }
-
         if (mounted) {
           navigator.pushReplacementNamed(
             PaymentSuccessScreen.routeName,
@@ -331,6 +325,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
               'paymentId': paymentId,
               'amount': widget.amount,
               'method': selectedMethod,
+              'isNewFlow':
+                  widget.orderId ==
+                  null, // Pass flag to indicate if cart should be cleared
             },
           );
         }
