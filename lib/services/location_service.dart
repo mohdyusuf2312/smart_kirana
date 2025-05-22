@@ -1,5 +1,6 @@
 import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:smart_kirana/utils/geocoding_helper.dart';
 
 class LocationService {
   // Singleton pattern
@@ -24,11 +25,13 @@ class LocationService {
     try {
       _setLoading(true);
       _error = null;
-      
+
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        _setError('Location services are disabled. Please enable location services.');
+        _setError(
+          'Location services are disabled. Please enable location services.',
+        );
         return false;
       }
 
@@ -41,9 +44,11 @@ class LocationService {
           return false;
         }
       }
-      
+
       if (permission == LocationPermission.deniedForever) {
-        _setError('Location permissions are permanently denied, we cannot request permissions.');
+        _setError(
+          'Location permissions are permanently denied, we cannot request permissions.',
+        );
         return false;
       }
 
@@ -63,14 +68,17 @@ class LocationService {
     try {
       _setLoading(true);
       _error = null;
-      
+
       _currentPosition = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        desiredAccuracy:
+            LocationAccuracy
+                .medium, // Changed from high to medium for faster response
+        timeLimit: const Duration(seconds: 10), // Added timeout
       );
-      
+
       // Get address from position
       await getAddressFromPosition(_currentPosition!);
-      
+
       return _currentPosition;
     } catch (e) {
       _setError('Error getting current position: $e');
@@ -80,37 +88,28 @@ class LocationService {
     }
   }
 
-  // Get address from position
+  // Get address from position using the robust geocoding helper
   Future<String?> getAddressFromPosition(Position position) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
+      // Use our robust geocoding helper with fallback strategies
+      LatLng location = LatLng(position.latitude, position.longitude);
+      String address = await GeocodingHelper.getAddressFromCoordinates(
+        location,
       );
 
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks[0];
-        _currentAddress = _formatAddress(place);
-        return _currentAddress;
+      // Don't set coordinates as the address - keep it as null if geocoding fails
+      if (address.startsWith('Lat:')) {
+        _currentAddress = null;
+        return null;
       }
-      return null;
+
+      _currentAddress = address;
+      return _currentAddress;
     } catch (e) {
       _setError('Error getting address: $e');
+      _currentAddress = null;
       return null;
     }
-  }
-
-  // Format address
-  String _formatAddress(Placemark place) {
-    List<String> addressParts = [
-      if (place.name != null && place.name!.isNotEmpty) place.name!,
-      if (place.street != null && place.street!.isNotEmpty) place.street!,
-      if (place.subLocality != null && place.subLocality!.isNotEmpty) place.subLocality!,
-      if (place.locality != null && place.locality!.isNotEmpty) place.locality!,
-      if (place.postalCode != null && place.postalCode!.isNotEmpty) place.postalCode!,
-    ];
-    
-    return addressParts.join(', ');
   }
 
   // Calculate delivery time based on distance (simplified)
