@@ -14,6 +14,7 @@ class PaymentSuccessScreen extends StatelessWidget {
   final String paymentId;
   final double amount;
   final payment_model.PaymentMethod method;
+  final bool isNewFlow;
 
   const PaymentSuccessScreen({
     super.key,
@@ -21,14 +22,21 @@ class PaymentSuccessScreen extends StatelessWidget {
     required this.paymentId,
     required this.amount,
     required this.method,
+    this.isNewFlow = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Clear the cart when payment is successful
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<CartProvider>(context, listen: false).clearCart();
-    });
+    // Clear the cart when payment is successful (only for new flow)
+    if (isNewFlow) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          Provider.of<CartProvider>(context, listen: false).clearCart();
+        } catch (e) {
+          // Ignore errors if provider is disposed
+        }
+      });
+    }
 
     return Scaffold(
       body: SafeArea(
