@@ -24,7 +24,7 @@ class _LowStockScreenState extends State<LowStockScreen> {
   List<String> _categories = ['All'];
 
   // Define low stock threshold
-  static const int _lowStockThreshold = 30;
+  static const int _lowStockThreshold = 10;
 
   @override
   void initState() {
