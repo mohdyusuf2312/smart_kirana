@@ -705,14 +705,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       if (orderId != null) {
         // Show success message
-        if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('Order placed successfully!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
+        // if (mounted) {
+        //   scaffoldMessenger.showSnackBar(
+        //     const SnackBar(
+        //       content: Text('Order placed successfully!'),
+        //       backgroundColor: AppColors.success,
+        //     ),
+        //   );
+        // }
 
         // Always navigate to payment screen
         if (mounted) {
