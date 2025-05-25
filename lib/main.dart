@@ -56,7 +56,7 @@ void main() async {
     await adminInitService.initializeDefaultAdmin();
   } catch (e) {
     // Log error but continue with app startup
-    debugPrint('Failed to initialize admin user: $e');
+    // debugPrint('Failed to initialize admin user: $e');
   }
 
   runApp(const MyApp());
@@ -125,14 +125,14 @@ class MyApp extends StatelessWidget {
               authProvider: Provider.of<AuthProvider>(context, listen: false),
             );
             // Initialize with empty data to prevent null errors
-            debugPrint('Creating AdminProvider instance');
+            // debugPrint('Creating AdminProvider instance');
             return provider;
           },
           update: (context, authProvider, previous) {
-            debugPrint('Updating AdminProvider with new AuthProvider');
+            // debugPrint('Updating AdminProvider with new AuthProvider');
             // Preserve previous state if available
             if (previous != null && authProvider.user?.role == 'ADMIN') {
-              debugPrint('Reusing previous AdminProvider state');
+              // debugPrint('Reusing previous AdminProvider state');
               return previous;
             }
             return AdminProvider(authProvider: authProvider);
