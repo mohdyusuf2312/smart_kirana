@@ -23,7 +23,7 @@ class AdminProvider extends ChangeNotifier {
   // Check if current user is admin
   bool get isAdmin {
     final isAdmin = _authProvider.user?.role == 'ADMIN';
-    debugPrint('User is admin: $isAdmin');
+    // debugPrint('User is admin: $isAdmin');
     return isAdmin;
   }
 
@@ -53,9 +53,9 @@ class AdminProvider extends ChangeNotifier {
       try {
         final usersSnapshot = await _firestore.collection('users').get();
         totalUsers = usersSnapshot.docs.length;
-        debugPrint('Fetched $totalUsers users');
+        // debugPrint('Fetched $totalUsers users');
       } catch (e) {
-        debugPrint('Error fetching users: $e');
+        // debugPrint('Error fetching users: $e');
         // Continue with default value
       }
 
@@ -64,7 +64,7 @@ class AdminProvider extends ChangeNotifier {
         final ordersSnapshot = await _firestore.collection('orders').get();
         final orders = ordersSnapshot.docs;
         totalOrders = orders.length;
-        debugPrint('Fetched $totalOrders orders');
+        // debugPrint('Fetched $totalOrders orders');
 
         // Calculate revenue and order status counts
         for (var order in orders) {
@@ -108,9 +108,9 @@ class AdminProvider extends ChangeNotifier {
             }
           }
         }
-        debugPrint('Calculated revenue: $totalRevenue');
+        // debugPrint('Calculated revenue: $totalRevenue');
       } catch (e) {
-        debugPrint('Error fetching orders: $e');
+        // debugPrint('Error fetching orders: $e');
         // Continue with default values
       }
 
@@ -129,36 +129,36 @@ class AdminProvider extends ChangeNotifier {
                   try {
                     return OrderAnalytics.fromMap(doc.data(), doc.id);
                   } catch (e) {
-                    debugPrint('Error parsing order ${doc.id}: $e');
+                    // debugPrint('Error parsing order ${doc.id}: $e');
                     return null;
                   }
                 })
                 .where((order) => order != null)
                 .cast<OrderAnalytics>()
                 .toList();
-        debugPrint('Fetched ${recentOrders.length} recent orders');
+        // debugPrint('Fetched ${recentOrders.length} recent orders');
       } catch (e) {
-        debugPrint('Error fetching recent orders: $e');
+        // debugPrint('Error fetching recent orders: $e');
         // Continue with empty list
       }
 
       // Generate revenue data for the last 7 days
       try {
         revenueData = await _generateRevenueData();
-        debugPrint('Generated revenue data: ${revenueData.length} entries');
+        // debugPrint('Generated revenue data: ${revenueData.length} entries');
       } catch (e) {
-        debugPrint('Error generating revenue data: $e');
+        // debugPrint('Error generating revenue data: $e');
         // Continue with empty list
       }
 
       // Generate user growth data for the last 7 days
       try {
         userGrowthData = await _generateUserGrowthData();
-        debugPrint(
-          'Generated user growth data: ${userGrowthData.length} entries',
-        );
+        // debugPrint(
+        //   'Generated user growth data: ${userGrowthData.length} entries',
+        // );
       } catch (e) {
-        debugPrint('Error generating user growth data: $e');
+        // debugPrint('Error generating user growth data: $e');
         // Continue with empty list
       }
 
@@ -176,9 +176,9 @@ class AdminProvider extends ChangeNotifier {
       );
 
       notifyListeners();
-      debugPrint('Dashboard data updated successfully');
+      // debugPrint('Dashboard data updated successfully');
     } catch (e) {
-      debugPrint('Failed to fetch dashboard data: $e');
+      // debugPrint('Failed to fetch dashboard data: $e');
       _setError('Failed to fetch dashboard data: ${e.toString()}');
     } finally {
       _setLoading(false);
@@ -227,12 +227,12 @@ class AdminProvider extends ChangeNotifier {
           revenueData.add(RevenueData(date: date, amount: dailyRevenue));
         } catch (e) {
           // If there's an error for a specific day, add zero revenue
-          debugPrint('Error fetching revenue data for day $i: $e');
+          // debugPrint('Error fetching revenue data for day $i: $e');
           revenueData.add(RevenueData(date: date, amount: 0));
         }
       }
     } catch (e) {
-      debugPrint('Error generating revenue data: $e');
+      // debugPrint('Error generating revenue data: $e');
       // Return empty data in case of error
       final now = DateTime.now();
       for (int i = 6; i >= 0; i--) {
@@ -274,12 +274,12 @@ class AdminProvider extends ChangeNotifier {
           );
         } catch (e) {
           // If there's an error for a specific day, add zero count
-          debugPrint('Error fetching user growth data for day $i: $e');
+          // debugPrint('Error fetching user growth data for day $i: $e');
           userGrowthData.add(UserGrowthData(date: date, count: 0));
         }
       }
     } catch (e) {
-      debugPrint('Error generating user growth data: $e');
+      // debugPrint('Error generating user growth data: $e');
       // Return empty data in case of error
       final now = DateTime.now();
       for (int i = 6; i >= 0; i--) {
