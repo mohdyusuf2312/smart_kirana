@@ -46,9 +46,9 @@ class RecommendationProvider extends ChangeNotifier {
       // If user has no recommendations, explicitly load global recommendations
       if (_userRecommendations == null ||
           _userRecommendations!.products.isEmpty) {
-        debugPrint(
-          'No user-specific recommendations found, loading global recommendations',
-        );
+        // debugPrint(
+        //   'No user-specific recommendations found, loading global recommendations',
+        // );
 
         // Load global recommendations if not already loaded
         if (_globalRecommendations == null) {
@@ -58,7 +58,7 @@ class RecommendationProvider extends ChangeNotifier {
         // If we have global recommendations, use them as fallback
         if (_globalRecommendations != null &&
             _globalRecommendations!.products.isNotEmpty) {
-          debugPrint('Using global recommendations as fallback');
+          // debugPrint('Using global recommendations as fallback');
           _userRecommendations = _globalRecommendations;
         }
       }
@@ -113,14 +113,14 @@ class RecommendationProvider extends ChangeNotifier {
           _allUserRecommendations.add(recommendation);
 
           // Debug info
-          debugPrint(
-            'Loaded recommendation - ID: ${doc.id}, Name: ${recommendation.userName}, '
-            'isGlobal: ${recommendation.isGlobal}, Products: ${recommendation.products.length}',
-          );
+          // debugPrint(
+          //   'Loaded recommendation - ID: ${doc.id}, Name: ${recommendation.userName}, '
+          //   'isGlobal: ${recommendation.isGlobal}, Products: ${recommendation.products.length}',
+          // );
         } catch (docError) {
-          debugPrint(
-            'Error processing recommendation document ${doc.id}: $docError',
-          );
+          // debugPrint(
+          //   'Error processing recommendation document ${doc.id}: $docError',
+          // );
           // Continue processing other documents even if one fails
         }
       }
@@ -129,14 +129,14 @@ class RecommendationProvider extends ChangeNotifier {
       _allUserRecommendations.sort((a, b) => a.userName.compareTo(b.userName));
 
       notifyListeners();
-      debugPrint(
-        'Loaded ${_allUserRecommendations.length} total recommendations',
-      );
+      // debugPrint(
+      //   'Loaded ${_allUserRecommendations.length} total recommendations',
+      // );
 
       // Count actual user recommendations (non-global)
-      final userRecsCount =
-          _allUserRecommendations.where((rec) => !rec.isGlobal).length;
-      debugPrint('User-specific recommendations count: $userRecsCount');
+      // final userRecsCount =
+      //     _allUserRecommendations.where((rec) => !rec.isGlobal).length;
+      // debugPrint('User-specific recommendations count: $userRecsCount');
     } catch (e) {
       _setError('Failed to load all recommendations: ${e.toString()}');
     } finally {
@@ -164,7 +164,7 @@ class RecommendationProvider extends ChangeNotifier {
       // Also reload all user recommendations to keep the admin view in sync
       await loadAllUserRecommendations();
 
-      debugPrint('Generated recommendations for user $userId');
+      // debugPrint('Generated recommendations for user $userId');
     } catch (e) {
       _setError('Failed to generate recommendations: ${e.toString()}');
     } finally {
@@ -194,9 +194,9 @@ class RecommendationProvider extends ChangeNotifier {
       // Also reload all user recommendations to keep the admin view in sync
       await loadAllUserRecommendations();
 
-      debugPrint(
-        'Added product ${product.name} to recommendations for user $userId',
-      );
+      // debugPrint(
+      //   'Added product ${product.name} to recommendations for user $userId',
+      // );
     } catch (e) {
       _setError('Failed to add product to recommendations: ${e.toString()}');
     } finally {
@@ -279,9 +279,9 @@ class RecommendationProvider extends ChangeNotifier {
       // Notify listeners to update UI without full reload
       notifyListeners();
 
-      debugPrint(
-        'Removed product $productId from recommendations for user $userId',
-      );
+      // debugPrint(
+      //   'Removed product $productId from recommendations for user $userId',
+      // );
     } catch (e) {
       _setError(
         'Failed to remove product from recommendations: ${e.toString()}',
@@ -302,7 +302,7 @@ class RecommendationProvider extends ChangeNotifier {
       await loadGlobalRecommendations();
       // Also reload all user recommendations to keep the admin view in sync
       await loadAllUserRecommendations();
-      debugPrint('Added product ${product.name} to global recommendations');
+      // debugPrint('Added product ${product.name} to global recommendations');
     } catch (e) {
       _setError(
         'Failed to add product to global recommendations: ${e.toString()}',
