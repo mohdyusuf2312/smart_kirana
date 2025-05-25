@@ -54,11 +54,11 @@ class AddressProvider extends ChangeNotifier {
                           data.containsKey('id')) {
                         return UserAddress.fromMap(data, data['id'] as String);
                       } else {
-                        debugPrint('Invalid address data: $data');
+                        // debugPrint('Invalid address data: $data');
                         return null;
                       }
                     } catch (e) {
-                      debugPrint('Error parsing address: $e');
+                      // debugPrint('Error parsing address: $e');
                       return null;
                     }
                   })
@@ -71,7 +71,7 @@ class AddressProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to load addresses: $e');
+      // debugPrint('Failed to load addresses: $e');
       _setError('Failed to load addresses: ${e.toString()}');
     } finally {
       _setLoading(false);
@@ -239,7 +239,7 @@ class AddressProvider extends ChangeNotifier {
             });
       }
     } catch (e) {
-      debugPrint('Failed to update addresses in Firestore: $e');
+      // debugPrint('Failed to update addresses in Firestore: $e');
       _setError('Failed to update addresses in Firestore: ${e.toString()}');
       rethrow;
     }
