@@ -25,7 +25,7 @@ class FirebaseAuthService {
         await user.reload();
       }
     } catch (e) {
-      debugPrint('Error reloading user: $e');
+      // debugPrint('Error reloading user: $e');
       rethrow;
     }
   }
@@ -48,7 +48,7 @@ class FirebaseAuthService {
         );
       }
     } catch (e) {
-      debugPrint('Error sending verification email: $e');
+      // debugPrint('Error sending verification email: $e');
       rethrow;
     }
   }
