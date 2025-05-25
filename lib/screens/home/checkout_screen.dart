@@ -43,7 +43,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Error loading default address: $e');
+      // debugPrint('Error loading default address: $e');
     }
   }
 
@@ -352,7 +352,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 height: 60,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  debugPrint('Error loading image: $error');
+                  // debugPrint('Error loading image: $error');
                   return Container(
                     width: 60,
                     height: 60,
