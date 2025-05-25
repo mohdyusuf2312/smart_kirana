@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 
 /// Service to ensure the default admin user exists when the app starts
 class AdminInitializationService {
@@ -16,7 +15,7 @@ class AdminInitializationService {
   /// Initialize the default admin user if it doesn't exist
   Future<void> initializeDefaultAdmin() async {
     try {
-      debugPrint('Initializing default admin user...');
+      // debugPrint('Initializing default admin user...');
 
       // Check if admin user exists in Firestore
       final adminQuery =
@@ -27,7 +26,7 @@ class AdminInitializationService {
 
       if (adminQuery.docs.isEmpty) {
         // No user with this email exists in Firestore, create it
-        debugPrint('No user with admin email found in Firestore, creating...');
+        // debugPrint('No user with admin email found in Firestore, creating...');
         await _createDefaultAdmin();
       } else {
         // User exists, check if it has admin role
@@ -35,21 +34,21 @@ class AdminInitializationService {
         final userData = userDoc.data();
 
         if (userData['role'] == 'ADMIN') {
-          debugPrint('Default admin user already exists with correct role');
+          // debugPrint('Default admin user already exists with correct role');
         } else {
           // User exists but doesn't have admin role, update it
-          debugPrint('User exists but not as admin, updating role...');
+          // debugPrint('User exists but not as admin, updating role...');
           await _firestore.collection('users').doc(userDoc.id).update({
             'role': 'ADMIN',
             'isVerified': true,
             'lastLogin': Timestamp.now(),
           });
-          debugPrint('Updated user to admin role');
+          // debugPrint('Updated user to admin role');
         }
       }
     } catch (e) {
       // Log error but don't crash the app
-      debugPrint('Error initializing default admin: $e');
+      // debugPrint('Error initializing default admin: $e');
     }
   }
 
@@ -76,15 +75,15 @@ class AdminInitializationService {
           await userCredential.user!.sendEmailVerification();
         } catch (e) {
           // Ignore verification email errors - we'll mark as verified in Firestore
-          debugPrint('Could not send verification email: $e');
+          // debugPrint('Could not send verification email: $e');
         }
 
-        debugPrint('Created new admin user in Firebase Auth');
+        // debugPrint('Created new admin user in Firebase Auth');
       } catch (e) {
         if (e is FirebaseAuthException && e.code == 'email-already-in-use') {
           // User already exists, try to get the UID
           userExists = true;
-          debugPrint('Admin user already exists in Firebase Auth');
+          // debugPrint('Admin user already exists in Firebase Auth');
 
           // We need to get the user ID, but we can't sign in if there are credential issues
           // Instead, we'll query Firestore to find the user document by email
@@ -96,11 +95,11 @@ class AdminInitializationService {
 
           if (userQuery.docs.isNotEmpty) {
             userId = userQuery.docs.first.id;
-            debugPrint('Found existing admin user ID: $userId');
+            // debugPrint('Found existing admin user ID: $userId');
           }
         } else {
           // Some other error occurred
-          debugPrint('Error checking if admin exists: $e');
+          // debugPrint('Error checking if admin exists: $e');
           rethrow;
         }
       }
@@ -108,11 +107,11 @@ class AdminInitializationService {
       // If we have a user ID, ensure the Firestore document exists with admin role
       if (userId != null) {
         await _createAdminDocument(userId);
-        debugPrint('Admin user document created or updated in Firestore');
+        // debugPrint('Admin user document created or updated in Firestore');
       } else if (userExists) {
         // User exists in Auth but we couldn't get the ID
         // This is a rare case, but we should handle it
-        debugPrint('Admin user exists but could not retrieve ID');
+        // debugPrint('Admin user exists but could not retrieve ID');
       }
 
       // Make sure we're signed out
@@ -120,7 +119,7 @@ class AdminInitializationService {
         await _auth.signOut();
       }
     } catch (e) {
-      debugPrint('Error creating default admin: $e');
+      // debugPrint('Error creating default admin: $e');
       // Don't rethrow - we want the app to continue even if admin creation fails
     }
   }
@@ -138,7 +137,7 @@ class AdminInitializationService {
           'isVerified': true,
           'lastLogin': Timestamp.now(),
         });
-        debugPrint('Updated existing admin document');
+        // debugPrint('Updated existing admin document');
       } else {
         // Document doesn't exist, create it
         await _firestore.collection('users').doc(uid).set({
@@ -151,10 +150,10 @@ class AdminInitializationService {
           'lastLogin': Timestamp.now(),
           'role': 'ADMIN', // Set role to ADMIN
         });
-        debugPrint('Created new admin document');
+        // debugPrint('Created new admin document');
       }
     } catch (e) {
-      debugPrint('Error creating/updating admin document: $e');
+      // debugPrint('Error creating/updating admin document: $e');
       // Don't rethrow - we want the app to continue even if this fails
     }
   }
