@@ -557,9 +557,9 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
                     if (kIsWeb) {
                       // For web platform, we need to re-select all images
                       // since we can't selectively remove one from CSVImportUtil
-                      debugPrint(
-                        'Removed image: ${path.basename(_imageFiles[index].path)}',
-                      );
+                      // debugPrint(
+                      //   'Removed image: ${path.basename(_imageFiles[index].path)}',
+                      // );
 
                       // Note: This is a limitation of the web platform
                       // In a production app, you would implement a more sophisticated
@@ -866,9 +866,9 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
           for (var file in result.files) {
             if (file.name.isNotEmpty && file.bytes != null) {
               _csvImportUtil?.addWebImageFile(file.name, file.bytes!);
-              debugPrint(
-                'Added web image file: ${file.name} (${file.bytes!.length} bytes)',
-              );
+              // debugPrint(
+              //   'Added web image file: ${file.name} (${file.bytes!.length} bytes)',
+              // );
             }
           }
 
@@ -883,7 +883,7 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
             _importSuccess = false;
           });
 
-          debugPrint('Added ${result.files.length} web image files');
+          // debugPrint('Added ${result.files.length} web image files');
         } else {
           // For other platforms, use the path
           setState(() {
@@ -902,7 +902,7 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
         _statusMessage = 'Error selecting image files: $e';
         _importSuccess = false;
       });
-      debugPrint('Error picking image files: $e');
+      // debugPrint('Error picking image files: $e');
     }
   }
 
@@ -929,13 +929,13 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
       }
 
       // Debug the import parameters
-      debugPrint('Starting import with skipHeader: $_skipHeader');
+      // debugPrint('Starting import with skipHeader: $_skipHeader');
 
       Map<String, dynamic> result;
       try {
         // Add a timeout for the entire import process
         if (_imageFiles.isNotEmpty) {
-          debugPrint('Importing products with images');
+          // debugPrint('Importing products with images');
           result = await _csvImportUtil!
               .importProductsWithImages(
                 _csvFile!,
@@ -951,7 +951,7 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
                         ),
               );
         } else {
-          debugPrint('Importing products without images');
+          // debugPrint('Importing products without images');
           result = await _csvImportUtil!
               .importProductsFromCSV(_csvFile!, skipHeader: _skipHeader)
               .timeout(
@@ -965,7 +965,7 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
         }
       } catch (e) {
         if (e is TimeoutException) {
-          debugPrint('Import timed out: $e');
+          // debugPrint('Import timed out: $e');
           if (mounted) {
             setState(() {
               _isLoading = false;
@@ -1026,7 +1026,7 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Error in _importProducts: $e');
+      // debugPrint('Error in _importProducts: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
