@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/user_model.dart';
-import 'package:smart_kirana/providers/admin_provider.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/screens/admin/admin_dashboard_screen.dart';
 import 'package:smart_kirana/screens/auth/login_screen.dart';
@@ -201,40 +200,40 @@ class ProfileScreen extends StatelessWidget {
                         textColor: AppColors.primary,
                         onTap: () {
                           // Use MaterialPageRoute with a fresh provider context
-                          debugPrint(
-                            'Navigating to admin dashboard from profile',
-                          );
+                          // debugPrint(
+                          //   'Navigating to admin dashboard from profile',
+                          // );
 
                           // Get providers
-                          final adminProvider = Provider.of<AdminProvider>(
-                            context,
-                            listen: false,
-                          );
+                          // final adminProvider = Provider.of<AdminProvider>(
+                          //   context,
+                          //   listen: false,
+                          // );
                           final authProvider = Provider.of<AuthProvider>(
                             context,
                             listen: false,
                           );
 
-                          debugPrint(
-                            'Admin provider in profile: ${adminProvider.hashCode}',
-                          );
-                          debugPrint(
-                            'Auth provider in profile: ${authProvider.hashCode}',
-                          );
-                          debugPrint('User role: ${authProvider.user?.role}');
+                          // debugPrint(
+                          //   'Admin provider in profile: ${adminProvider.hashCode}',
+                          // );
+                          // debugPrint(
+                          //   'Auth provider in profile: ${authProvider.hashCode}',
+                          // );
+                          // debugPrint('User role: ${authProvider.user?.role}');
 
                           // Check if user is admin before navigating
                           if (authProvider.user?.role == 'ADMIN') {
-                            debugPrint(
-                              'User confirmed as admin, proceeding to dashboard',
-                            );
+                            // debugPrint(
+                            //   'User confirmed as admin, proceeding to dashboard',
+                            // );
 
                             // Use named route navigation instead of MaterialPageRoute
                             Navigator.of(
                               context,
                             ).pushNamed(AdminDashboardScreen.routeName);
                           } else {
-                            debugPrint('User is not admin, showing error');
+                            // debugPrint('User is not admin, showing error');
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
