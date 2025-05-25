@@ -30,11 +30,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    debugPrint('AdminDashboardScreen initState called');
+    // debugPrint('AdminDashboardScreen initState called');
 
     // Use a small delay to ensure the widget is fully built before loading data
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      debugPrint('AdminDashboardScreen post-frame callback');
+      // debugPrint('AdminDashboardScreen post-frame callback');
       if (mounted) {
         _loadDashboardData();
       }
@@ -44,14 +44,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    debugPrint('AdminDashboardScreen didChangeDependencies called');
+    // debugPrint('AdminDashboardScreen didChangeDependencies called');
 
     // Check if admin provider is available and initialized
-    final adminProvider = Provider.of<AdminProvider>(context, listen: false);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    // final adminProvider = Provider.of<AdminProvider>(context, listen: false);
+    // final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    debugPrint('Admin check: ${authProvider.user?.role == 'ADMIN'}');
-    debugPrint('Admin provider available: ${adminProvider.hashCode}');
+    // debugPrint('Admin check: ${authProvider.user?.role == 'ADMIN'}');
+    // debugPrint('Admin provider available: ${adminProvider.hashCode}');
   }
 
   Future<void> _loadDashboardData() async {
@@ -83,7 +83,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Error loading dashboard data: $e');
+      // debugPrint('Error loading dashboard data: $e');
       setState(() {
         _localError = 'Failed to load dashboard data: ${e.toString()}';
       });
@@ -187,7 +187,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     // Wrap everything in a try-catch to identify rendering issues
     try {
-      debugPrint('Building admin dashboard content');
+      // debugPrint('Building admin dashboard content');
 
       return RefreshIndicator(
         onRefresh: _loadDashboardData,
@@ -203,7 +203,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   try {
                     return _buildWelcomeCard();
                   } catch (e) {
-                    debugPrint('Error building welcome card: $e');
+                    // debugPrint('Error building welcome card: $e');
                     return const Card(
                       elevation: 2,
                       child: Padding(
@@ -222,7 +222,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   try {
                     return DashboardCharts(data: adminProvider.dashboardData);
                   } catch (e) {
-                    debugPrint('Error building charts: $e');
+                    // debugPrint('Error building charts: $e');
                     return const Card(
                       elevation: 2,
                       child: Padding(
@@ -282,7 +282,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           try {
                             return _buildStatsGrid(adminProvider.dashboardData);
                           } catch (e) {
-                            debugPrint('Error building stats grid: $e');
+                            // debugPrint('Error building stats grid: $e');
                             return const Card(
                               elevation: 2,
                               child: Padding(
@@ -347,7 +347,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           try {
                             return _buildFeatureGrid();
                           } catch (e) {
-                            debugPrint('Error building feature grid: $e');
+                            // debugPrint('Error building feature grid: $e');
                             return const Card(
                               elevation: 2,
                               child: Padding(
@@ -373,7 +373,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       adminProvider.dashboardData,
                     );
                   } catch (e) {
-                    debugPrint('Error building recent orders: $e');
+                    // debugPrint('Error building recent orders: $e');
                     return const Card(
                       elevation: 2,
                       child: Padding(
@@ -389,7 +389,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
       );
     } catch (e) {
-      debugPrint('Error building admin dashboard: $e');
+      // debugPrint('Error building admin dashboard: $e');
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
