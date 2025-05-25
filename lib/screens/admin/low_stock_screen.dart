@@ -51,7 +51,7 @@ class _LowStockScreenState extends State<LowStockScreen> {
         _categories = categories;
       });
     } catch (e) {
-      debugPrint('Error loading categories: $e');
+      // debugPrint('Error loading categories: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -156,7 +156,7 @@ class _LowStockScreenState extends State<LowStockScreen> {
         }
 
         // Debug: Print all products and their stock levels
-        debugPrint('Total products: ${snapshot.data!.docs.length}');
+        // debugPrint('Total products: ${snapshot.data!.docs.length}');
 
         // Create a list to store products with their stock levels for debugging
         List<Map<String, dynamic>> productsWithStock = [];
@@ -186,18 +186,18 @@ class _LowStockScreenState extends State<LowStockScreen> {
             'stockType': stockValue.runtimeType.toString(),
           });
 
-          debugPrint(
-            'Product: $name, Stock: $stock, Type: ${stockValue.runtimeType}',
-          );
+          // debugPrint(
+            // 'Product: $name, Stock: $stock, Type: ${stockValue.runtimeType}',
+          // );
         }
 
         // Sort by stock for debugging
         productsWithStock.sort(
           (a, b) => (a['stock'] as int).compareTo(b['stock'] as int),
         );
-        debugPrint(
-          'Products sorted by stock: ${productsWithStock.map((p) => "${p['name']}: ${p['stock']}").join(', ')}',
-        );
+        // debugPrint(
+          // 'Products sorted by stock: ${productsWithStock.map((p) => "${p['name']}: ${p['stock']}").join(', ')}',
+        // );
 
         // Filter products based on low stock, search query and category
         var filteredDocs =
@@ -240,11 +240,12 @@ class _LowStockScreenState extends State<LowStockScreen> {
         }
 
         // Debug: Print filtered products
-        debugPrint('Filtered products count: ${filteredDocs.length}');
+        // debugPrint('Filtered products count: ${filteredDocs.length}');
         for (var doc in filteredDocs) {
           final data = doc.data() as Map<String, dynamic>;
-          final name = data['name'] as String? ?? 'Unknown';
+          // final name = data['name'] as String? ?? 'Unknown';
           var stockValue = data['stock'];
+          // ignore: unused_local_variable
           int stock = 0;
 
           // Handle different stock types
@@ -258,9 +259,9 @@ class _LowStockScreenState extends State<LowStockScreen> {
             stock = stockValue.toInt();
           }
 
-          debugPrint(
-            'Filtered Product: $name, Stock: $stock, Type: ${stockValue.runtimeType}',
-          );
+          // debugPrint(
+          //   'Filtered Product: $name, Stock: $stock, Type: ${stockValue.runtimeType}',
+          // );
         }
 
         if (filteredDocs.isEmpty) {
