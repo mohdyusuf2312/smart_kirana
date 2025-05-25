@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } catch (e) {
-      debugPrint('Error loading recommendations: $e');
+      // debugPrint('Error loading recommendations: $e');
       // Don't set error message here to avoid blocking the whole screen
     }
   }
@@ -121,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Error initializing location: $e');
+      // debugPrint('Error initializing location: $e');
       // Don't set error message here to avoid blocking the whole screen
       // Just keep the default location message
     }
