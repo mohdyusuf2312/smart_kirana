@@ -70,9 +70,9 @@ class _RecommendationManagementScreenState
       await recommendationProvider.loadAllUserRecommendations();
       await recommendationProvider.loadGlobalRecommendations();
 
-      debugPrint('Recommendation data loaded successfully');
+      // debugPrint('Recommendation data loaded successfully');
     } catch (e) {
-      debugPrint('Error loading recommendation data: $e');
+      // debugPrint('Error loading recommendation data: $e');
       // Show error message if widget is still mounted
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -162,19 +162,19 @@ class _RecommendationManagementScreenState
     final allUsers = recommendationProvider.allUserRecommendations;
 
     // Enhanced debug print to see what users are available
-    debugPrint('All users count: ${allUsers.length}');
+    // debugPrint('All users count: ${allUsers.length}');
     for (var user in allUsers) {
-      debugPrint(
-        'User: ${user.userName}, ID: ${user.userId}, Products: ${user.products.length}, isGlobal: ${user.isGlobal}',
-      );
+      // debugPrint(
+      //   'User: ${user.userName}, ID: ${user.userId}, Products: ${user.products.length}, isGlobal: ${user.isGlobal}',
+      // );
       // Print product details for debugging
       if (user.products.isNotEmpty) {
-        debugPrint('First product details for ${user.userName}:');
-        final firstProduct = user.products.first;
-        debugPrint('  ProductID: ${firstProduct.productId}');
-        debugPrint('  ProductName: ${firstProduct.productName}');
-        debugPrint('  ImageURL: ${firstProduct.imageUrl}');
-        debugPrint('  Price: ${firstProduct.price}');
+        // debugPrint('First product details for ${user.userName}:');
+        // final firstProduct = user.products.first;
+        // debugPrint('  ProductID: ${firstProduct.productId}');
+        // debugPrint('  ProductName: ${firstProduct.productName}');
+        // debugPrint('  ImageURL: ${firstProduct.imageUrl}');
+        // debugPrint('  Price: ${firstProduct.price}');
       }
     }
 
@@ -313,9 +313,9 @@ class _RecommendationManagementScreenState
                                               error,
                                               stackTrace,
                                             ) {
-                                              debugPrint(
-                                                'Error loading image: $error',
-                                              );
+                                              // debugPrint(
+                                              //   'Error loading image: $error',
+                                              // );
                                               return Container(
                                                 width: 50,
                                                 height: 50,
@@ -595,9 +595,9 @@ class _RecommendationManagementScreenState
                                                     error,
                                                     stackTrace,
                                                   ) {
-                                                    debugPrint(
-                                                      'Error loading product image in dialog: $error',
-                                                    );
+                                                    // debugPrint(
+                                                    //   'Error loading product image in dialog: $error',
+                                                    // );
                                                     return Container(
                                                       width: 40,
                                                       height: 40,
@@ -767,9 +767,9 @@ class _RecommendationManagementScreenState
                                             error,
                                             stackTrace,
                                           ) {
-                                            debugPrint(
-                                              'Error loading global image: $error',
-                                            );
+                                            // debugPrint(
+                                            //   'Error loading global image: $error',
+                                            // );
                                             return Container(
                                               width: 50,
                                               height: 50,
