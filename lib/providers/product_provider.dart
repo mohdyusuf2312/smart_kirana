@@ -41,7 +41,7 @@ class ProductProvider extends ChangeNotifier {
                 try {
                   return ProductModel.fromMap(doc.data(), doc.id);
                 } catch (e) {
-                  debugPrint('Error parsing product ${doc.id}: $e');
+                  // debugPrint('Error parsing product ${doc.id}: $e');
                   return null;
                 }
               })
@@ -50,7 +50,7 @@ class ProductProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to load products: $e');
+      // debugPrint('Failed to load products: $e');
       _setError('Failed to load products: ${e.toString()}');
     } finally {
       _setLoading(false);
@@ -64,7 +64,7 @@ class ProductProvider extends ChangeNotifier {
           await _firestore.collection('products').doc(productId).get();
 
       if (!productDoc.exists) {
-        debugPrint('Product $productId no longer exists');
+        // debugPrint('Product $productId no longer exists');
         // Remove from local list if it exists
         _products.removeWhere((product) => product.id == productId);
         notifyListeners();
@@ -82,11 +82,11 @@ class ProductProvider extends ChangeNotifier {
           _products[index] = updatedProduct;
           notifyListeners();
         } catch (e) {
-          debugPrint('Error parsing updated product $productId: $e');
+          // debugPrint('Error parsing updated product $productId: $e');
         }
       }
     } catch (e) {
-      debugPrint('Failed to refresh product $productId: $e');
+      // debugPrint('Failed to refresh product $productId: $e');
     }
   }
 
@@ -116,7 +116,7 @@ class ProductProvider extends ChangeNotifier {
                       notifyListeners();
                     }
                   } catch (e) {
-                    debugPrint('Error parsing modified product $docId: $e');
+                    // debugPrint('Error parsing modified product $docId: $e');
                   }
                   break;
 
@@ -131,7 +131,7 @@ class ProductProvider extends ChangeNotifier {
                       _products.add(newProduct);
                       notifyListeners();
                     } catch (e) {
-                      debugPrint('Error parsing new product $docId: $e');
+                      // debugPrint('Error parsing new product $docId: $e');
                     }
                   }
                   break;
@@ -144,7 +144,7 @@ class ProductProvider extends ChangeNotifier {
             }
           },
           onError: (error) {
-            debugPrint('Error in product listener: $error');
+            // debugPrint('Error in product listener: $error');
           },
         );
   }
@@ -169,7 +169,7 @@ class ProductProvider extends ChangeNotifier {
                 try {
                   return CategoryModel.fromMap(doc.data(), doc.id);
                 } catch (e) {
-                  debugPrint('Error parsing category ${doc.id}: $e');
+                  // debugPrint('Error parsing category ${doc.id}: $e');
                   return null;
                 }
               })
@@ -178,7 +178,7 @@ class ProductProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to load categories: $e');
+      // debugPrint('Failed to load categories: $e');
       _setError('Failed to load categories: ${e.toString()}');
     } finally {
       _setLoading(false);
