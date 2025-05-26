@@ -5,6 +5,7 @@ import 'package:smart_kirana/models/admin_dashboard_model.dart';
 import 'package:smart_kirana/providers/admin_provider.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/screens/admin/category_management_screen.dart';
+import 'package:smart_kirana/screens/admin/expiring_soon_screen.dart';
 import 'package:smart_kirana/screens/admin/low_stock_screen.dart';
 import 'package:smart_kirana/screens/admin/order_management_screen.dart';
 import 'package:smart_kirana/screens/admin/product_management_screen.dart';
@@ -654,9 +655,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Navigator.pushNamed(context, CategoryManagementScreen.routeName),
         ),
         _buildFeatureCard(
-          'Orders',
-          Icons.shopping_bag,
-          () => Navigator.pushNamed(context, OrderManagementScreen.routeName),
+          'Expiring Soon',
+          Icons.schedule,
+          () => Navigator.pushNamed(context, ExpiringSoonScreen.routeName),
         ),
         _buildFeatureCard(
           'Low Stock',
@@ -754,14 +755,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   Navigator.pop(context);
                   Navigator.pushNamed(context, OrderManagementScreen.routeName);
                 }),
-                _buildQuickActionButton(
-                  'View Low Stock',
-                  Icons.warning_amber,
-                  () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, LowStockScreen.routeName);
-                  },
-                ),
+                _buildQuickActionButton('Expiring Soon', Icons.schedule, () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, ExpiringSoonScreen.routeName);
+                }),
               ],
             ),
             const SizedBox(height: AppPadding.large),

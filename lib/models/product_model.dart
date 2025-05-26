@@ -11,6 +11,7 @@ class ProductModel {
   final String unit;
   final bool isPopular;
   final bool isFeatured;
+  final DateTime? expiryDate;
 
   ProductModel({
     required this.id,
@@ -25,6 +26,7 @@ class ProductModel {
     required this.unit,
     this.isPopular = false,
     this.isFeatured = false,
+    this.expiryDate,
   });
 
   factory ProductModel.fromMap(Map<String, dynamic> map, String id) {
@@ -44,6 +46,10 @@ class ProductModel {
       unit: map['unit'] ?? '',
       isPopular: map['isPopular'] ?? false,
       isFeatured: map['isFeatured'] ?? false,
+      expiryDate:
+          map['expiryDate'] != null
+              ? (map['expiryDate'] as dynamic).toDate()
+              : null,
     );
   }
 
@@ -60,6 +66,7 @@ class ProductModel {
       'unit': unit,
       'isPopular': isPopular,
       'isFeatured': isFeatured,
+      'expiryDate': expiryDate,
     };
   }
 
@@ -76,6 +83,7 @@ class ProductModel {
     String? unit,
     bool? isPopular,
     bool? isFeatured,
+    DateTime? expiryDate,
   }) {
     return ProductModel(
       id: id ?? this.id,
@@ -90,6 +98,28 @@ class ProductModel {
       unit: unit ?? this.unit,
       isPopular: isPopular ?? this.isPopular,
       isFeatured: isFeatured ?? this.isFeatured,
+      expiryDate: expiryDate ?? this.expiryDate,
     );
+  }
+
+  // Helper method to check if product is expiring soon (within 30 days)
+  bool get isExpiringSoon {
+    if (expiryDate == null) return false;
+    final now = DateTime.now();
+    final difference = expiryDate!.difference(now).inDays;
+    return difference >= 0 && difference <= 30;
+  }
+
+  // Helper method to get days until expiry
+  int? get daysUntilExpiry {
+    if (expiryDate == null) return null;
+    final now = DateTime.now();
+    return expiryDate!.difference(now).inDays;
+  }
+
+  // Helper method to check if product is expired
+  bool get isExpired {
+    if (expiryDate == null) return false;
+    return DateTime.now().isAfter(expiryDate!);
   }
 }

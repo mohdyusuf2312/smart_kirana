@@ -202,6 +202,13 @@ class ProductProvider extends ChangeNotifier {
     return _products.where((product) => product.isFeatured).toList();
   }
 
+  // Get products expiring soon (within 30 days)
+  List<ProductModel> getExpiringSoonProducts() {
+    return _products
+        .where((product) => product.isExpiringSoon || product.isExpired)
+        .toList();
+  }
+
   // Get product by ID
   ProductModel? getProductById(String productId) {
     try {

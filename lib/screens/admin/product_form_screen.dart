@@ -38,6 +38,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   final _unitController = TextEditingController();
   bool _isPopular = false;
   bool _isFeatured = false;
+  DateTime? _selectedExpiryDate;
 
   @override
   void initState() {
@@ -114,6 +115,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         _isFeatured = product.isFeatured;
         _imageUrl = product.imageUrl;
         _selectedCategoryId = product.categoryId;
+        _selectedExpiryDate = product.expiryDate;
       }
     } catch (e) {
       if (mounted) {
@@ -186,6 +188,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         'unit': _unitController.text,
         'isPopular': _isPopular,
         'isFeatured': _isFeatured,
+        'expiryDate': _selectedExpiryDate,
       };
 
       if (_isEdit) {
@@ -441,6 +444,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           ],
         ),
         const SizedBox(height: AppPadding.medium),
+        _buildExpiryDateField(),
+        const SizedBox(height: AppPadding.medium),
         SwitchListTile(
           title: const Text('Popular Product'),
           subtitle: const Text('Show in popular products section'),
@@ -464,6 +469,75 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           activeColor: AppColors.primary,
         ),
       ],
+    );
+  }
+
+  Widget _buildExpiryDateField() {
+    return InkWell(
+      onTap: () async {
+        final DateTime? picked = await showDatePicker(
+          context: context,
+          initialDate:
+              _selectedExpiryDate ??
+              DateTime.now().add(const Duration(days: 30)),
+          firstDate: DateTime.now(),
+          lastDate: DateTime.now().add(
+            const Duration(days: 365 * 5),
+          ), // 5 years from now
+          helpText: 'Select Expiry Date',
+          cancelText: 'Clear',
+          confirmText: 'Select',
+        );
+        if (picked != null) {
+          setState(() {
+            _selectedExpiryDate = picked;
+          });
+        } else if (picked == null && _selectedExpiryDate != null && mounted) {
+          // User pressed cancel, but we want to allow clearing the date
+          final bool? clearDate = await showDialog<bool>(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Clear Expiry Date'),
+                content: const Text('Do you want to remove the expiry date?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('Clear'),
+                  ),
+                ],
+              );
+            },
+          );
+          if (clearDate == true && mounted) {
+            setState(() {
+              _selectedExpiryDate = null;
+            });
+          }
+        }
+      },
+      child: InputDecorator(
+        decoration: const InputDecoration(
+          labelText: 'Expiry Date (Optional)',
+          hintText: 'Tap to select expiry date',
+          suffixIcon: Icon(Icons.calendar_today),
+        ),
+        child: Text(
+          _selectedExpiryDate != null
+              ? '${_selectedExpiryDate!.day}/${_selectedExpiryDate!.month}/${_selectedExpiryDate!.year}'
+              : 'No expiry date set',
+          style: TextStyle(
+            color:
+                _selectedExpiryDate != null
+                    ? AppColors.textPrimary
+                    : AppColors.textSecondary,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -105,7 +105,7 @@ class CSVImportUtil {
       // Debug: Print raw CSV data for inspection
       // debugPrint('Raw CSV data (first few rows):');
       // for (int i = 0; i < (csvData.length > 3 ? 3 : csvData.length); i++) {
-        // debugPrint('Row $i: ${csvData[i]}');
+      // debugPrint('Row $i: ${csvData[i]}');
       // }
 
       // Debug: Print the number of rows in the CSV data
@@ -307,10 +307,25 @@ class CSVImportUtil {
 
           final unit = row.length > 7 ? row[7].toString().trim() : '';
 
+          // Parse expiry date
+          DateTime? expiryDate;
+          if (row.length > 8 && row[8].toString().trim().isNotEmpty) {
+            final expiryDateStr = row[8].toString().trim();
+            try {
+              expiryDate = DateTime.parse(expiryDateStr);
+              // Debug: Log successful expiry date parsing
+              // debugPrint('Row $rowIndex: Parsed expiry date "$expiryDateStr" for product "$name"');
+            } catch (e) {
+              warnings.add(
+                'Row $rowIndex: Invalid expiry date format "$expiryDateStr" for product "$name". Expected YYYY-MM-DD format.',
+              );
+            }
+          }
+
           // Parse boolean fields
           bool isPopular = false;
-          if (row.length > 8) {
-            final isPopularStr = row[8].toString().trim().toLowerCase();
+          if (row.length > 9) {
+            final isPopularStr = row[9].toString().trim().toLowerCase();
             isPopular =
                 isPopularStr == 'true' ||
                 isPopularStr == 'yes' ||
@@ -318,8 +333,8 @@ class CSVImportUtil {
           }
 
           bool isFeatured = false;
-          if (row.length > 9) {
-            final isFeaturedStr = row[9].toString().trim().toLowerCase();
+          if (row.length > 10) {
+            final isFeaturedStr = row[10].toString().trim().toLowerCase();
             isFeatured =
                 isFeaturedStr == 'true' ||
                 isFeaturedStr == 'yes' ||
@@ -398,6 +413,7 @@ class CSVImportUtil {
               'categoryName': categoryIdToName[categoryId] ?? categoryName,
               'stock': stock,
               'unit': unit,
+              'expiryDate': expiryDate,
               'isPopular': isPopular,
               'isFeatured': isFeatured,
             };
@@ -457,6 +473,18 @@ class CSVImportUtil {
               changedFields.add('isFeatured');
             }
 
+            // Compare expiry date (handle null case)
+            final existingExpiryDate =
+                existingProduct['expiryDate'] != null
+                    ? (existingProduct['expiryDate'] as dynamic).toDate()
+                    : null;
+            if (existingExpiryDate != expiryDate) {
+              hasChanged = true;
+              changedFields.add('expiryDate');
+              // Debug: Log expiry date change
+              // debugPrint('Row $rowIndex: Expiry date changed for "$name" from $existingExpiryDate to $expiryDate');
+            }
+
             if (hasChanged) {
               // Update the product
               try {
@@ -495,40 +523,34 @@ class CSVImportUtil {
           }
 
           // Create product data
-          // final productData = {
-          //   'name': name,
-          //   'description': description,
-          //   'price': price,
-          //   'discountPrice': discountPrice,
-          //   'imageUrl': imageUrl,
-          //   'categoryId': categoryId,
-          //   'categoryName': categoryIdToName[categoryId] ?? categoryName,
-          //   'stock': stock,
-          //   'unit': unit,
-          //   'isPopular': isPopular,
-          //   'isFeatured': isFeatured,
-          //   'createdAt': FieldValue.serverTimestamp(),
-          // };
+          final productData = {
+            'name': name,
+            'description': description,
+            'price': price,
+            'discountPrice': discountPrice,
+            'imageUrl': imageUrl,
+            'categoryId': categoryId,
+            'categoryName': categoryIdToName[categoryId] ?? categoryName,
+            'stock': stock,
+            'unit': unit,
+            'isPopular': isPopular,
+            'isFeatured': isFeatured,
+            'expiryDate': expiryDate,
+            'createdAt': FieldValue.serverTimestamp(),
+          };
 
           // Add to Firestore
-          // debugPrint('Adding product to Firestore: "$name"');
           try {
-            // final docRef = await _firestore
-            //     .collection('products')
-            //     .add(productData);
-            // debugPrint(
-            //   'Successfully added product to Firestore with ID: ${docRef.id}',
-            // );
+            // ignore: unused_local_variable
+            final docRef = await _firestore
+                .collection('products')
+                .add(productData);
 
             // Add to our set of added products to prevent duplicates in the same import
             addedProductNames.add(normalizedName);
 
             importedCount++;
-            // debugPrint(
-            //   'Successfully imported product: "$name" (total imported: $importedCount)',
-            // );
           } catch (e) {
-            // debugPrint('Error adding product to Firestore: $e');
             errors.add('Row $rowIndex: Failed to add product to Firestore: $e');
             skippedCount++;
             continue;
@@ -892,10 +914,23 @@ class CSVImportUtil {
 
           final unit = row.length > 7 ? row[7].toString().trim() : '';
 
+          // Parse expiry date
+          DateTime? expiryDate;
+          if (row.length > 8 && row[8].toString().trim().isNotEmpty) {
+            final expiryDateStr = row[8].toString().trim();
+            try {
+              expiryDate = DateTime.parse(expiryDateStr);
+            } catch (e) {
+              warnings.add(
+                'Row $rowIndex: Invalid expiry date format "$expiryDateStr" for product "$name". Expected YYYY-MM-DD format.',
+              );
+            }
+          }
+
           // Parse boolean fields
           bool isPopular = false;
-          if (row.length > 8) {
-            final isPopularStr = row[8].toString().trim().toLowerCase();
+          if (row.length > 9) {
+            final isPopularStr = row[9].toString().trim().toLowerCase();
             isPopular =
                 isPopularStr == 'true' ||
                 isPopularStr == 'yes' ||
@@ -903,8 +938,8 @@ class CSVImportUtil {
           }
 
           bool isFeatured = false;
-          if (row.length > 9) {
-            final isFeaturedStr = row[9].toString().trim().toLowerCase();
+          if (row.length > 10) {
+            final isFeaturedStr = row[10].toString().trim().toLowerCase();
             isFeatured =
                 isFeaturedStr == 'true' ||
                 isFeaturedStr == 'yes' ||
@@ -1115,6 +1150,7 @@ class CSVImportUtil {
             'unit': unit,
             'isPopular': isPopular,
             'isFeatured': isFeatured,
+            'expiryDate': expiryDate,
             'createdAt': FieldValue.serverTimestamp(),
           };
 
@@ -1179,6 +1215,16 @@ class CSVImportUtil {
               changedFields.add('isFeatured');
             }
 
+            // Compare expiry date (handle null case)
+            final existingExpiryDate =
+                existingProduct['expiryDate'] != null
+                    ? (existingProduct['expiryDate'] as dynamic).toDate()
+                    : null;
+            if (existingExpiryDate != expiryDate) {
+              hasChanged = true;
+              changedFields.add('expiryDate');
+            }
+
             if (hasChanged) {
               // Update the product
               try {
@@ -1217,25 +1263,18 @@ class CSVImportUtil {
           }
 
           // Add to Firestore (only for new products)
-          // debugPrint('Adding product to Firestore: "$name"');
           try {
             // Add a timeout to prevent hanging
-            // final docRef = await _firestore
-            //     .collection('products')
-            //     .add(productData)
-            //     .timeout(const Duration(seconds: 15));
-
-            // debugPrint(
-            //   'Successfully added product to Firestore with ID: ${docRef.id}',
-            // );
+            // ignore: unused_local_variable
+            final docRef = await _firestore
+                .collection('products')
+                .add(productData)
+                .timeout(const Duration(seconds: 15));
 
             // Add to our set of added products to prevent duplicates in the same import
             addedProductNames.add(normalizedName);
 
             importedCount++;
-            // debugPrint(
-            //   'Successfully imported product: "$name" (total imported: $importedCount)',
-            // );
           } catch (e) {
             String errorMessage = e.toString();
             if (e is TimeoutException) {
@@ -1243,7 +1282,6 @@ class CSVImportUtil {
                   'Timeout adding product to Firestore. The operation took too long.';
             }
 
-            // debugPrint('Error adding product to Firestore: $errorMessage');
             errors.add(
               'Row $rowIndex: Failed to add product to Firestore: $errorMessage',
             );

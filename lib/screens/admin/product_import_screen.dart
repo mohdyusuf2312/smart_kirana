@@ -4,6 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart' as path;
+import 'package:provider/provider.dart';
+import 'package:smart_kirana/providers/product_provider.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/utils/csv_import_util.dart';
 
@@ -383,6 +385,7 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
       {'name': 'Category Name', 'required': true},
       {'name': 'Stock', 'required': true},
       {'name': 'Unit', 'required': false},
+      {'name': 'Expiry Date (YYYY-MM-DD)', 'required': false},
       {'name': 'Is Popular', 'required': false},
       {'name': 'Is Featured', 'required': false},
     ];
@@ -984,14 +987,34 @@ class _ProductImportScreenState extends State<ProductImportScreen> {
       }
 
       if (mounted) {
+        final importSuccess = result['success'] as bool;
+        final importedCount = result['importedCount'] as int;
+        final updatedCount = result['updatedCount'] as int? ?? 0;
+        final skippedCount = result['skippedCount'] as int;
+        final errors = List<String>.from(result['errors'] as List? ?? []);
+        final warnings = List<String>.from(result['warnings'] as List? ?? []);
+
+        // Refresh the ProductProvider to show updated products immediately
+        if (importSuccess) {
+          try {
+            final productProvider = Provider.of<ProductProvider>(
+              context,
+              listen: false,
+            );
+            await productProvider.loadProducts();
+          } catch (e) {
+            // Silently handle provider refresh errors
+            debugPrint('Error refreshing product provider after import: $e');
+          }
+        }
+
         setState(() {
           _isLoading = false;
-          _importSuccess = result['success'] as bool;
-          _importedCount = result['importedCount'] as int;
-          final updatedCount = result['updatedCount'] as int? ?? 0;
-          _skippedCount = result['skippedCount'] as int;
-          _errors = List<String>.from(result['errors'] as List? ?? []);
-          _warnings = List<String>.from(result['warnings'] as List? ?? []);
+          _importSuccess = importSuccess;
+          _importedCount = importedCount;
+          _skippedCount = skippedCount;
+          _errors = errors;
+          _warnings = warnings;
 
           if (_importSuccess) {
             if (_errors.isEmpty && _warnings.isEmpty) {

@@ -1,43 +1,43 @@
-Name,Description,Price,DiscountPrice,ImageUrl,CategoryName,Stock,Unit,IsPopular,IsFeatured
-Basmati Rice,Premium long grain basmati rice,120,110,https://cdn.pixabay.com/photo/2014/10/22/18/43/rice-498688_1280.jpg,Grains,50,kg,yes,yes
-Arhar Dal,High quality yellow split pigeon peas,90,85,https://cdn.pixabay.com/photo/2016/10/14/13/18/dal-1740205_1280.png,Pulses,40,kg,yes,no
-Wheat Flour,Stone ground whole wheat flour,45,40,https://cdn.pixabay.com/photo/2012/06/08/17/59/flour-49689_1280.jpg,Flour,60,kg,yes,yes
-Sugar,Fine grain white sugar,50,48,https://cdn.pixabay.com/photo/2017/01/07/20/40/candy-1961536_1280.jpg,Essentials,100,kg,no,no
-Salt,Iodized table salt,20,18,https://cdn.pixabay.com/photo/2019/08/20/13/04/salt-4418749_1280.jpg,Essentials,200,kg,no,no
-Turmeric Powder,Pure ground turmeric spice,60,55,https://cdn.pixabay.com/photo/2022/12/26/10/01/turmeric-powder-7678634_1280.png,Spices,30,g,yes,no
-Red Chilli Powder,Hot and spicy red chilli powder,70,65,https://cdn.pixabay.com/photo/2022/06/07/01/02/red-pepper-7247194_1280.jpg,Spices,25,g,yes,no
-Cooking Oil,Refined sunflower oil,110,100,https://cdn.pixabay.com/photo/2016/05/24/13/29/olive-oil-1412361_1280.jpg,Oils,45,L,yes,yes
-Tea Leaves,Premium Assam tea leaves,80,75,https://cdn.pixabay.com/photo/2021/03/04/19/50/tea-6069409_1280.jpg,Beverages,35,g,yes,yes
-Coffee Powder,Instant coffee powder,120,110,https://cdn.pixabay.com/photo/2018/06/06/10/13/coffee-beans-3457587_1280.jpg,Beverages,20,g,no,yes
-Brown Rice,Organic whole grain brown rice,130,125,https://cdn.pixabay.com/photo/2017/06/07/16/24/rice-2380808_1280.jpg,Grains,40,kg,no,yes
-Quinoa,Protein-rich ancient grain,180,170,https://cdn.pixabay.com/photo/2021/06/16/14/31/quinoa-6341423_1280.jpg,Grains,30,kg,yes,no
-Moong Dal,Split green gram,85,80,https://cdn.pixabay.com/photo/2020/02/09/17/40/pulses-4833967_1280.jpg,Pulses,45,kg,no,no
-Chana Dal,Split chickpeas,75,70,https://cdn.pixabay.com/photo/2013/07/25/12/03/daal-166985_1280.jpg,Pulses,50,kg,yes,yes
-Besan Flour,Gram flour for pakoras,60,55,https://cdn.pixabay.com/photo/2015/01/14/19/20/bake-599521_1280.jpg,Flour,40,kg,no,yes
-Corn Flour,Fine yellow corn flour,40,38,https://cdn.pixabay.com/photo/2017/09/04/13/31/flour-2713990_1280.jpg,Flour,35,kg,no,no
-Jaggery,Natural unrefined sugar,65,60,https://cdn.pixabay.com/photo/2016/04/03/12/38/sugar-1304500_1280.jpg,Essentials,40,kg,yes,no
-Black Pepper,Whole black peppercorns,90,85,https://cdn.pixabay.com/photo/2015/02/09/22/04/pepper-630294_1280.jpg,Spices,20,g,yes,yes
-Cumin Seeds,Aromatic whole cumin seeds,50,48,https://cdn.pixabay.com/photo/2021/04/05/04/34/cumin-6152146_1280.jpg,Spices,25,g,no,no
-Coriander Powder,Ground coriander spice,45,42,https://cdn.pixabay.com/photo/2019/10/20/16/45/caraway-4564182_1280.jpg,Spices,30,g,no,no
-Mustard Oil,Cold-pressed mustard oil,130,125,https://cdn.pixabay.com/photo/2019/09/17/06/46/oil-4482643_1280.jpg,Oils,30,L,no,yes
-Coconut Oil,Virgin coconut oil,160,150,https://cdn.pixabay.com/photo/2018/01/05/04/44/food-3062139_1280.jpg,Oils,25,L,yes,no
-Green Tea,Organic green tea leaves,95,90,https://cdn.pixabay.com/photo/2016/09/19/18/01/tee-1680885_1280.jpg,Beverages,30,g,yes,no
-Milk,Fresh pasteurized milk,60,58,https://cdn.pixabay.com/photo/2017/07/05/15/41/milk-2474993_1280.jpg,Dairy,100,L,yes,yes
-Paneer,Fresh cottage cheese,120,115,https://cdn.pixabay.com/photo/2020/07/04/09/29/paneer-5368890_1280.jpg,Dairy,30,kg,yes,yes
-Yogurt,Creamy natural yogurt,40,38,https://cdn.pixabay.com/photo/2016/06/07/17/15/yogurt-1442034_1280.jpg,Dairy,50,g,yes,no
-Butter,Salted table butter,90,85,https://cdn.pixabay.com/photo/2018/05/18/12/55/butter-3411126_1280.jpg,Dairy,40,g,no,yes
-Apples,Fresh red apples,80,75,https://cdn.pixabay.com/photo/2016/11/30/15/00/apples-1872997_1280.jpg,Fruits,60,kg,yes,yes
-Bananas,Ripe yellow bananas,50,48,https://cdn.pixabay.com/photo/2016/01/03/17/59/bananas-1119790_1280.jpg,Fruits,70,dozen,yes,no
-Oranges,Juicy sweet oranges,70,65,https://cdn.pixabay.com/photo/2017/01/20/15/06/oranges-1995056_1280.jpg,Fruits,50,kg,no,yes
-Potatoes,Fresh farm potatoes,30,28,https://cdn.pixabay.com/photo/2016/05/29/08/45/potato-1422580_1280.jpg,Vegetables,100,kg,yes,yes
-Onions,Red onion bulbs,25,23,https://cdn.pixabay.com/photo/2016/05/16/22/47/onions-1397037_1280.jpg,Vegetables,120,kg,yes,no
-Tomatoes,Ripe red tomatoes,40,38,https://cdn.pixabay.com/photo/2011/03/16/16/01/tomatoes-5356_1280.jpg,Vegetables,80,kg,yes,yes
-Potato Chips,Crispy salted potato chips,30,28,https://cdn.pixabay.com/photo/2020/09/11/17/09/food-5563700_1280.jpg,Snacks,60,pack,yes,yes
-Cookies,Chocolate chip cookies,45,42,https://cdn.pixabay.com/photo/2016/11/17/17/37/cookie-1832169_1280.jpg,Snacks,50,pack,yes,no
-Chocolate,Dark chocolate bar,60,55,https://cdn.pixabay.com/photo/2013/09/18/18/24/chocolate-183543_1280.jpg,Snacks,40,pack,no,yes
-Almonds,Raw unsalted almonds,220,210,https://cdn.pixabay.com/photo/2023/01/31/12/46/nuts-7758021_1280.jpg,Dry Fruits,25,kg,yes,yes
-Cashews,Premium whole cashews,250,240,https://cdn.pixabay.com/photo/2018/07/08/08/44/anacardium-3523449_1280.jpg,Dry Fruits,20,kg,yes,no
-Raisins,Sun-dried golden raisins,150,145,https://cdn.pixabay.com/photo/2015/02/05/05/58/food-624603_1280.jpg,Dry Fruits,30,kg,no,yes
-Honey,Pure natural honey,180,170,https://cdn.pixabay.com/photo/2015/06/27/16/35/honey-823614_1280.jpg,Condiments,25,bottle,yes,yes
-Ketchup,Tomato ketchup,60,55,https://cdn.pixabay.com/photo/2015/01/30/08/52/ketchup-617231_1280.jpg,Condiments,40,bottle,yes,no
-Mayonnaise,Creamy mayonnaise,80,75,https://cdn.pixabay.com/photo/2012/10/01/18/34/dips-58738_1280.jpg,Condiments,30,bottle,no,yes
+Name,Description,Price,DiscountPrice,ImageUrl,CategoryName,Stock,Unit,ExpiryDate,IsPopular,IsFeatured
+Basmati Rice,Premium long grain basmati rice,120,110,https://cdn.pixabay.com/photo/2014/10/22/18/43/rice-498688_1280.jpg,Grains,50,kg,2025-12-31,yes,yes
+Arhar Dal,High quality yellow split pigeon peas,90,85,https://cdn.pixabay.com/photo/2016/10/14/13/18/dal-1740205_1280.png,Pulses,40,kg,2025-08-15,yes,no
+Wheat Flour,Stone ground whole wheat flour,45,40,https://cdn.pixabay.com/photo/2012/06/08/17/59/flour-49689_1280.jpg,Flour,60,kg,2025-05-20,yes,yes
+Sugar,Fine grain white sugar,50,48,https://cdn.pixabay.com/photo/2017/01/07/20/40/candy-1961536_1280.jpg,Essentials,100,kg,,no,no
+Salt,Iodized table salt,20,18,https://cdn.pixabay.com/photo/2019/08/20/13/04/salt-4418749_1280.jpg,Essentials,200,kg,,no,no
+Turmeric Powder,Pure ground turmeric spice,60,55,https://cdn.pixabay.com/photo/2022/12/26/10/01/turmeric-powder-7678634_1280.png,Spices,30,g,2025-06-30,yes,no
+Red Chilli Powder,Hot and spicy red chilli powder,70,65,https://cdn.pixabay.com/photo/2022/06/07/01/02/red-pepper-7247194_1280.jpg,Spices,25,g,2025-05-15,yes,no
+Cooking Oil,Refined sunflower oil,110,100,https://cdn.pixabay.com/photo/2016/05/24/13/29/olive-oil-1412361_1280.jpg,Oils,4,L,2025-09-10,yes,yes
+Tea Leaves,Premium Assam tea leaves,80,75,https://cdn.pixabay.com/photo/2021/03/04/19/50/tea-6069409_1280.jpg,Beverages,5,g,2025-07-25,yes,yes
+Coffee Powder,Instant coffee powder,120,110,https://cdn.pixabay.com/photo/2018/06/06/10/13/coffee-beans-3457587_1280.jpg,Beverages,20,g,2025-05-18,no,yes
+Brown Rice,Organic whole grain brown rice,130,125,https://cdn.pixabay.com/photo/2017/06/07/16/24/rice-2380808_1280.jpg,Grains,40,kg,2025-11-30,no,yes
+Quinoa,Protein-rich ancient grain,180,170,https://cdn.pixabay.com/photo/2021/06/16/14/31/quinoa-6341423_1280.jpg,Grains,30,kg,2025-10-15,yes,no
+Moong Dal,Split green gram,85,80,https://cdn.pixabay.com/photo/2020/02/09/17/40/pulses-4833967_1280.jpg,Pulses,45,kg,2025-07-08,no,no
+Chana Dal,Split chickpeas,75,70,https://cdn.pixabay.com/photo/2013/07/25/12/03/daal-166985_1280.jpg,Pulses,50,kg,2025-09-22,yes,yes
+Besan Flour,Gram flour for pakoras,60,55,https://cdn.pixabay.com/photo/2015/01/14/19/20/bake-599521_1280.jpg,Flour,40,kg,2025-05-28,no,yes
+Corn Flour,Fine yellow corn flour,40,38,https://cdn.pixabay.com/photo/2017/09/04/13/31/flour-2713990_1280.jpg,Flour,35,kg,2025-05-12,no,no
+Jaggery,Natural unrefined sugar,65,60,https://cdn.pixabay.com/photo/2016/04/03/12/38/sugar-1304500_1280.jpg,Essentials,40,kg,2026-05-15,yes,no
+Black Pepper,Whole black peppercorns,90,85,https://cdn.pixabay.com/photo/2015/02/09/22/04/pepper-630294_1280.jpg,Spices,20,g,2025-08-30,yes,yes
+Cumin Seeds,Aromatic whole cumin seeds,50,48,https://cdn.pixabay.com/photo/2021/04/05/04/34/cumin-6152146_1280.jpg,Spices,25,g,2025-06-18,no,no
+Coriander Powder,Ground coriander spice,45,42,https://cdn.pixabay.com/photo/2019/10/20/16/45/caraway-4564182_1280.jpg,Spices,30,g,2025-05-25,no,no
+Mustard Oil,Cold-pressed mustard oil,130,125,https://cdn.pixabay.com/photo/2019/09/17/06/46/oil-4482643_1280.jpg,Oils,30,L,2025-12-20,no,yes
+Coconut Oil,Virgin coconut oil,160,150,https://cdn.pixabay.com/photo/2018/01/05/04/44/food-3062139_1280.jpg,Oils,25,L,2025-11-05,yes,no
+Green Tea,Organic green tea leaves,95,90,https://cdn.pixabay.com/photo/2016/09/19/18/01/tee-1680885_1280.jpg,Beverages,30,g,2025-08-12,yes,no
+Milk,Fresh pasteurized milk,60,58,https://cdn.pixabay.com/photo/2017/07/05/15/41/milk-2474993_1280.jpg,Dairy,100,L,2025-06-15,yes,yes
+Paneer,Fresh cottage cheese,120,115,https://cdn.pixabay.com/photo/2020/07/04/09/29/paneer-5368890_1280.jpg,Dairy,30,kg,2025-05-08,yes,yes
+Yogurt,Creamy natural yogurt,40,38,https://cdn.pixabay.com/photo/2016/06/07/17/15/yogurt-1442034_1280.jpg,Dairy,50,g,2025-05-12,yes,no
+Butter,Salted table butter,90,85,https://cdn.pixabay.com/photo/2018/05/18/12/55/butter-3411126_1280.jpg,Dairy,40,g,2025-06-05,no,yes
+Apples,Fresh red apples,80,75,https://cdn.pixabay.com/photo/2016/11/30/15/00/apples-1872997_1280.jpg,Fruits,60,kg,2025-07-20,yes,yes
+Bananas,Ripe yellow bananas,50,48,https://cdn.pixabay.com/photo/2016/01/03/17/59/bananas-1119790_1280.jpg,Fruits,9,dozen,2025-08-05,yes,no
+Oranges,Juicy sweet oranges,70,65,https://cdn.pixabay.com/photo/2017/01/20/15/06/oranges-1995056_1280.jpg,Fruits,50,kg,2025-06-18,no,yes
+Potatoes,Fresh farm potatoes,30,28,https://cdn.pixabay.com/photo/2016/05/29/08/45/potato-1422580_1280.jpg,Vegetables,100,kg,2025-05-10,yes,yes
+Onions,Red onion bulbs,25,23,https://cdn.pixabay.com/photo/2016/05/16/22/47/onions-1397037_1280.jpg,Vegetables,120,kg,2025-07-15,yes,no
+Tomatoes,Ripe red tomatoes,40,38,https://cdn.pixabay.com/photo/2011/03/16/16/01/tomatoes-5356_1280.jpg,Vegetables,80,kg,2025-05-10,yes,yes
+Potato Chips,Crispy salted potato chips,30,28,https://cdn.pixabay.com/photo/2020/09/11/17/09/food-5563700_1280.jpg,Snacks,60,pack,2025-12-28,yes,yes
+Cookies,Chocolate chip cookies,45,42,https://cdn.pixabay.com/photo/2016/11/17/17/37/cookie-1832169_1280.jpg,Snacks,50,pack,2025-12-25,yes,no
+Chocolate,Dark chocolate bar,60,55,https://cdn.pixabay.com/photo/2013/09/18/18/24/chocolate-183543_1280.jpg,Snacks,40,pack,2025-06-30,no,yes
+Almonds,Raw unsalted almonds,220,210,https://cdn.pixabay.com/photo/2023/01/31/12/46/nuts-7758021_1280.jpg,Dry Fruits,25,kg,2025-12-31,yes,yes
+Cashews,Premium whole cashews,250,240,https://cdn.pixabay.com/photo/2018/07/08/08/44/anacardium-3523449_1280.jpg,Dry Fruits,20,kg,2025-11-20,yes,no
+Raisins,Sun-dried golden raisins,150,145,https://cdn.pixabay.com/photo/2015/02/05/05/58/food-624603_1280.jpg,Dry Fruits,30,kg,2025-10-08,no,yes
+Honey,Pure natural honey,180,170,https://cdn.pixabay.com/photo/2015/06/27/16/35/honey-823614_1280.jpg,Condiments,25,bottle,,yes,yes
+Ketchup,Tomato ketchup,60,55,https://cdn.pixabay.com/photo/2015/01/30/08/52/ketchup-617231_1280.jpg,Condiments,40,bottle,2025-08-15,yes,no
+Mayonnaise,Creamy mayonnaise,80,75,https://cdn.pixabay.com/photo/2012/10/01/18/34/dips-58738_1280.jpg,Condiments,30,bottle,2025-04-22,no,yes
