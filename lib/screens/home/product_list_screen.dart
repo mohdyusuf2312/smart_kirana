@@ -25,7 +25,7 @@ class ProductListScreen extends StatefulWidget {
 
 class _ProductListScreenState extends State<ProductListScreen> {
   late List<ProductModel> _products;
-  bool _isLoading = false;
+  final bool _isLoading = false;
   String _sortBy = 'name'; // Default sort by name
 
   @override
@@ -68,32 +68,33 @@ class _ProductListScreenState extends State<ProductListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        backgroundColor: AppColors.primary,
+        elevation: 0,
         actions: [
+          // Sort button
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
+            tooltip: 'Sort Products',
             onSelected: (value) {
               setState(() {
                 _sortBy = value;
-                _sortProducts();
               });
+              _sortProducts();
             },
             itemBuilder:
                 (context) => [
-                  const PopupMenuItem(
-                    value: 'name',
-                    child: Text('Sort by Name'),
-                  ),
+                  const PopupMenuItem(value: 'name', child: Text('Name (A-Z)')),
                   const PopupMenuItem(
                     value: 'price_low',
-                    child: Text('Price: Low to High'),
+                    child: Text('Price (Low to High)'),
                   ),
                   const PopupMenuItem(
                     value: 'price_high',
-                    child: Text('Price: High to Low'),
+                    child: Text('Price (High to Low)'),
                   ),
                   const PopupMenuItem(
                     value: 'popularity',
-                    child: Text('Sort by Popularity'),
+                    child: Text('Popularity'),
                   ),
                 ],
           ),

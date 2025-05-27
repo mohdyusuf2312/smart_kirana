@@ -13,12 +13,25 @@ class LocationService {
   String? _currentAddress;
   bool _isLoading = false;
   String? _error;
+  DateTime? _lastLocationUpdate;
+
+  // Cache duration for location updates (5 minutes)
+  static const Duration _cacheValidDuration = Duration(minutes: 5);
 
   // Getters
   Position? get currentPosition => _currentPosition;
   String? get currentAddress => _currentAddress;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  // Check if cached location is still valid
+  bool get _isCacheValid {
+    if (_lastLocationUpdate == null || _currentPosition == null) {
+      return false;
+    }
+    return DateTime.now().difference(_lastLocationUpdate!) <
+        _cacheValidDuration;
+  }
 
   // Initialize location service
   Future<bool> initialize() async {
@@ -63,24 +76,53 @@ class LocationService {
     }
   }
 
-  // Get current position
+  // Get current position with optimized settings for faster response
   Future<Position?> getCurrentPosition() async {
     try {
       _setLoading(true);
       _error = null;
 
+      // Return cached position if still valid
+      if (_isCacheValid) {
+        _setLoading(false);
+        return _currentPosition;
+      }
+
+      // Try to get last known position first for immediate response
+      Position? lastKnownPosition;
+      try {
+        lastKnownPosition = await Geolocator.getLastKnownPosition();
+        if (lastKnownPosition != null) {
+          // Use last known position temporarily while getting fresh position
+          _currentPosition = lastKnownPosition;
+          // Get address from last known position in background
+          getAddressFromPosition(lastKnownPosition);
+        }
+      } catch (e) {
+        // Ignore errors from last known position
+      }
+
+      // Get fresh position with optimized settings
       _currentPosition = await Geolocator.getCurrentPosition(
         desiredAccuracy:
-            LocationAccuracy
-                .medium, // Changed from high to medium for faster response
-        timeLimit: const Duration(seconds: 10), // Added timeout
+            LocationAccuracy.low, // Use low accuracy for faster response
+        timeLimit: const Duration(
+          seconds: 5,
+        ), // Reduced timeout for faster response
       );
 
-      // Get address from position
+      // Update cache timestamp
+      _lastLocationUpdate = DateTime.now();
+
+      // Get address from fresh position
       await getAddressFromPosition(_currentPosition!);
 
       return _currentPosition;
     } catch (e) {
+      // If we have a last known position, use it as fallback
+      if (_currentPosition != null) {
+        return _currentPosition;
+      }
       _setError('Error getting current position: $e');
       return null;
     } finally {

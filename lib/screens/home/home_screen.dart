@@ -11,9 +11,9 @@ import 'package:smart_kirana/screens/home/cart_screen.dart';
 import 'package:smart_kirana/screens/home/product_detail_screen.dart';
 import 'package:smart_kirana/screens/home/product_list_screen.dart';
 import 'package:smart_kirana/screens/home/profile_screen.dart';
-import 'package:smart_kirana/screens/home/search_screen.dart';
 import 'package:smart_kirana/services/location_service.dart';
 import 'package:smart_kirana/utils/constants.dart';
+import 'package:smart_kirana/widgets/product_filter_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String routeName = '/home';
@@ -37,6 +37,16 @@ class _HomeScreenState extends State<HomeScreen> {
   String _deliveryLocation = 'Detecting location...';
   String _deliveryTime = '15 minutes';
 
+  // Filtering state
+  ProductFilterOptions _filterOptions = ProductFilterOptions();
+
+  // Search state
+  bool _isSearchActive = false;
+  String _searchQuery = '';
+  List<ProductModel> _searchResults = [];
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+
   // Key for refresh indicator
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
@@ -49,6 +59,12 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeScreen();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _initializeScreen() async {
@@ -183,6 +199,87 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     }
+  }
+
+  void _performSearch(String query) {
+    if (query.trim().isEmpty) {
+      setState(() {
+        _isSearchActive = false;
+        _searchQuery = '';
+        _searchResults = [];
+        _isSearching = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearchActive = true;
+      _searchQuery = query.trim().toLowerCase();
+      _isSearching = true;
+    });
+
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
+    final allProducts = productProvider.products;
+
+    // Filter products based on search query
+    final results =
+        allProducts.where((product) {
+          final nameMatch = product.name.toLowerCase().contains(_searchQuery);
+          final descriptionMatch = product.description.toLowerCase().contains(
+            _searchQuery,
+          );
+          final categoryMatch = product.categoryName.toLowerCase().contains(
+            _searchQuery,
+          );
+          return nameMatch || descriptionMatch || categoryMatch;
+        }).toList();
+
+    setState(() {
+      _searchResults = results;
+      _isSearching = false;
+    });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() {
+      _isSearchActive = false;
+      _searchQuery = '';
+      _searchResults = [];
+      _isSearching = false;
+    });
+  }
+
+  void _showFilterDialog() {
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.8,
+            maxChildSize: 0.9,
+            minChildSize: 0.5,
+            builder:
+                (context, scrollController) => ProductFilterWidget(
+                  initialFilters: _filterOptions,
+                  categories: productProvider.categories,
+                  onFiltersChanged: (filters) {
+                    setState(() {
+                      _filterOptions = filters;
+                    });
+                  },
+                ),
+          ),
+    );
   }
 
   @override
@@ -348,35 +445,78 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildUserRecommendationsSection() {
+  Widget _buildMergedRecommendationsSection() {
     final productProvider = Provider.of<ProductProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
     final recommendationProvider = Provider.of<RecommendationProvider>(context);
 
-    // Check if user is logged in
-    final isLoggedIn = authProvider.currentUser != null;
+    List<ProductModel> mergedRecommendations = [];
 
-    // Only show user recommendations if user is logged in
-    if (!isLoggedIn ||
-        recommendationProvider.userRecommendations == null ||
-        recommendationProvider.userRecommendations!.products.isEmpty) {
-      // Return empty container if no user recommendations
-      return const SizedBox.shrink();
-    }
-
-    // Convert recommendation products to product models
-    List<ProductModel> recommendedProducts = [];
-    final recommendations =
-        recommendationProvider.userRecommendations!.products;
-    for (var recommendation in recommendations) {
-      final product = productProvider.getProductById(recommendation.productId);
-      if (product != null) {
-        recommendedProducts.add(product);
+    // Collect user-specific recommendations if user is logged in
+    if (authProvider.currentUser != null &&
+        recommendationProvider.userRecommendations != null &&
+        recommendationProvider.userRecommendations!.products.isNotEmpty) {
+      final userRecommendations =
+          recommendationProvider.userRecommendations!.products;
+      for (var recommendation in userRecommendations) {
+        final product = productProvider.getProductById(
+          recommendation.productId,
+        );
+        if (product != null) {
+          mergedRecommendations.add(product);
+        }
       }
     }
 
-    // If no valid products found, return empty container
-    if (recommendedProducts.isEmpty) {
+    // Collect global recommendations
+    if (recommendationProvider.globalRecommendations != null &&
+        recommendationProvider.globalRecommendations!.products.isNotEmpty) {
+      final globalRecommendations =
+          recommendationProvider.globalRecommendations!.products;
+      for (var recommendation in globalRecommendations) {
+        final product = productProvider.getProductById(
+          recommendation.productId,
+        );
+        if (product != null && !mergedRecommendations.contains(product)) {
+          mergedRecommendations.add(product);
+        }
+      }
+    }
+
+    // If no recommendations from either source, fall back to popular products
+    if (mergedRecommendations.isEmpty) {
+      mergedRecommendations =
+          productProvider.getPopularProducts().take(8).toList();
+    }
+
+    // Apply filters to recommendations
+    if (_filterOptions.hasActiveFilters) {
+      mergedRecommendations =
+          productProvider
+              .filterProducts(
+                categoryId: _filterOptions.categoryId,
+                minPrice: _filterOptions.minPrice,
+                maxPrice: _filterOptions.maxPrice,
+                inStockOnly: _filterOptions.inStockOnly,
+                onSaleOnly: _filterOptions.onSaleOnly,
+              )
+              .where((product) => mergedRecommendations.contains(product))
+              .toList();
+
+      // Apply sorting
+      mergedRecommendations = productProvider.sortProducts(
+        mergedRecommendations,
+        _filterOptions.sortBy,
+      );
+    } else {
+      // Shuffle the merged recommendations for random display only when no filters
+      mergedRecommendations.shuffle();
+    }
+
+    // Limit to 10 items for better performance
+    mergedRecommendations = mergedRecommendations.take(15).toList();
+
+    if (mergedRecommendations.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -385,20 +525,39 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.person, color: AppColors.secondary),
-              SizedBox(width: 8),
-              Text(
+              const Icon(Icons.recommend, color: AppColors.secondary),
+              const SizedBox(width: 8),
+              const Text(
                 'Recommended for You',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
+              if (_filterOptions.hasActiveFilters) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    'Filtered',
+                    style: TextStyle(fontSize: 10, color: AppColors.primary),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Based on your previous orders',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+          Text(
+            authProvider.currentUser != null
+                ? 'Personalized picks and trending items'
+                : 'Popular and trending items',
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -406,303 +565,16 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
-              itemCount: recommendedProducts.length,
+              itemCount: mergedRecommendations.length,
               itemBuilder: (context, index) {
                 return _buildProductCard(
-                  recommendedProducts[index],
+                  mergedRecommendations[index],
                   horizontal: true,
                 );
               },
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGlobalRecommendationsSection() {
-    final productProvider = Provider.of<ProductProvider>(context);
-    final recommendationProvider = Provider.of<RecommendationProvider>(context);
-
-    // Get global recommendations
-    List<ProductModel> recommendedProducts = [];
-    String recommendationSource = 'popular products';
-
-    // Try global recommendations first
-    if (recommendationProvider.globalRecommendations != null &&
-        recommendationProvider.globalRecommendations!.products.isNotEmpty) {
-      final globalRecs = recommendationProvider.globalRecommendations!.products;
-      for (var recommendation in globalRecs) {
-        final product = productProvider.getProductById(
-          recommendation.productId,
-        );
-        if (product != null) {
-          recommendedProducts.add(product);
-        }
-      }
-
-      if (recommendedProducts.isNotEmpty) {
-        recommendationSource = 'popular items';
-      }
-    }
-
-    // If no global recommendations, fall back to popular products
-    if (recommendedProducts.isEmpty) {
-      recommendedProducts =
-          productProvider.getPopularProducts().take(5).toList();
-      recommendationSource = 'popular products';
-    }
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.trending_up, color: AppColors.secondary),
-              SizedBox(width: 8),
-              Text(
-                'Popular Recommendations',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Based on $recommendationSource',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 200,
-            child:
-                recommendedProducts.isEmpty
-                    ? const Center(child: Text('No recommendations available'))
-                    : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: recommendedProducts.length,
-                      itemBuilder: (context, index) {
-                        return _buildProductCard(
-                          recommendedProducts[index],
-                          horizontal: true,
-                        );
-                      },
-                    ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoriesSection() {
-    final productProvider = Provider.of<ProductProvider>(context);
-    final categories = productProvider.categories;
-
-    // ✅ Filter categories that have at least one product
-    final categoriesWithProducts =
-        categories
-            .where(
-              (category) =>
-                  productProvider.getProductsByCategory(category.id).isNotEmpty,
-            )
-            .toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Shop by Category',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              if (categoriesWithProducts.length > 5)
-                SizedBox(
-                  width: 80,
-                  child: TextButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder:
-                            (context) => AlertDialog(
-                              title: const Text('All Categories'),
-                              content: SizedBox(
-                                width: double.maxFinite,
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  itemCount: categoriesWithProducts.length,
-                                  itemBuilder: (context, index) {
-                                    final category =
-                                        categoriesWithProducts[index];
-                                    final products = productProvider
-                                        .getProductsByCategory(category.id);
-                                    return ListTile(
-                                      leading: CircleAvatar(
-                                        backgroundImage: NetworkImage(
-                                          category.imageUrl,
-                                        ),
-                                        onBackgroundImageError: (_, __) {},
-                                        backgroundColor: Colors.grey.shade200,
-                                        child: const Icon(
-                                          Icons.category,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                      title: Text(category.name),
-                                      subtitle: Text(
-                                        '${products.length} products',
-                                      ),
-                                      onTap: () {
-                                        Navigator.pop(context);
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) => ProductListScreen(
-                                                  title: category.name,
-                                                  products: products,
-                                                  categoryId: category.id,
-                                                ),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('Close'),
-                                ),
-                              ],
-                            ),
-                      );
-                    },
-                    child: const Text('See all'),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        Container(
-          height: 125,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child:
-              categoriesWithProducts.isEmpty
-                  ? const Center(child: Text('No categories available'))
-                  : ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    itemCount: categoriesWithProducts.length,
-                    itemBuilder: (context, index) {
-                      final category = categoriesWithProducts[index];
-                      return _buildCategoryItem(category);
-                    },
-                  ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategoryItem(dynamic category) {
-    final productProvider = Provider.of<ProductProvider>(
-      context,
-      listen: false,
-    );
-    final products = productProvider.getProductsByCategory(category.id);
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 12),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(30),
-          onTap: () {
-            if (products.isNotEmpty) {
-              // Navigate to category products screen
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) => ProductListScreen(
-                        title: category.name,
-                        products: products,
-                        categoryId: category.id,
-                      ),
-                ),
-              );
-            } else {
-              // Show message if no products in this category
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('No products available in this category'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(4.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  height: 60,
-                  width: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withAlpha(51),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(30),
-                    child: Image.network(
-                      category.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey.shade200,
-                          child: const Icon(Icons.category, color: Colors.grey),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: 80,
-                  child: Text(
-                    category.name,
-                    style: const TextStyle(fontSize: 11),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -720,20 +592,27 @@ class _HomeScreenState extends State<HomeScreen> {
             // Location banner
             SliverToBoxAdapter(child: _buildLocationBanner()),
 
-            // User-specific Recommendations (only shown if user is logged in and has recommendations)
-            SliverToBoxAdapter(child: _buildUserRecommendationsSection()),
+            // Search bar
+            SliverToBoxAdapter(child: _buildSearchBar()),
 
-            // Global Recommendations (shown to all users)
-            SliverToBoxAdapter(child: _buildGlobalRecommendationsSection()),
+            // Show search results, filtered results, or normal sections
+            if (_isSearchActive) ...[
+              // Show search results when search is active
+              SliverToBoxAdapter(child: _buildSearchResultsSection()),
+            ] else if (_filterOptions.hasActiveFilters) ...[
+              // Only show filtered products when filters are active
+              SliverToBoxAdapter(child: _buildFilteredProductsSection()),
+            ] else ...[
+              // Show normal sections when no filters are applied
+              // Merged Recommendations (combines user-specific and global recommendations)
+              SliverToBoxAdapter(child: _buildMergedRecommendationsSection()),
 
-            // Categories
-            SliverToBoxAdapter(child: _buildCategoriesSection()),
+              // Popular Products
+              SliverToBoxAdapter(child: _buildPopularProductsSection()),
 
-            // Popular Products
-            SliverToBoxAdapter(child: _buildPopularProductsSection()),
-
-            // All Products by Category
-            SliverToBoxAdapter(child: _buildProductsByCategory()),
+              // All Products by Category
+              SliverToBoxAdapter(child: _buildProductsByCategory()),
+            ],
 
             // Bottom padding
             const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -743,9 +622,449 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildSearchBar() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Search for products...',
+          hintStyle: const TextStyle(color: Colors.grey),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: AppColors.primary),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          suffixIcon:
+              _isSearchActive
+                  ? IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.grey),
+                    onPressed: _clearSearch,
+                  )
+                  : Container(
+                    padding: const EdgeInsets.all(4),
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withAlpha(51),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Icon(
+                      Icons.mic,
+                      color: AppColors.secondary,
+                      size: 18,
+                    ),
+                  ),
+        ),
+        textInputAction: TextInputAction.search,
+        onSubmitted: _performSearch,
+        onChanged: (value) {
+          if (value.isEmpty) {
+            _clearSearch();
+          } else {
+            _performSearch(value);
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildSearchResultsSection() {
+    if (_isSearching) {
+      return Container(
+        padding: const EdgeInsets.all(32),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
+
+    // Get matching categories
+    final matchingCategories =
+        productProvider.categories.where((category) {
+          return category.name.toLowerCase().contains(_searchQuery);
+        }).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Search header
+          Row(
+            children: [
+              const Icon(Icons.search, color: AppColors.primary),
+              const SizedBox(width: 8),
+              const Text(
+                'Search Results',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'for "$_searchQuery"',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Show matching categories first
+          if (matchingCategories.isNotEmpty) ...[
+            const Text(
+              'Categories',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: matchingCategories.length,
+                itemBuilder: (context, index) {
+                  final category = matchingCategories[index];
+                  return _buildCategoryCard(category);
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+
+          // Show products
+          if (_searchResults.isNotEmpty) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Products',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '${_searchResults.length} found',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.85, // Standardized aspect ratio
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: _searchResults.length,
+                  itemBuilder: (context, index) {
+                    return _buildProductCard(_searchResults[index]);
+                  },
+                );
+              },
+            ),
+          ] else if (!_isSearching) ...[
+            // No results found
+            Container(
+              padding: const EdgeInsets.all(32),
+              child: const Column(
+                children: [
+                  Icon(Icons.search_off, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'No products found',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Try searching with different keywords',
+                    style: TextStyle(color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryCard(dynamic category) {
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
+
+    return Container(
+      width: 80,
+      margin: const EdgeInsets.only(right: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            final products = productProvider.getProductsByCategory(category.id);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => ProductListScreen(
+                      title: category.name,
+                      products: products,
+                      categoryId: category.id,
+                    ),
+              ),
+            );
+          },
+          child: Column(
+            children: [
+              Container(
+                height: 60,
+                width: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withAlpha(51),
+                      spreadRadius: 1,
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    category.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.category, color: Colors.grey),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                category.name,
+                style: const TextStyle(fontSize: 12),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilteredProductsSection() {
+    final productProvider = Provider.of<ProductProvider>(context);
+
+    // Get all filtered products
+    List<ProductModel> filteredProducts = productProvider.filterProducts(
+      categoryId: _filterOptions.categoryId,
+      minPrice: _filterOptions.minPrice,
+      maxPrice: _filterOptions.maxPrice,
+      inStockOnly: _filterOptions.inStockOnly,
+      onSaleOnly: _filterOptions.onSaleOnly,
+    );
+
+    // Apply sorting
+    filteredProducts = productProvider.sortProducts(
+      filteredProducts,
+      _filterOptions.sortBy,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.filter_list, color: AppColors.primary),
+              const SizedBox(width: 8),
+              const Text(
+                'Filtered Results',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${filteredProducts.length} products',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _getFilterDescription(),
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 16),
+          if (filteredProducts.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(32),
+              child: const Column(
+                children: [
+                  Icon(Icons.search_off, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'No products found',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Try adjusting your filters to see more results',
+                    style: TextStyle(color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.85, // Standardized aspect ratio
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: filteredProducts.length,
+                  itemBuilder: (context, index) {
+                    return _buildProductCard(filteredProducts[index]);
+                  },
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _getFilterDescription() {
+    List<String> descriptions = [];
+
+    if (_filterOptions.categoryId != null) {
+      final productProvider = Provider.of<ProductProvider>(
+        context,
+        listen: false,
+      );
+      final category = productProvider.categories.firstWhere(
+        (cat) => cat.id == _filterOptions.categoryId,
+        orElse: () => throw Exception('Category not found'),
+      );
+      descriptions.add('Category: ${category.name}');
+    }
+
+    if (_filterOptions.minPrice != null || _filterOptions.maxPrice != null) {
+      String priceRange = 'Price: ';
+      if (_filterOptions.minPrice != null && _filterOptions.maxPrice != null) {
+        priceRange +=
+            '₹${_filterOptions.minPrice!.toStringAsFixed(0)} - ₹${_filterOptions.maxPrice!.toStringAsFixed(0)}';
+      } else if (_filterOptions.minPrice != null) {
+        priceRange += 'Above ₹${_filterOptions.minPrice!.toStringAsFixed(0)}';
+      } else {
+        priceRange += 'Below ₹${_filterOptions.maxPrice!.toStringAsFixed(0)}';
+      }
+      descriptions.add(priceRange);
+    }
+
+    if (_filterOptions.inStockOnly == true) {
+      descriptions.add('In stock only');
+    }
+
+    if (_filterOptions.onSaleOnly == true) {
+      descriptions.add('On sale only');
+    }
+
+    descriptions.add('Sorted by: ${_getSortDescription()}');
+
+    return descriptions.join(' • ');
+  }
+
+  String _getSortDescription() {
+    switch (_filterOptions.sortBy) {
+      case 'name':
+        return 'Name (A-Z)';
+      case 'price_low':
+        return 'Price (Low to High)';
+      case 'price_high':
+        return 'Price (High to Low)';
+      case 'popularity':
+        return 'Popularity';
+      default:
+        return 'Name (A-Z)';
+    }
+  }
+
   Widget _buildPopularProductsSection() {
     final productProvider = Provider.of<ProductProvider>(context);
-    final popularProducts = productProvider.getPopularProducts();
+    List<ProductModel> popularProducts = productProvider.getPopularProducts();
+
+    // Apply filters if active
+    if (_filterOptions.hasActiveFilters) {
+      popularProducts =
+          productProvider
+              .filterProducts(
+                categoryId: _filterOptions.categoryId,
+                minPrice: _filterOptions.minPrice,
+                maxPrice: _filterOptions.maxPrice,
+                inStockOnly: _filterOptions.inStockOnly,
+                onSaleOnly: _filterOptions.onSaleOnly,
+              )
+              .where((product) => popularProducts.contains(product))
+              .toList();
+
+      // Apply sorting
+      popularProducts = productProvider.sortProducts(
+        popularProducts,
+        _filterOptions.sortBy,
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -755,9 +1074,33 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Popular Products',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Row(
+                children: [
+                  const Text(
+                    'Popular Products',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  if (_filterOptions.hasActiveFilters) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        'Filtered',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
               SizedBox(
                 width: 80,
@@ -770,7 +1113,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         builder:
                             (context) => ProductListScreen(
                               title: 'Popular Products',
-                              products: popularProducts,
+                              products: productProvider.getPopularProducts(),
                               isPopular: true,
                             ),
                       ),
@@ -811,7 +1154,31 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       children:
           categories.map((category) {
-            final products = productProvider.getProductsByCategory(category.id);
+            List<ProductModel> products = productProvider.getProductsByCategory(
+              category.id,
+            );
+
+            // Apply filters if active
+            if (_filterOptions.hasActiveFilters) {
+              products =
+                  productProvider
+                      .filterProducts(
+                        categoryId: _filterOptions.categoryId,
+                        minPrice: _filterOptions.minPrice,
+                        maxPrice: _filterOptions.maxPrice,
+                        inStockOnly: _filterOptions.inStockOnly,
+                        onSaleOnly: _filterOptions.onSaleOnly,
+                      )
+                      .where((product) => products.contains(product))
+                      .toList();
+
+              // Apply sorting
+              products = productProvider.sortProducts(
+                products,
+                _filterOptions.sortBy,
+              );
+            }
+
             if (products.isEmpty) return const SizedBox.shrink();
 
             return Column(
@@ -825,12 +1192,36 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        category.name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            category.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (_filterOptions.hasActiveFilters) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Text(
+                                'Filtered',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       SizedBox(
                         width: 80,
@@ -843,7 +1234,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 builder:
                                     (context) => ProductListScreen(
                                       title: category.name,
-                                      products: products,
+                                      products: productProvider
+                                          .getProductsByCategory(category.id),
                                       categoryId: category.id,
                                     ),
                               ),
@@ -1248,84 +1640,80 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(40),
-        child: Container(
-          height: 40,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SearchScreen()),
-                );
-              },
-              child: Ink(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, color: Colors.grey),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Search for products...',
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppColors.secondary.withAlpha(51),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Icon(
-                        Icons.mic,
-                        color: AppColors.secondary,
-                        size: 18,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+
       actions: [
+        // Filter button
         IconButton(
-          icon: const Icon(Icons.location_on),
-          onPressed: () {
-            // Show location dialog
-            showDialog(
-              context: context,
-              builder:
-                  (context) => AlertDialog(
-                    title: const Text('Delivery Location'),
-                    content: Text(_deliveryLocation),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Close'),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          Navigator.pop(context);
-                          // Refresh location
-                          await _initializeLocation();
-                        },
-                        child: const Text('Refresh'),
-                      ),
-                    ],
+          icon: Stack(
+            children: [
+              const Icon(Icons.filter_list),
+              if (_filterOptions.hasActiveFilters)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 8,
+                      minHeight: 8,
+                    ),
                   ),
-            );
+                ),
+            ],
+          ),
+          onPressed: _showFilterDialog,
+          tooltip: 'Filter Products',
+        ),
+
+        // Sort button
+        PopupMenuButton<String>(
+          icon: Stack(
+            children: [
+              const Icon(Icons.sort),
+              if (_filterOptions.sortBy != 'name')
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Colors.orange,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 8,
+                      minHeight: 8,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          tooltip: 'Sort Products',
+          onSelected: (value) {
+            setState(() {
+              _filterOptions = _filterOptions.copyWith(sortBy: value);
+            });
           },
+          itemBuilder:
+              (context) => [
+                const PopupMenuItem(value: 'name', child: Text('Name (A-Z)')),
+                const PopupMenuItem(
+                  value: 'price_low',
+                  child: Text('Price (Low to High)'),
+                ),
+                const PopupMenuItem(
+                  value: 'price_high',
+                  child: Text('Price (High to Low)'),
+                ),
+                const PopupMenuItem(
+                  value: 'popularity',
+                  child: Text('Popularity'),
+                ),
+              ],
         ),
       ],
     );
@@ -1345,19 +1733,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<Widget> _buildAppBarActions() {
-    if (_currentIndex == 0) {
-      return [
-        IconButton(
-          icon: const Icon(Icons.search),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SearchScreen()),
-            );
-          },
-        ),
-      ];
-    }
     return [];
   }
 

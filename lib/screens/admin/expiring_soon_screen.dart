@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -10,7 +11,7 @@ import 'package:smart_kirana/utils/constants.dart';
 class ExpiringSoonScreen extends StatefulWidget {
   static const String routeName = '/admin-expiring-soon';
 
-  const ExpiringSoonScreen({Key? key}) : super(key: key);
+  const ExpiringSoonScreen({super.key});
 
   @override
   State<ExpiringSoonScreen> createState() => _ExpiringSoonScreenState();
@@ -38,12 +39,25 @@ class _ExpiringSoonScreenState extends State<ExpiringSoonScreen> {
         context,
         listen: false,
       );
-      await productProvider.loadProducts();
 
-      _expiringSoonProducts = productProvider.getExpiringSoonProducts();
+      // Check if products are already loaded to avoid unnecessary reload
+      if (productProvider.products.isEmpty) {
+        await productProvider.loadProducts();
+      }
 
-      // Automatically add expiring products to global recommendations
-      await _addExpiringSoonToRecommendations();
+      // Use compute to offload heavy processing from main thread
+      final allProducts = productProvider.products;
+      final expiringSoonProducts = await compute(
+        _processExpiringSoonProducts,
+        allProducts,
+      );
+
+      setState(() {
+        _expiringSoonProducts = expiringSoonProducts;
+      });
+
+      // Add to recommendations in background without blocking UI
+      _addExpiringSoonToRecommendations();
     } catch (e) {
       setState(() {
         _error = 'Failed to load expiring products: ${e.toString()}';
@@ -55,20 +69,57 @@ class _ExpiringSoonScreenState extends State<ExpiringSoonScreen> {
     }
   }
 
-  Future<void> _addExpiringSoonToRecommendations() async {
-    try {
-      final recommendationProvider = Provider.of<RecommendationProvider>(
-        context,
-        listen: false,
-      );
+  // Static method for compute function - processes expiring products
+  static List<ProductModel> _processExpiringSoonProducts(
+    List<ProductModel> allProducts,
+  ) {
+    final expiringSoonProducts =
+        allProducts
+            .where((product) => product.isExpiringSoon || product.isExpired)
+            .toList();
 
-      for (final product in _expiringSoonProducts) {
-        await recommendationProvider.addProductToGlobalRecommendations(product);
+    // Sort products by expiry date
+    expiringSoonProducts.sort((a, b) {
+      if (a.isExpired && !b.isExpired) return -1;
+      if (!a.isExpired && b.isExpired) return 1;
+      if (a.expiryDate == null && b.expiryDate == null) return 0;
+      if (a.expiryDate == null) return 1;
+      if (b.expiryDate == null) return -1;
+      return a.expiryDate!.compareTo(b.expiryDate!);
+    });
+
+    return expiringSoonProducts;
+  }
+
+  void _addExpiringSoonToRecommendations() {
+    // Get provider reference before async operation
+    final recommendationProvider = Provider.of<RecommendationProvider>(
+      context,
+      listen: false,
+    );
+
+    // Run in background without blocking UI
+    Future.microtask(() async {
+      try {
+        // Process in smaller batches to avoid blocking
+        const batchSize = 5;
+        for (int i = 0; i < _expiringSoonProducts.length; i += batchSize) {
+          final batch = _expiringSoonProducts.skip(i).take(batchSize);
+
+          for (final product in batch) {
+            await recommendationProvider.addProductToGlobalRecommendations(
+              product,
+            );
+          }
+
+          // Add small delay between batches to keep UI responsive
+          await Future.delayed(const Duration(milliseconds: 10));
+        }
+      } catch (e) {
+        // Silently handle errors for recommendation updates
+        debugPrint('Error adding expiring products to recommendations: $e');
       }
-    } catch (e) {
-      // Silently handle errors for recommendation updates
-      debugPrint('Error adding expiring products to recommendations: $e');
-    }
+    });
   }
 
   @override
@@ -146,17 +197,46 @@ class _ExpiringSoonScreenState extends State<ExpiringSoonScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadExpiringSoonProducts,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppPadding.medium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSummaryCard(),
-            const SizedBox(height: AppPadding.medium),
-            _buildProductsList(),
-          ],
-        ),
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.all(AppPadding.medium),
+            sliver: SliverToBoxAdapter(child: _buildSummaryCard()),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: AppPadding.medium)),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: AppPadding.medium),
+            sliver: SliverToBoxAdapter(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Products', style: AppTextStyles.heading2),
+                  Text(
+                    '${_expiringSoonProducts.length} items',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: AppPadding.small)),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: AppPadding.medium),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final product = _expiringSoonProducts[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: AppPadding.small),
+                  child: _buildProductCard(product),
+                );
+              }, childCount: _expiringSoonProducts.length),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: AppPadding.large)),
+        ],
       ),
     );
   }
@@ -261,36 +341,6 @@ class _ExpiringSoonScreenState extends State<ExpiringSoonScreen> {
     );
   }
 
-  Widget _buildProductsList() {
-    // Sort products by expiry date (expired first, then by days remaining)
-    final sortedProducts = List<ProductModel>.from(_expiringSoonProducts)
-      ..sort((a, b) {
-        if (a.isExpired && !b.isExpired) return -1;
-        if (!a.isExpired && b.isExpired) return 1;
-        if (a.expiryDate == null && b.expiryDate == null) return 0;
-        if (a.expiryDate == null) return 1;
-        if (b.expiryDate == null) return -1;
-        return a.expiryDate!.compareTo(b.expiryDate!);
-      });
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Products', style: AppTextStyles.heading2),
-        const SizedBox(height: AppPadding.small),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: sortedProducts.length,
-          itemBuilder: (context, index) {
-            final product = sortedProducts[index];
-            return _buildProductCard(product);
-          },
-        ),
-      ],
-    );
-  }
-
   Widget _buildProductCard(ProductModel product) {
     final isExpired = product.isExpired;
     final daysUntilExpiry = product.daysUntilExpiry;
@@ -315,31 +365,44 @@ class _ExpiringSoonScreenState extends State<ExpiringSoonScreen> {
         side: BorderSide(color: expiryColor.withAlpha(51), width: 1),
       ),
       child: ListTile(
-        leading:
-            product.imageUrl.isNotEmpty
-                ? ClipRRect(
-                  borderRadius: BorderRadius.circular(AppBorderRadius.small),
-                  child: Image.network(
-                    product.imageUrl,
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 50,
-                        height: 50,
-                        color: Colors.grey.shade200,
-                        child: const Icon(Icons.image_not_supported),
-                      );
-                    },
+        leading: SizedBox(
+          width: 50,
+          height: 50,
+          child:
+              product.imageUrl.isNotEmpty
+                  ? ClipRRect(
+                    borderRadius: BorderRadius.circular(AppBorderRadius.small),
+                    child: Image.network(
+                      product.imageUrl,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: Colors.grey.shade200,
+                          child: const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey.shade200,
+                          child: const Icon(Icons.image_not_supported),
+                        );
+                      },
+                    ),
+                  )
+                  : Container(
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.image),
                   ),
-                )
-                : Container(
-                  width: 50,
-                  height: 50,
-                  color: Colors.grey.shade200,
-                  child: const Icon(Icons.image),
-                ),
+        ),
         title: Text(
           product.name,
           style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold),

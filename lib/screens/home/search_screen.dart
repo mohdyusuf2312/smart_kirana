@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/product_model.dart';
 import 'package:smart_kirana/providers/product_provider.dart';
 import 'package:smart_kirana/screens/home/product_detail_screen.dart';
+import 'package:smart_kirana/screens/home/product_list_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/product_card.dart';
 
@@ -157,29 +158,162 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildSearchResults() {
-    return GridView.builder(
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
+    final query = _searchController.text.trim().toLowerCase();
+
+    // Get matching categories
+    final matchingCategories =
+        productProvider.categories.where((category) {
+          return category.name.toLowerCase().contains(query);
+        }).toList();
+
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(AppPadding.medium),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.85, // Adjusted to match popular product cards
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Show matching categories first
+          if (matchingCategories.isNotEmpty) ...[
+            const Text(
+              'Categories',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: matchingCategories.length,
+                itemBuilder: (context, index) {
+                  final category = matchingCategories[index];
+                  return _buildCategoryCard(category);
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+
+          // Show products
+          if (_searchResults.isNotEmpty) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Products',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '${_searchResults.length} found',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.85, // Standardized aspect ratio
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: _searchResults.length,
+              itemBuilder: (context, index) {
+                final product = _searchResults[index];
+                return ProductCard(
+                  product: product,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => ProductDetailScreen(product: product),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ],
       ),
-      itemCount: _searchResults.length,
-      itemBuilder: (context, index) {
-        final product = _searchResults[index];
-        return ProductCard(
-          product: product,
+    );
+  }
+
+  Widget _buildCategoryCard(dynamic category) {
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
+
+    return Container(
+      width: 80,
+      margin: const EdgeInsets.only(right: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
           onTap: () {
+            final products = productProvider.getProductsByCategory(category.id);
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ProductDetailScreen(product: product),
+                builder:
+                    (context) => ProductListScreen(
+                      title: category.name,
+                      products: products,
+                      categoryId: category.id,
+                    ),
               ),
             );
           },
-        );
-      },
+          child: Column(
+            children: [
+              Container(
+                height: 60,
+                width: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withAlpha(51),
+                      spreadRadius: 1,
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    category.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.category, color: Colors.grey),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                category.name,
+                style: const TextStyle(fontSize: 12),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

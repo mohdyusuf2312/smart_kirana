@@ -241,6 +241,102 @@ class ProductProvider extends ChangeNotifier {
     }).toList();
   }
 
+  // Filter products with advanced options
+  List<ProductModel> filterProducts({
+    String? categoryId,
+    double? minPrice,
+    double? maxPrice,
+    bool? inStockOnly,
+    bool? onSaleOnly,
+    String? searchQuery,
+  }) {
+    List<ProductModel> filteredProducts = List.from(_products);
+
+    // Apply search filter
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      filteredProducts = searchProducts(searchQuery);
+    }
+
+    // Apply category filter
+    if (categoryId != null && categoryId.isNotEmpty) {
+      filteredProducts =
+          filteredProducts
+              .where((product) => product.categoryId == categoryId)
+              .toList();
+    }
+
+    // Apply price range filter
+    if (minPrice != null) {
+      filteredProducts =
+          filteredProducts.where((product) {
+            final price = product.discountPrice ?? product.price;
+            return price >= minPrice;
+          }).toList();
+    }
+
+    if (maxPrice != null) {
+      filteredProducts =
+          filteredProducts.where((product) {
+            final price = product.discountPrice ?? product.price;
+            return price <= maxPrice;
+          }).toList();
+    }
+
+    // Apply stock filter
+    if (inStockOnly == true) {
+      filteredProducts =
+          filteredProducts.where((product) => product.stock > 0).toList();
+    }
+
+    // Apply sale filter
+    if (onSaleOnly == true) {
+      filteredProducts =
+          filteredProducts
+              .where((product) => product.discountPrice != null)
+              .toList();
+    }
+
+    return filteredProducts;
+  }
+
+  // Sort products
+  List<ProductModel> sortProducts(List<ProductModel> products, String sortBy) {
+    List<ProductModel> sortedProducts = List.from(products);
+
+    switch (sortBy) {
+      case 'name':
+        sortedProducts.sort((a, b) => a.name.compareTo(b.name));
+        break;
+      case 'price_low':
+        sortedProducts.sort((a, b) {
+          final priceA = a.discountPrice ?? a.price;
+          final priceB = b.discountPrice ?? b.price;
+          return priceA.compareTo(priceB);
+        });
+        break;
+      case 'price_high':
+        sortedProducts.sort((a, b) {
+          final priceA = a.discountPrice ?? a.price;
+          final priceB = b.discountPrice ?? b.price;
+          return priceB.compareTo(priceA);
+        });
+        break;
+      case 'popularity':
+        // Sort by popular products first, then by name
+        sortedProducts.sort((a, b) {
+          if (a.isPopular && !b.isPopular) return -1;
+          if (!a.isPopular && b.isPopular) return 1;
+          return a.name.compareTo(b.name);
+        });
+        break;
+      default:
+        // Default to name sorting
+        sortedProducts.sort((a, b) => a.name.compareTo(b.name));
+    }
+
+    return sortedProducts;
+  }
+
   // Helper methods
   void _setLoading(bool value) {
     _isLoading = value;

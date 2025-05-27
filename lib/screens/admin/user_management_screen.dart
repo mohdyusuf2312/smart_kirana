@@ -26,7 +26,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    
+
     // Check if user is admin
     if (authProvider.user?.role != 'ADMIN') {
       return Scaffold(
@@ -34,10 +34,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'Unauthorized Access',
-                style: AppTextStyles.heading1,
-              ),
+              const Text('Unauthorized Access', style: AppTextStyles.heading1),
               const SizedBox(height: AppPadding.medium),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
@@ -50,17 +47,16 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('User Management'),
-      ),
+      appBar: AppBar(title: const Text('User Management')),
       drawer: const AdminDrawer(),
       body: Column(
         children: [
           _buildSearchAndFilter(),
           Expanded(
-            child: _selectedUserId != null
-                ? _buildUserDetails()
-                : _buildUserList(),
+            child:
+                _selectedUserId != null
+                    ? _buildUserDetails()
+                    : _buildUserList(),
           ),
         ],
       ),
@@ -93,7 +89,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               itemBuilder: (context, index) {
                 final role = _roleOptions[index];
                 final isSelected = role == _selectedRole;
-                
+
                 return Padding(
                   padding: const EdgeInsets.only(right: AppPadding.small),
                   child: ChoiceChip(
@@ -109,8 +105,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     backgroundColor: Colors.white,
                     selectedColor: AppColors.primary.withOpacity(0.2),
                     labelStyle: TextStyle(
-                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color:
+                          isSelected
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 );
@@ -129,42 +129,42 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
-          return Center(
-            child: Text('Error: ${snapshot.error}'),
-          );
+          return Center(child: Text('Error: ${snapshot.error}'));
         }
-        
+
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(
-            child: Text('No users found'),
-          );
+          return const Center(child: Text('No users found'));
         }
-        
+
         // Filter users based on search query and role
         var filteredDocs = snapshot.data!.docs;
-        
+
         if (_searchQuery.isNotEmpty) {
-          filteredDocs = filteredDocs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final name = data['name'] as String? ?? '';
-            final email = data['email'] as String? ?? '';
-            
-            return name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                email.toLowerCase().contains(_searchQuery.toLowerCase());
-          }).toList();
+          filteredDocs =
+              filteredDocs.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final name = data['name'] as String? ?? '';
+                final email = data['email'] as String? ?? '';
+
+                return name.toLowerCase().contains(
+                      _searchQuery.toLowerCase(),
+                    ) ||
+                    email.toLowerCase().contains(_searchQuery.toLowerCase());
+              }).toList();
         }
-        
+
         if (_selectedRole != 'All') {
-          filteredDocs = filteredDocs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final role = data['role'] as String? ?? 'CUSTOMER';
-            
-            return role == _selectedRole;
-          }).toList();
+          filteredDocs =
+              filteredDocs.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final role = data['role'] as String? ?? 'CUSTOMER';
+
+                return role == _selectedRole;
+              }).toList();
         }
-        
+
         return ListView.builder(
           padding: const EdgeInsets.all(AppPadding.medium),
           itemCount: filteredDocs.length,
@@ -172,7 +172,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             final doc = filteredDocs[index];
             final data = doc.data() as Map<String, dynamic>;
             final user = UserModel.fromMap(data, doc.id);
-            
+
             return Card(
               margin: const EdgeInsets.only(bottom: AppPadding.medium),
               child: ListTile(
@@ -194,12 +194,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   children: [
                     Text(user.email),
                     Text('Phone: ${user.phone}'),
-                    Row(
-                      children: [
-                        Text('Role: '),
-                        _buildRoleChip(user.role),
-                      ],
-                    ),
+                    Row(children: [Text('Role: '), _buildRoleChip(user.role)]),
                   ],
                 ),
                 trailing: IconButton(
@@ -230,13 +225,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
-          return Center(
-            child: Text('Error: ${snapshot.error}'),
-          );
+          return Center(child: Text('Error: ${snapshot.error}'));
         }
-        
+
         if (!snapshot.hasData || !snapshot.data!.exists) {
           return Center(
             child: Column(
@@ -256,10 +249,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             ),
           );
         }
-        
+
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final user = UserModel.fromMap(data, snapshot.data!.id);
-        
+
         return SingleChildScrollView(
           padding: const EdgeInsets.all(AppPadding.medium),
           child: Column(
@@ -275,10 +268,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       });
                     },
                   ),
-                  const Text(
-                    'User Details',
-                    style: AppTextStyles.heading2,
-                  ),
+                  const Text('User Details', style: AppTextStyles.heading2),
                 ],
               ),
               const SizedBox(height: AppPadding.medium),
@@ -293,7 +283,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                           radius: 40,
                           backgroundColor: AppColors.primary,
                           child: Text(
-                            user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                            user.name.isNotEmpty
+                                ? user.name[0].toUpperCase()
+                                : '?',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 30,
@@ -315,58 +307,19 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       ),
                       _buildUserInfoRow(
                         'Last Login',
-                        DateFormat('MMM d, yyyy hh:mm a').format(user.lastLogin),
+                        DateFormat(
+                          'MMM d, yyyy hh:mm a',
+                        ).format(user.lastLogin),
                       ),
                       const SizedBox(height: AppPadding.medium),
-                      Row(
-                        children: [
-                          const Text(
-                            'Role: ',
-                            style: AppTextStyles.bodyLarge,
-                          ),
-                          const SizedBox(width: AppPadding.small),
-                          DropdownButton<String>(
-                            value: user.role,
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'CUSTOMER',
-                                child: Text('CUSTOMER'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'ADMIN',
-                                child: Text('ADMIN'),
-                              ),
-                            ],
-                            onChanged: (newValue) async {
-                              if (newValue != null && newValue != user.role) {
-                                try {
-                                  await _firestore.collection('users').doc(user.id).update({
-                                    'role': newValue,
-                                  });
-                                  
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('User role updated to $newValue')),
-                                  );
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Failed to update user role: $e')),
-                                  );
-                                }
-                              }
-                            },
-                          ),
-                        ],
-                      ),
+                      _buildUserInfoRow('Role', user.role),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: AppPadding.medium),
               if (user.addresses.isNotEmpty) ...[
-                const Text(
-                  'Addresses',
-                  style: AppTextStyles.heading3,
-                ),
+                const Text('Addresses', style: AppTextStyles.heading3),
                 const SizedBox(height: AppPadding.small),
                 ListView.builder(
                   shrinkWrap: true,
@@ -386,20 +339,22 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         subtitle: Text(
                           '${address.city}, ${address.state}, ${address.pincode}',
                         ),
-                        trailing: address.isDefault
-                            ? const Chip(
-                                label: Text(
-                                  'Default',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
+                        trailing:
+                            address.isDefault
+                                ? const Chip(
+                                  label: Text(
+                                    'Default',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
                                   ),
-                                ),
-                                backgroundColor: AppColors.primary,
-                                padding: EdgeInsets.zero,
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              )
-                            : null,
+                                  backgroundColor: AppColors.primary,
+                                  padding: EdgeInsets.zero,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                )
+                                : null,
                       ),
                     );
                   },
@@ -427,12 +382,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               ),
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: AppTextStyles.bodyLarge,
-            ),
-          ),
+          Expanded(child: Text(value, style: AppTextStyles.bodyLarge)),
         ],
       ),
     );
@@ -442,12 +392,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     return Chip(
       label: Text(
         role,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-        ),
+        style: const TextStyle(color: Colors.white, fontSize: 12),
       ),
-      backgroundColor: role == 'ADMIN' ? AppColors.secondary : AppColors.primary,
+      backgroundColor:
+          role == 'ADMIN' ? AppColors.secondary : AppColors.primary,
       padding: EdgeInsets.zero,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
