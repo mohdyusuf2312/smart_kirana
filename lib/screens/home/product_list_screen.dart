@@ -105,18 +105,28 @@ class _ProductListScreenState extends State<ProductListScreen> {
               ? const Center(child: CircularProgressIndicator())
               : _products.isEmpty
               ? const Center(child: Text('No products available'))
-              : GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio:
-                      0.85, // Adjusted to match popular product cards
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: _products.length,
-                itemBuilder: (context, index) {
-                  return _buildProductCard(_products[index]);
+              : LayoutBuilder(
+                builder: (context, constraints) {
+                  final screenWidth = constraints.maxWidth;
+                  return GridView.builder(
+                    padding: EdgeInsets.all(
+                      ResponsiveGrid.getPadding(screenWidth),
+                    ),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: ResponsiveGrid.getCrossAxisCount(
+                        screenWidth,
+                      ),
+                      childAspectRatio: ResponsiveGrid.getChildAspectRatio(
+                        screenWidth,
+                      ),
+                      crossAxisSpacing: ResponsiveGrid.getSpacing(screenWidth),
+                      mainAxisSpacing: ResponsiveGrid.getSpacing(screenWidth),
+                    ),
+                    itemCount: _products.length,
+                    itemBuilder: (context, index) {
+                      return _buildProductCard(_products[index]);
+                    },
+                  );
                 },
               ),
     );

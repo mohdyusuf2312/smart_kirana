@@ -212,27 +212,37 @@ class _SearchScreenState extends State<SearchScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.85, // Standardized aspect ratio
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: _searchResults.length,
-              itemBuilder: (context, index) {
-                final product = _searchResults[index];
-                return ProductCard(
-                  product: product,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => ProductDetailScreen(product: product),
-                      ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final screenWidth = constraints.maxWidth;
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: ResponsiveGrid.getCrossAxisCount(
+                      screenWidth,
+                    ),
+                    childAspectRatio: ResponsiveGrid.getChildAspectRatio(
+                      screenWidth,
+                    ),
+                    crossAxisSpacing: ResponsiveGrid.getSpacing(screenWidth),
+                    mainAxisSpacing: ResponsiveGrid.getSpacing(screenWidth),
+                  ),
+                  itemCount: _searchResults.length,
+                  itemBuilder: (context, index) {
+                    final product = _searchResults[index];
+                    return ProductCard(
+                      product: product,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) =>
+                                    ProductDetailScreen(product: product),
+                          ),
+                        );
+                      },
                     );
                   },
                 );

@@ -517,7 +517,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final currencyFormat = NumberFormat.currency(symbol: '₹');
 
     return GridView.count(
-      crossAxisCount: 4, // Changed from 2 to 4 for more compact layout
+      crossAxisCount: 2, // Changed from 2 to 4 for more compact layout
       crossAxisSpacing: 8, // Reduced spacing
       mainAxisSpacing: 8, // Reduced spacing
       shrinkWrap: true,
@@ -636,7 +636,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildFeatureGrid() {
     return GridView.count(
-      crossAxisCount: 5,
+      crossAxisCount: 2,
       crossAxisSpacing: 8, // Reduced spacing
       mainAxisSpacing: 8, // Reduced spacing
       shrinkWrap: true,
@@ -653,6 +653,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Icons.category,
           () =>
               Navigator.pushNamed(context, CategoryManagementScreen.routeName),
+        ),
+        _buildFeatureCard(
+          'Users',
+          Icons.people,
+          () => Navigator.pushNamed(context, UserManagementScreen.routeName),
         ),
         _buildFeatureCard(
           'Expiring Soon',

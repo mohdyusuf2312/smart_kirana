@@ -771,14 +771,19 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
             LayoutBuilder(
               builder: (context, constraints) {
+                final screenWidth = constraints.maxWidth;
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.85, // Standardized aspect ratio
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: ResponsiveGrid.getCrossAxisCount(
+                      screenWidth,
+                    ),
+                    childAspectRatio: ResponsiveGrid.getChildAspectRatio(
+                      screenWidth,
+                    ),
+                    crossAxisSpacing: ResponsiveGrid.getSpacing(screenWidth),
+                    mainAxisSpacing: ResponsiveGrid.getSpacing(screenWidth),
                   ),
                   itemCount: _searchResults.length,
                   itemBuilder: (context, index) {
@@ -964,14 +969,19 @@ class _HomeScreenState extends State<HomeScreen> {
           else
             LayoutBuilder(
               builder: (context, constraints) {
+                final screenWidth = constraints.maxWidth;
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.85, // Standardized aspect ratio
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: ResponsiveGrid.getCrossAxisCount(
+                      screenWidth,
+                    ),
+                    childAspectRatio: ResponsiveGrid.getChildAspectRatio(
+                      screenWidth,
+                    ),
+                    crossAxisSpacing: ResponsiveGrid.getSpacing(screenWidth),
+                    mainAxisSpacing: ResponsiveGrid.getSpacing(screenWidth),
                   ),
                   itemCount: filteredProducts.length,
                   itemBuilder: (context, index) {

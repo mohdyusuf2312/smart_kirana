@@ -101,10 +101,18 @@ class _ExpiringSoonScreenState extends State<ExpiringSoonScreen> {
     // Run in background without blocking UI
     Future.microtask(() async {
       try {
+        // Filter out expired products - only add expiring soon products to recommendations
+        final expiringSoonOnly =
+            _expiringSoonProducts
+                .where(
+                  (product) => product.isExpiringSoon && !product.isExpired,
+                )
+                .toList();
+
         // Process in smaller batches to avoid blocking
         const batchSize = 5;
-        for (int i = 0; i < _expiringSoonProducts.length; i += batchSize) {
-          final batch = _expiringSoonProducts.skip(i).take(batchSize);
+        for (int i = 0; i < expiringSoonOnly.length; i += batchSize) {
+          final batch = expiringSoonOnly.skip(i).take(batchSize);
 
           for (final product in batch) {
             await recommendationProvider.addProductToGlobalRecommendations(
