@@ -40,7 +40,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.smart_kirana"
-        minSdk = 22
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
