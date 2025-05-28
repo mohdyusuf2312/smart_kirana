@@ -1565,18 +1565,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         ) {
                                           if (mounted) {
                                             if (success) {
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    '${product.name} added to cart',
-                                                  ),
-                                                  duration: const Duration(
-                                                    seconds: 1,
-                                                  ),
-                                                ),
-                                              );
+                                              // Silently Add item to cart.
+
+                                              // ScaffoldMessenger.of(
+                                              //   context,
+                                              // ).showSnackBar(
+                                              //   SnackBar(
+                                              //     content: Text(
+                                              //       '${product.name} added to cart',
+                                              //     ),
+                                              //     duration: const Duration(
+                                              //       seconds: 1,
+                                              //     ),
+                                              //   ),
+                                              // );
                                             } else if (cartProvider.error !=
                                                 null) {
                                               ScaffoldMessenger.of(
@@ -1715,14 +1717,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             borderRadius: BorderRadius.circular(4),
                             onTap: () {
                               cartProvider.addToCart(product, 1);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    '${product.name} added to cart',
-                                  ),
-                                  duration: const Duration(seconds: 1),
-                                ),
-                              );
+                              // Silently added item to cart
+
+                              // ScaffoldMessenger.of(context).showSnackBar(
+                              //   SnackBar(
+                              //     content: Text(
+                              //       '${product.name} added to cart',
+                              //     ),
+                              //     duration: const Duration(seconds: 1),
+                              //   ),
+                              // );
                             },
                             child: Ink(
                               padding: const EdgeInsets.all(4),
