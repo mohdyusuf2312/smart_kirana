@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_kirana/models/product_model.dart';
@@ -24,7 +25,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // Navigation state
   int _currentIndex = 0;
 
@@ -51,6 +52,10 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
+  // Auto-scroll controllers for horizontal lists
+  final Map<String, ScrollController> _scrollControllers = {};
+  final Map<String, Timer> _autoScrollTimers = {};
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +69,17 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+
+    // Dispose auto-scroll timers and controllers
+    for (var timer in _autoScrollTimers.values) {
+      timer.cancel();
+    }
+    for (var controller in _scrollControllers.values) {
+      controller.dispose();
+    }
+    _autoScrollTimers.clear();
+    _scrollControllers.clear();
+
     super.dispose();
   }
 
@@ -280,6 +296,53 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
           ),
     );
+  }
+
+  // Auto-scroll helper methods
+  ScrollController _getScrollController(String key) {
+    if (!_scrollControllers.containsKey(key)) {
+      _scrollControllers[key] = ScrollController();
+    }
+    return _scrollControllers[key]!;
+  }
+
+  void _startAutoScroll(String key, int itemCount) {
+    if (itemCount <= 3) return; // Don't auto-scroll if few items
+
+    _autoScrollTimers[key]?.cancel();
+
+    _autoScrollTimers[key] = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (!mounted || !_scrollControllers.containsKey(key)) {
+        timer.cancel();
+        return;
+      }
+
+      final controller = _scrollControllers[key]!;
+      if (!controller.hasClients) return;
+
+      final maxScrollExtent = controller.position.maxScrollExtent;
+      final currentOffset = controller.offset;
+
+      // Calculate next scroll position (scroll by one item width approximately)
+      const itemWidth = 172.0; // 160 + 12 margin
+      double nextOffset = currentOffset + itemWidth;
+
+      // If we've reached the end, scroll back to beginning
+      if (nextOffset >= maxScrollExtent) {
+        nextOffset = 0;
+      }
+
+      controller.animateTo(
+        nextOffset,
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  void _stopAutoScroll(String key) {
+    _autoScrollTimers[key]?.cancel();
+    _autoScrollTimers.remove(key);
   }
 
   @override
@@ -562,14 +625,32 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 16),
           SizedBox(
             height: 200,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemCount: mergedRecommendations.length,
-              itemBuilder: (context, index) {
-                return _buildProductCard(
-                  mergedRecommendations[index],
-                  horizontal: true,
+            child: Builder(
+              builder: (context) {
+                final scrollKey = 'recommendations';
+                final controller = _getScrollController(scrollKey);
+                final itemCount = mergedRecommendations.length;
+
+                // Start auto-scroll after the widget is built
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _startAutoScroll(scrollKey, itemCount);
+                });
+
+                return MouseRegion(
+                  onEnter: (_) => _stopAutoScroll(scrollKey),
+                  onExit: (_) => _startAutoScroll(scrollKey, itemCount),
+                  child: ListView.builder(
+                    controller: controller,
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: itemCount,
+                    itemBuilder: (context, index) {
+                      return _buildProductCard(
+                        mergedRecommendations[index],
+                        horizontal: true,
+                      );
+                    },
+                  ),
                 );
               },
             ),
@@ -1144,21 +1225,38 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         SizedBox(
           height: 220,
-          child:
-              popularProducts.isEmpty
-                  ? const Center(child: Text('No popular products available'))
-                  : ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: popularProducts.length,
-                    itemBuilder: (context, index) {
-                      return _buildProductCard(
-                        popularProducts[index],
-                        horizontal: true,
-                      );
-                    },
-                  ),
+          child: popularProducts.isEmpty
+              ? const Center(child: Text('No popular products available'))
+              : Builder(
+                  builder: (context) {
+                    final scrollKey = 'popular_products';
+                    final controller = _getScrollController(scrollKey);
+                    final itemCount = popularProducts.length;
+
+                    // Start auto-scroll after the widget is built
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _startAutoScroll(scrollKey, itemCount);
+                    });
+
+                    return MouseRegion(
+                      onEnter: (_) => _stopAutoScroll(scrollKey),
+                      onExit: (_) => _startAutoScroll(scrollKey, itemCount),
+                      child: ListView.builder(
+                        controller: controller,
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: itemCount,
+                        itemBuilder: (context, index) {
+                          return _buildProductCard(
+                            popularProducts[index],
+                            horizontal: true,
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -1266,15 +1364,33 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 SizedBox(
                   height: 220,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: products.length > 6 ? 6 : products.length,
-                    itemBuilder: (context, index) {
-                      return _buildProductCard(
-                        products[index],
-                        horizontal: true,
+                  child: Builder(
+                    builder: (context) {
+                      final scrollKey = 'category_${category.id}';
+                      final controller = _getScrollController(scrollKey);
+                      final itemCount = products.length > 6 ? 6 : products.length;
+
+                      // Start auto-scroll after the widget is built
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        _startAutoScroll(scrollKey, itemCount);
+                      });
+
+                      return MouseRegion(
+                        onEnter: (_) => _stopAutoScroll(scrollKey),
+                        onExit: (_) => _startAutoScroll(scrollKey, itemCount),
+                        child: ListView.builder(
+                          controller: controller,
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: itemCount,
+                          itemBuilder: (context, index) {
+                            return _buildProductCard(
+                              products[index],
+                              horizontal: true,
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
