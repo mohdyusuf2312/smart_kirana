@@ -4,10 +4,12 @@ import 'package:smart_kirana/models/user_model.dart';
 import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/screens/admin/admin_dashboard_screen.dart';
 import 'package:smart_kirana/screens/auth/login_screen.dart';
+import 'package:smart_kirana/screens/auth/signup_screen.dart';
 import 'package:smart_kirana/screens/home/about_us_screen.dart';
 import 'package:smart_kirana/screens/home/address_screen.dart';
 import 'package:smart_kirana/screens/home/edit_profile_screen.dart';
 import 'package:smart_kirana/screens/home/help_support_screen.dart';
+import 'package:smart_kirana/screens/home/home_screen.dart';
 import 'package:smart_kirana/screens/orders/order_history_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
@@ -28,37 +30,188 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildNotLoggedIn(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.account_circle_outlined,
-            size: 100,
-            color: AppColors.textSecondary.withAlpha(128),
-          ),
-          const SizedBox(height: AppPadding.medium),
-          Text('You are not logged in', style: AppTextStyles.heading3),
-          const SizedBox(height: AppPadding.small),
-          Text(
-            'Please login to view your profile',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+    // Check if we're on web platform for enhanced guest experience
+    final isWeb =
+        Theme.of(context).platform != TargetPlatform.android &&
+        Theme.of(context).platform != TargetPlatform.iOS;
+
+    if (isWeb) {
+      // Enhanced guest experience for web
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(AppPadding.medium),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Guest Header
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(AppPadding.medium),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: AppColors.primary.withAlpha(128),
+                      child: Icon(
+                        Icons.person_outline,
+                        size: 40,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: AppPadding.medium),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Welcome, Guest!',
+                            style: AppTextStyles.heading2,
+                          ),
+                          const SizedBox(height: AppPadding.small),
+                          Text(
+                            'Browse products and add to cart',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          Text(
+                            'Login for personalized experience',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: AppPadding.large),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppPadding.large),
-            child: CustomButton(
-              text: 'Login',
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, LoginScreen.routeName);
-              },
+            const SizedBox(height: AppPadding.medium),
+
+            // Login/Register Options
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+              ),
+              child: Column(
+                children: [
+                  _buildProfileOption(
+                    context,
+                    icon: Icons.login,
+                    title: 'Login to Your Account',
+                    textColor: AppColors.primary,
+                    onTap: () {
+                      Navigator.pushNamed(context, LoginScreen.routeName);
+                    },
+                  ),
+                  const Divider(height: 1),
+                  _buildProfileOption(
+                    context,
+                    icon: Icons.person_add,
+                    title: 'Create New Account',
+                    onTap: () {
+                      Navigator.pushNamed(context, SignupScreen.routeName);
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+            const SizedBox(height: AppPadding.medium),
+
+            // Guest Options
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+              ),
+              child: Column(
+                children: [
+                  _buildProfileOption(
+                    context,
+                    icon: Icons.help_outline,
+                    title: 'Help & Support',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HelpSupportScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  _buildProfileOption(
+                    context,
+                    icon: Icons.info_outline,
+                    title: 'About Us',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AboutUsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppPadding.large),
+
+            // App Version
+            Center(
+              child: Text(
+                'App Version 1.0.0',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Original mobile experience
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.account_circle_outlined,
+              size: 100,
+              color: AppColors.textSecondary.withAlpha(128),
+            ),
+            const SizedBox(height: AppPadding.medium),
+            Text('You are not logged in', style: AppTextStyles.heading3),
+            const SizedBox(height: AppPadding.small),
+            Text(
+              'Please login to view your profile',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppPadding.large),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppPadding.large),
+              child: CustomButton(
+                text: 'Login',
+                onPressed: () {
+                  Navigator.pushReplacementNamed(
+                    context,
+                    LoginScreen.routeName,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Widget _buildProfileContent(
@@ -284,10 +437,25 @@ class ProfileScreen extends StatelessWidget {
                   onTap: () async {
                     await authProvider.signOut();
                     if (context.mounted) {
-                      Navigator.pushReplacementNamed(
-                        context,
-                        LoginScreen.routeName,
-                      );
+                      // Check if we're on web platform
+                      final isWeb =
+                          Theme.of(context).platform !=
+                              TargetPlatform.android &&
+                          Theme.of(context).platform != TargetPlatform.iOS;
+
+                      if (isWeb) {
+                        // On web, navigate to home screen (allows guest access)
+                        Navigator.pushReplacementNamed(
+                          context,
+                          HomeScreen.routeName,
+                        );
+                      } else {
+                        // On mobile, navigate to login screen (requires authentication)
+                        Navigator.pushReplacementNamed(
+                          context,
+                          LoginScreen.routeName,
+                        );
+                      }
                     }
                   },
                 ),

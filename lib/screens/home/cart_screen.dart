@@ -1,7 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:email_validator/email_validator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_kirana/models/cart_item_model.dart';
+import 'package:smart_kirana/providers/auth_provider.dart';
 import 'package:smart_kirana/providers/cart_provider.dart';
+import 'package:smart_kirana/screens/auth/forgot_password_screen.dart';
 import 'package:smart_kirana/screens/home/checkout_screen.dart';
 import 'package:smart_kirana/utils/constants.dart';
 import 'package:smart_kirana/widgets/custom_button.dart';
@@ -295,15 +300,459 @@ class CartScreen extends StatelessWidget {
           const SizedBox(height: AppPadding.medium),
           CustomButton(
             text: 'Proceed to Checkout',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CheckoutScreen()),
-              );
-            },
+            onPressed: () => _handleCheckout(context),
           ),
         ],
       ),
     );
+  }
+
+  void _handleCheckout(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    // Check if user is authenticated
+    if (authProvider.currentUser != null) {
+      // User is authenticated, proceed to checkout
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const CheckoutScreen()),
+      );
+    } else {
+      // User is guest, show login/signup dialog
+      _showGuestLoginDialog(context);
+    }
+  }
+
+  void _showGuestLoginDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return _GuestAuthDialog(
+          onAuthSuccess: () async {
+            // Store navigator before async operations
+            final navigator = Navigator.of(context);
+
+            // Close dialog
+            navigator.pop();
+
+            // Cart merge already happened in _handleSubmit, just navigate to checkout
+            // Small delay to ensure UI is updated
+            await Future.delayed(const Duration(milliseconds: 100));
+
+            // Navigate to checkout with fresh context
+            if (context.mounted) {
+              navigator.push(
+                MaterialPageRoute(builder: (context) => const CheckoutScreen()),
+              );
+            }
+          },
+        );
+      },
+    );
+  }
+}
+
+// Guest Authentication Dialog Widget
+class _GuestAuthDialog extends StatefulWidget {
+  final VoidCallback onAuthSuccess;
+
+  const _GuestAuthDialog({required this.onAuthSuccess});
+
+  @override
+  State<_GuestAuthDialog> createState() => _GuestAuthDialogState();
+}
+
+class _GuestAuthDialogState extends State<_GuestAuthDialog> {
+  bool _isLoginMode = true;
+  final _formKey = GlobalKey<FormState>();
+
+  // Controllers
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+      ),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
+        padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Icon(
+                    Icons.account_circle_outlined,
+                    color: AppColors.primary,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _isLoginMode ? 'Login to Continue' : 'Create Account',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                    iconSize: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Info message
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(26),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Your cart items will be saved',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Form
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    // Name field (only for signup)
+                    if (!_isLoginMode) ...[
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          labelText: 'Full Name',
+                          prefixIcon: const Icon(Icons.person_outline),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (!_isLoginMode &&
+                              (value == null || value.trim().isEmpty)) {
+                            return 'Please enter your name';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Email field
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: const Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter your email';
+                        }
+                        if (!EmailValidator.validate(value.trim())) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Phone field (only for signup)
+                    if (!_isLoginMode) ...[
+                      TextFormField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          labelText: 'Phone Number',
+                          prefixIcon: const Icon(Icons.phone_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (!_isLoginMode &&
+                              (value == null || value.trim().isEmpty)) {
+                            return 'Please enter your phone number';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Password field
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your password';
+                        }
+                        if (!_isLoginMode && value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Submit button
+                    Consumer<AuthProvider>(
+                      builder: (context, authProvider, _) {
+                        return Column(
+                          children: [
+                            if (authProvider.error != null) ...[
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                margin: const EdgeInsets.only(bottom: 16),
+                                decoration: BoxDecoration(
+                                  color: AppColors.error.withAlpha(26),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      color: AppColors.error,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        authProvider.error!,
+                                        style: AppTextStyles.bodySmall.copyWith(
+                                          color: AppColors.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            SizedBox(
+                              width: double.infinity,
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                child: CustomButton(
+                                  text: _isLoginMode ? 'Login' : 'Sign Up',
+                                  onPressed:
+                                      authProvider.isLoading
+                                          ? null
+                                          : _handleSubmit,
+                                  isLoading: authProvider.isLoading,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Forgot password button (only show in login mode)
+                    if (_isLoginMode) ...[
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: _handleForgotPassword,
+                            child: Text(
+                              'Forgot Password?',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Toggle between login/signup
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _isLoginMode
+                              ? "Don't have an account? "
+                              : "Already have an account? ",
+                          style: AppTextStyles.bodyMedium,
+                        ),
+                        MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isLoginMode = !_isLoginMode;
+                                // Clear form when switching
+                                _formKey.currentState?.reset();
+                                _emailController.clear();
+                                _passwordController.clear();
+                                _nameController.clear();
+                                _phoneController.clear();
+                              });
+                            },
+                            child: Text(
+                              _isLoginMode ? 'Sign Up' : 'Login',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleSubmit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+
+    // Store guest cart data before authentication
+    final guestCartItems = List<Map<String, dynamic>>.from(
+      cartProvider.cartItems.map(
+        (item) => {'productId': item.product.id, 'quantity': item.quantity},
+      ),
+    );
+
+    bool success = false;
+
+    if (_isLoginMode) {
+      // Login
+      success = await authProvider.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+    } else {
+      // Sign up
+      success = await authProvider.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        name: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
+      );
+    }
+
+    if (success && mounted) {
+      // Store the guest cart data to a temporary key in SharedPreferences
+      // This ensures it survives the provider recreation
+      await _storeGuestCartForMerge(guestCartItems);
+
+      // Check if email verification is required
+      if (!authProvider.isEmailVerified && !_isLoginMode && mounted) {
+        // For signup, show verification message but still proceed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Please verify your email. Check your inbox for verification link.',
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: AppColors.primary,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+
+      // Call success callback
+      widget.onAuthSuccess();
+    }
+  }
+
+  Future<void> _storeGuestCartForMerge(
+    List<Map<String, dynamic>> guestCartItems,
+  ) async {
+    if (guestCartItems.isEmpty) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'temp_guest_cart_for_merge',
+      jsonEncode(guestCartItems),
+    );
+  }
+
+  void _handleForgotPassword() {
+    // Close the current dialog
+    Navigator.of(context).pop();
+
+    // Navigate to forgot password screen
+    Navigator.pushNamed(context, ForgotPasswordScreen.routeName);
   }
 }

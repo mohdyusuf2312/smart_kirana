@@ -7,7 +7,7 @@ import 'package:smart_kirana/screens/auth/login_screen.dart';
 import 'package:smart_kirana/screens/home/home_screen.dart';
 
 class HomeWrapper extends StatefulWidget {
-  const HomeWrapper({Key? key}) : super(key: key);
+  const HomeWrapper({super.key});
 
   @override
   State<HomeWrapper> createState() => _HomeWrapperState();
@@ -68,8 +68,17 @@ class _HomeWrapperState extends State<HomeWrapper> {
           return const HomeScreen();
         }
 
-        // Not authenticated users go to login
-        return const LoginScreen();
+        // Handle unauthenticated users
+        // For web platform, allow guest access to home screen
+        // For mobile platforms, redirect to login
+        if (Theme.of(context).platform == TargetPlatform.android ||
+            Theme.of(context).platform == TargetPlatform.iOS) {
+          // Mobile platforms require authentication
+          return const LoginScreen();
+        } else {
+          // Web and other platforms allow guest access
+          return const HomeScreen();
+        }
       },
     );
   }

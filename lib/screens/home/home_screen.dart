@@ -580,45 +580,52 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHomeTab() {
-    return SafeArea(
-      child: RefreshIndicator(
-        key: _refreshIndicatorKey,
-        onRefresh: _refreshData,
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        return SafeArea(
+          child: RefreshIndicator(
+            key: _refreshIndicatorKey,
+            onRefresh: _refreshData,
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              slivers: [
+                // Location banner
+                SliverToBoxAdapter(child: _buildLocationBanner()),
+
+                // Search bar
+                SliverToBoxAdapter(child: _buildSearchBar()),
+
+                // Show search results, filtered results, or normal sections
+                if (_isSearchActive) ...[
+                  // Show search results when search is active
+                  SliverToBoxAdapter(child: _buildSearchResultsSection()),
+                ] else if (_filterOptions.hasActiveFilters) ...[
+                  // Only show filtered products when filters are active
+                  SliverToBoxAdapter(child: _buildFilteredProductsSection()),
+                ] else ...[
+                  // Show normal sections when no filters are applied
+                  // Merged Recommendations (only for authenticated users)
+                  if (authProvider.currentUser != null)
+                    SliverToBoxAdapter(
+                      child: _buildMergedRecommendationsSection(),
+                    ),
+
+                  // Popular Products
+                  SliverToBoxAdapter(child: _buildPopularProductsSection()),
+
+                  // All Products by Category
+                  SliverToBoxAdapter(child: _buildProductsByCategory()),
+                ],
+
+                // Bottom padding
+                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+              ],
+            ),
           ),
-          slivers: [
-            // Location banner
-            SliverToBoxAdapter(child: _buildLocationBanner()),
-
-            // Search bar
-            SliverToBoxAdapter(child: _buildSearchBar()),
-
-            // Show search results, filtered results, or normal sections
-            if (_isSearchActive) ...[
-              // Show search results when search is active
-              SliverToBoxAdapter(child: _buildSearchResultsSection()),
-            ] else if (_filterOptions.hasActiveFilters) ...[
-              // Only show filtered products when filters are active
-              SliverToBoxAdapter(child: _buildFilteredProductsSection()),
-            ] else ...[
-              // Show normal sections when no filters are applied
-              // Merged Recommendations (combines user-specific and global recommendations)
-              SliverToBoxAdapter(child: _buildMergedRecommendationsSection()),
-
-              // Popular Products
-              SliverToBoxAdapter(child: _buildPopularProductsSection()),
-
-              // All Products by Category
-              SliverToBoxAdapter(child: _buildProductsByCategory()),
-            ],
-
-            // Bottom padding
-            const SliverToBoxAdapter(child: SizedBox(height: 80)),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 
